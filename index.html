@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YK Portfolio</title>
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
+    <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/home.css"> <!-- Only for home page -->
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/footer.css">
+</head>
+<body class="home-page">
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="contact.html">Contact Me</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Home Section -->
+        <section id="home">
+            <p>Frontend & Backend Developer<span class="green-dots">.</span><span class="green-dots">.</span><span class="green-dots">.</span></p>
+            
+            <!-- Logo Image -->
+            <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946616/DeskMan_uqrjey.jpg" alt="Desk Man Image" class="center-image">
+
+            <!-- Code Snippet Section -->
+            <div id="code-container">
+                <pre id="code-display"></pre> <!-- This is where the animated code snippet will appear -->
+            </div>
+        </section>
+
+        <!-- Arrow and "More about me" section -->
+        <div id="more-info-section">
+            <a href="javascript:void(0);" id="arrow" onclick="toggleInfo()">
+                <span id="arrow-icon">&#x25BC;</span>
+                <span id="arrow-text">More about me</span>
+            </a>
+        </div>
+
+        <!-- Hidden More Info Section -->
+        <section id="more-info" class="hidden-section">
+            <h3 id="countries-title">Countries I've Visited</h3>
+            
+            <!-- Embedded Map -->
+            <div style="max-width:980px;margin:5px auto 10px auto;font-size:14px;">
+                <div style="position:relative;padding: 0 0 67% 0;height:0;overflow:hidden;">
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" 
+                        src="//www.fla-shop.com/visited-countries/embed/?st=AE%2CBH%2CCA%2CCH%2CDE%2CFR%2CGB%2CIT%2CJO%2CPK%2CQA%2CSA%2CTR%2CUS%2CVA&vc=ff9838&uc=b3c3ca&hc=40bfa6&bc=ffffff" 
+                        frameborder="0" scrolling="no">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- Travel Photo Gallery -->
+            <h3 id="gallery-title">Photo Gallery</h3>
+            <div class="photo-gallery">
+                <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946627/Timage1_veckls.jpg" alt="Travel Photo 1" class="gallery-photo">
+                <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946616/Timage4_asz4r7.jpg" alt="Travel Photo 2" class="gallery-photo">
+                <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946627/Timage3_s9v2sy.jpg" alt="Travel Photo 3" class="gallery-photo">
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Link to external JavaScript files -->
+    <script src="js/typeCodeAnimation.js"></script> <!-- Add this to include your new JS file -->
+    <script src="js/expandMore.js"></script>
+</body>
+</html>

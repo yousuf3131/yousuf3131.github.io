@@ -1,0 +1,141 @@
+/* General Styling */
+body {
+    font-family: 'League Gothic', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Home Section Specific Styling */
+#home {
+    text-align: center;
+    padding-top: 120px;
+}
+
+#home p {
+    font-size: 100px;
+    margin-bottom: 20px;
+}
+
+.center-image {
+    display: block;
+    margin: 20px auto;
+    max-width: 70%;
+    height: auto;
+}
+
+/* Code Container Styling */
+#code-container {
+    margin-top: 30px;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Adjust image size specifically for larger screens (desktops) */
+@media (min-width: 1024px) {
+    .center-image {
+        max-width: 55%;
+        max-height: 500px;
+    }
+}
+
+/* Styling for arrow and "More about me" section */
+#more-info-section {
+    text-align: center;
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#arrow {
+    color: #00e05d;
+    font-size: 24px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+#arrow:hover {
+    color: #00cc4b;
+}
+
+/* Hidden More Info Section */
+.hidden-section {
+    display: none;
+    margin-top: 50px;
+    text-align: center;
+}
+
+/* Travel Photo Gallery Styling */
+.photo-gallery {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.gallery-photo {
+    width: 300px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.gallery-photo:hover {
+    transform: scale(1.05);
+}
+
+/* Contact Icons Styling */
+.contact-icons {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.contact-icons a {
+    margin: 0 10px;
+}
+
+.contact-icons img.icon {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.3s ease;
+}
+
+.contact-icons img.icon:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    #home p {
+        font-size: 50px;
+    }
+
+    .center-image {
+        max-width: 80%;
+    }
+
+    .gallery-photo {
+        width: 200px;
+    }
+
+    #more-info-section {
+        font-size: 18px;
+    }
+
+    .contact-icons img.icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .contact-icons a {
+        margin: 0 8px;
+    }
+}

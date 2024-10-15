@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Yousuf Kazmi</title>
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
+    <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/projects.css"> <!-- Only for projects page -->
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/footer.css">
+
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="contact.html">Contact Me</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="projects">
+            <h2>My Projects</h2>
+            <div class="project-list">
+                <div class="project-item aws-project">
+                    <h3>AWSPractice.io</h3>
+                    <p>A quiz and flashcard tool for AWS Certified Practitioner exam prep, featuring over 500 questions. Built with .NET and React, and hosted on AWS for seamless, reliable performance.</p>
+                    <a href="https://awspractice.io" target="_blank">Visit Project</a>
+                    <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946615/aws_bbx5qn.png" alt="AWS Project Image" class="aws-large-image">
+                </div>
+                
+                
+                
+                
+
+                <div class="project-item">
+                    <h3>Current Work Support App</h3>
+                    <p>An internal tool created for faster ticket management and daily task automation, including text generators, database search, file search, and project tracking features.</p>
+                </div>
+
+                <div class="project-item">
+                    <h3>Word Ladder Game</h3>
+                    <p>A command-line word ladder game built in C++ with custom functions like `strCmpCnt`, `strCmpInd`, and more to manage and validate word ladders.</p>
+                </div>
+
+                <!-- Add more project items as needed -->
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer id="footer"></footer>
+
+    <!-- Link to JavaScript -->
+    <script>
+        // Dynamically include footer content
+        fetch('footer.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('footer').innerHTML = data);
+    </script>
+</body>
+</html>

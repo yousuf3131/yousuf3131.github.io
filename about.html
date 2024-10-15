@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Me - Yousuf Kazmi</title>
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
+    <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/about.css"> <!-- Only for about page -->
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/footer.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="contact.html">Contact Me</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+    <!-- About Me Section -->
+    <section id="about-me">
+        <h1>About Me</h1>
+        <p>
+            I am Yousuf Ahmed Kazmi, a passionate software developer with a strong foundation in both backend and frontend technologies. My journey began with an initial interest in electrical engineering, but I soon discovered my true calling in computer science, where I found the excitement of building innovative digital solutions.
+            
+            I thrive on learning and tackling challenges, constantly exploring new ways to enhance user experiences and solve complex problems. When I’m not immersed in coding, I enjoy woodworking, soccer, cricket, and cooking, which allow me to express creativity beyond the digital world.
+            
+            Currently, I hold a Bachelor's degree from DePaul University and am pursuing a Master’s in Management to further my leadership and strategic skills. Afterward, I plan to pursue an MBA to continue growing my expertise at the intersection of technology and business.
+            
+            I’m eager to contribute to impactful projects, pushing boundaries in both education and technology to make a lasting difference.</p>
+    </section>
+
+    <!-- Professional Experience Section -->
+    <section id="experience-section">
+        <h2>Professional Experience</h2>
+        <div class="horizontal-timeline">
+            <div class="timeline-item">
+                <h3>Software Developer</h3>
+                <p>OSM Worldwide</p>
+                <p>November 2023 - Present</p>
+            </div>
+            <div class="timeline-arrow">&#x2192;</div> <!-- Right arrow -->
+            <div class="timeline-item">
+                <h3>Software Engineer</h3>
+                <p>Albiware</p>
+                <p>April 2023 - September 2023</p>
+            </div>
+            <div class="timeline-arrow">&#x2192;</div>
+            <div class="timeline-item">
+                <h3>Software Engineer</h3>
+                <p>Ticketmaster</p>
+                <p>June 2021 - December 2022</p>
+            </div>
+            <div class="timeline-arrow">&#x2192;</div>
+            <div class="timeline-item">
+                <h3>Founder/Co-Owner</h3>
+                <p>StreetWorkoutArmy</p>
+                <p>April 2021 - Present</p>
+            </div>
+        </div>
+    </section>
+    
+</main>
+    <!-- Footer -->
+    <footer id="footer"></footer>
+    <script>
+        fetch('footer.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('footer').innerHTML = data);
+    </script>
+    
+    
+</body>
+</html>

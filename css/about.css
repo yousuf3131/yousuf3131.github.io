@@ -1,0 +1,103 @@
+/* About Page Styling */
+#about {
+    padding: 80px 20px; /* Reduce padding for a tighter layout */
+    background-color: #f9f9f9;
+    text-align: center;
+}
+
+/* About Me Section */
+#about-me {
+    max-width: 1000px;
+    margin: 0 auto 30px auto; /* Reduce space between bio and experience */
+}
+
+#about-me h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#about-me p {
+    font-size: 24px;
+    line-height: 1.8;
+    color: #333;
+    margin: 0 auto;
+    max-width: 800px;
+    text-align: center;
+}
+
+/* Professional Experience Section */
+#experience-section {
+    margin-top: 60px;
+    text-align: center;
+}
+
+#experience-section h2 {
+    font-size: 36px;
+    margin-bottom: 40px;
+    font-weight: bold;
+}
+
+/* Horizontal Timeline Styling */
+.horizontal-timeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px; /* Space between each timeline item */
+    padding: 20px 0;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+}
+
+/* Timeline Item Styling */
+.timeline-item {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 220px; /* Adjusted width for better alignment */
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover */
+    cursor: pointer; /* Make it clear the timeline item is interactive */
+}
+
+/* Hover Effect on Timeline Items */
+.timeline-item:hover {
+    transform: translateY(-10px); /* Lift the box slightly on hover */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15); /* Increase shadow for depth */
+}
+
+/* Timeline Item Headings */
+.timeline-item h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+/* Timeline Item Paragraph */
+.timeline-item p {
+    font-size: 16px;
+    margin: 5px 0;
+}
+
+/* Timeline Arrows */
+.timeline-arrow {
+    font-size: 30px;
+    color: #00e05d; /* Green arrow color */
+    display: inline-block;
+    margin-top: -10px; /* Align arrows properly */
+}
+
+/* Responsive adjustments for mobile devices */
+@media (max-width: 768px) {
+    .horizontal-timeline {
+        flex-direction: column; /* Stack items vertically */
+    }
+
+    .timeline-arrow {
+        display: none; /* Hide arrows on mobile */
+    }
+    
+    .timeline-item {
+        width: 90%; /* Make items full-width on mobile */
+    }
+}

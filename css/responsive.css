@@ -1,0 +1,51 @@
+/* Responsive adjustments for mobile devices */
+@media (max-width: 768px) {
+    /* Reduce font sizes for mobile */
+    body {
+        font-size: 14px;
+    }
+
+    /* Navigation adjustments for mobile (horizontal layout) */
+    nav ul {
+        flex-direction: row; /* Keep items in a row (horizontal) */
+        justify-content: center; /* Center the links */
+        padding: 0;
+    }
+
+    nav ul li {
+        margin-left: 10px; /* Reduce margin between links */
+        margin-right: 10px; /* Add right margin for spacing */
+    }
+
+    nav ul li a {
+        font-size: 18px; /* Adjust font size for mobile */
+        padding: 10px; /* Add padding for easier tap targets */
+        display: block;
+    }
+
+    /* Other page adjustments */
+    #home p {
+        font-size: 60px;
+    }
+
+    .gallery-photo {
+        width: 150px;
+    }
+
+    .timeline-item h4 {
+        font-size: 18px;
+    }
+
+    section {
+        padding: 50px 10px;
+    }
+
+    .center-image {
+        max-width: 300px;
+    }
+
+    .contact-icons img.icon {
+        width: 40px;
+        height: 40px;
+    }
+}

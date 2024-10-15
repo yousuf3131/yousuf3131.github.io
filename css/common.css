@@ -1,0 +1,65 @@
+/* General Styling */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'League Gothic', sans-serif;
+}
+
+/* Header/Nav Styling */
+header {
+    background-color: #f9f9f9;
+    padding: 20px 0; /* Adjusted padding for uniform spacing */
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px; /* Set max width to constrain the content */
+    margin: 0 auto; /* Center the nav container */
+    padding: 0 20px; /* Add some padding for responsiveness */
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+nav ul li {
+    margin-left: 20px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    font-size: 18px;
+    color: #000; /* Set the link color */
+}
+
+/* Logo Styling */
+.logo-link {
+    display: block;
+    flex-shrink: 0; /* Ensure the logo doesn’t shrink */
+}
+
+.logo {
+    max-width: 150px;
+    height: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul li {
+        margin: 10px 0;
+    }
+
+    .logo {
+        max-width: 100px; /* Adjust logo size for mobile */
+    }
+}

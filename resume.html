@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume - Yousuf Kazmi</title>
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
+    <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/footer.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="contact.html">Contact Me</a></li>
+                <li><a href="resume.html">Resume</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="resume">
+            <h2>My Resume</h2>
+            <!-- Embed the PDF with a taller height -->
+            <iframe src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728947030/Yousuf_Kazmi_Resume_frgfjz.pdf" width="100%" height="900px" style="border:none;"></iframe>
+        </section>
+    </main>
+
+    <script src="js/pageTransitions.js"></script>
+
+    <!-- Footer -->
+    <footer id="footer"></footer>
+
+    <!-- Link to JavaScript -->
+    <script>
+        // Dynamically include footer content
+        fetch('footer.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('footer').innerHTML = data);
+    </script>
+</body>
+</html>

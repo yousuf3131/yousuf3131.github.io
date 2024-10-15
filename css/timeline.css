@@ -1,0 +1,41 @@
+/* Timeline Styling */
+.timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.timeline-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #00e05d;
+    border-radius: 50%;
+    position: absolute;
+    left: -30px;
+}
+
+.timeline-content {
+    padding-left: 40px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item h4 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.timeline-item p {
+    margin: 5px 0;
+    font-size: 16px;
+}
