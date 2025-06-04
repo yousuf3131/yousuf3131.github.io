@@ -1,9 +1,14 @@
 /* Header and Navigation Styling */
 header {
-    position: absolute;
+    position: fixed;
     top: 0;
     right: 0;
     padding: 20px;
+    background-color: var(--background-color);
+    padding: 1rem 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    z-index: 1000;
 }
 
 nav ul {
@@ -11,12 +16,20 @@ nav ul {
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: flex-end;
-    max-width: 100%;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
 }
 
 nav ul li {
     margin-left: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    transition: color 0.3s;
 }
 
 nav ul li a {
@@ -36,6 +49,10 @@ nav ul li a[href="resume.html"]:hover {
 }
 
 /* Hover effect for all links */
+nav a:hover {
+    color: var(--accent-color);
+}
+
 nav ul li a:hover {
     color: #555;
 }

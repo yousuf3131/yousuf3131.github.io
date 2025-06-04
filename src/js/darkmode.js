@@ -1,4 +1,3 @@
-
 // Get the elements needed
 const toggleIcon = document.getElementById("toggle-dark-mode");
 const body = document.body;
@@ -16,6 +15,25 @@ toggleIcon.addEventListener('click', function() {
         toggleIcon.src = "assets/moon.png"; // Switch to moon icon
         homeImage.src = "assets/DeskMan.jpg"; // Switch back to light mode image
     }
+});
+
+function toggleDarkMode() {
+    const body = document.body;
+    const currentTheme = body.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    body.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Update toggle button icon
+    const toggleIcon = document.getElementById('theme-toggle-icon');
+    toggleIcon.src = newTheme === 'dark' ? 'assets/sun.png' : 'assets/moon.png';
+}
+
+// Set initial theme based on user preference
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', savedTheme);
 });
 
 

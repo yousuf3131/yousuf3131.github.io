@@ -85,5 +85,10 @@
     <!-- Link to external JavaScript files -->
     <script src="js/typeCodeAnimation.js"></script> <!-- Add this to include your new JS file -->
     <script src="js/expandMore.js"></script>
+    <script>
+        fetch('components/footer.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('footer').innerHTML = data);
+    </script>
 </body>
 </html>

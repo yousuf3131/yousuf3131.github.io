@@ -9,7 +9,7 @@ body {
 /* Home Section Specific Styling */
 #home {
     text-align: center;
-    padding-top: 120px;
+    padding-top: 80px;
 }
 
 #home p {
@@ -20,17 +20,18 @@ body {
 .center-image {
     display: block;
     margin: 20px auto;
-    max-width: 70%;
+    max-width: 300px;
     height: auto;
+    border-radius: 50%;
 }
 
 /* Code Container Styling */
 #code-container {
     margin-top: 30px;
     font-family: 'Courier New', Courier, monospace;
-    background-color: #f4f4f4;
+    background: #1e1e1e;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 8px;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
@@ -138,4 +139,15 @@ body {
     .contact-icons a {
         margin: 0 8px;
     }
+}
+
+/* Home Page Specific Styles */
+.home-page {
+    background-color: var(--background-color);
+}
+
+#code-display {
+    color: #fff;
+    text-align: left;
+    font-family: 'Courier New', monospace;
 }

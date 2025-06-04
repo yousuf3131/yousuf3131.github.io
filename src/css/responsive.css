@@ -7,7 +7,8 @@
 
     /* Navigation adjustments for mobile (horizontal layout) */
     nav ul {
-        flex-direction: row; /* Keep items in a row (horizontal) */
+        flex-direction: column; /* Stack items in a column */
+        gap: 1rem; /* Add gap between items */
         justify-content: center; /* Center the links */
         padding: 0;
     }
@@ -47,5 +48,37 @@
     .contact-icons img.icon {
         width: 40px;
         height: 40px;
+    }
+
+    .project-list {
+        grid-template-columns: 1fr; /* Stack project items in a single column */
+    }
+
+    .horizontal-timeline {
+        flex-direction: column; /* Stack timeline items in a column */
+        gap: 2rem; /* Add gap between items */
+    }
+
+    .timeline-arrow {
+        transform: rotate(90deg); /* Rotate arrow for vertical timeline */
+    }
+
+    #code-container {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .photo-gallery {
+        grid-template-columns: 1fr; /* Stack photo gallery items in a single column */
+    }
+}
+
+@media screen and (max-width: 480px) {
+    main {
+        padding: 1rem;
+    }
+
+    h1, h2 {
+        font-size: 24px;
     }
 }

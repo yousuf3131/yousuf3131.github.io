@@ -1,10 +1,24 @@
-/* General styling */
+/* Global styles */
+:root {
+    --primary-color: #333;
+    --secondary-color: #666;
+    --background-color: #fff;
+    --accent-color: #40bfa6;
+}
+
 body {
-    font-family: 'League Gothic', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: white;
+    font-family: 'League Gothic', sans-serif;
+    color: var(--primary-color);
+    background-color: var(--background-color);
     overflow-x: hidden; /* Prevents horizontal scroll */
+}
+
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 /* Section padding - shared across pages */
@@ -69,6 +83,28 @@ section {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     overflow: hidden;
+}
+
+/* Footer Styling */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: var(--secondary-color);
+    color: var(--background-color);
+    position: relative;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.theme-toggle button {
+    background: none;
+    border: none;
+    cursor: pointer;
 }
 
 /* Responsive adjustments */

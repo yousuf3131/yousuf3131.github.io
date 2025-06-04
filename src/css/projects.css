@@ -14,6 +14,10 @@
     max-width: 800px;
     margin: 0 auto;
     text-align: left;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 20px;
 }
 
 .project-item {
@@ -23,6 +27,17 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     position: relative;
+    transition: transform 0.3s;
+}
+
+.project-item:hover {
+    transform: translateY(-5px);
+}
+
+.aws-project img {
+    width: 100%;
+    border-radius: 4px;
+    margin-top: 15px;
 }
 
 /* Make the AWS image larger and centered below the text */
