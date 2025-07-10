@@ -1,0 +1,72 @@
+/* Footer Styling */
+footer {
+    background-color: var(--background-color);
+    padding: 2rem 0;
+    text-align: center;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Sticky Footer */
+body, html {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body takes full viewport height */
+}
+
+main {
+    flex-grow: 1; /* Allow main content to grow and take up remaining space */
+}
+
+/* Contact Icons */
+.contact-icons {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.contact-icons a {
+    margin: 0 15px;
+}
+
+/* Set base size for icons */
+.contact-icons img.icon {
+    width: 30px;
+    height: 30px;
+    transition: transform 0.3s;
+}
+
+/* For very large screens (like 3440x1440), cap the icon size */
+@media (min-width: 1600px) {
+    .contact-icons img.icon {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* For screens smaller than 1600px */
+@media (max-width: 1600px) {
+    .contact-icons img.icon {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+    .contact-icons img.icon {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Hover effect */
+.contact-icons img.icon:hover {
+    transform: scale(1.2);
+}

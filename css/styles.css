@@ -1,0 +1,110 @@
+/* Global styles */
+:root {
+    --primary-color: #333;
+    --secondary-color: #666;
+    --background-color: #fff;
+    --accent-color: #40bfa6;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] {
+    --primary-color: #fff;
+    --secondary-color: #ccc;
+    --background-color: #1a1a1a;
+    --text-color: #fff;
+    --border-color: #333;
+    --shadow-color: rgba(255,255,255,0.1);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'League Gothic', sans-serif;
+    color: var(--primary-color);
+    background-color: var(--background-color);
+    overflow-x: hidden; /* Prevents horizontal scroll */
+}
+
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Section padding - shared across pages */
+section {
+    padding: 100px 20px;
+}
+
+/* Decorative Borders */
+.left-border, .right-border {
+    position: fixed;
+    top: 0;
+    width: 10px;
+    height: 100%;
+    background-color: #00e05d;
+    z-index: -1;
+}
+
+.left-border {
+    left: 0;
+}
+
+.right-border {
+    right: 0;
+}
+
+/* Green dots animation */
+.green-dots {
+    color: #00e05d;
+    opacity: 0;
+    animation: fadeInOut 1.5s infinite;
+}
+
+.green-dots:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+.green-dots:nth-child(3) {
+    animation-delay: 1s;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+/* Resume Section Styling */
+#resume {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+#resume h2 {
+    font-size: 48px;
+    margin-bottom: 40px;
+    font-weight: bold;
+}
+
+/* PDF Container Styling */
+.pdf-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #resume h2 {
+        font-size: 32px;
+    }
+
+    .pdf-container {
+        width: 100%;
+    }
+}
