@@ -4,86 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YK Portfolio</title>
-    <!-- Link to Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
-    <!-- Link to your CSS file -->
-    <link rel="stylesheet" href="css/styles.css">
+    <!-- Google Fonts: Inter for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/home.css"> <!-- Only for home page -->
-    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/responsive.css">
     <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-04GNC61G4Z"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-04GNC61G4Z');
-  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-04GNC61G4Z"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-04GNC61G4Z');
+    </script>
 </head>
-<body class="home-page">
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="contact.html">Contact Me</a></li>
-                <li><a href="resume.html">Resume</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="home-page" style="position:relative; min-height:100vh;">
+    <!-- Floating Decorative Shapes -->
+    <div class="floating-shape green"></div>
+    <div class="floating-shape yellow"></div>
+    <div class="floating-shape purple"></div>
+
+    <div id="navbar"></div>
+    <script>
+        fetch('components/navbar.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar').innerHTML = data);
+    </script>
 
     <main>
-        <!-- Home Section -->
-        <section id="home">
-            <p>Frontend & Backend Developer<span class="green-dots">.</span><span class="green-dots">.</span><span class="green-dots">.</span></p>
-            
-            <!-- Logo Image -->
-            <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946616/DeskMan_uqrjey.jpg" alt="Desk Man Image" class="center-image">
-
-            <!-- Code Snippet Section -->
-            <div id="code-container">
-                <pre id="code-display"></pre> <!-- This is where the animated code snippet will appear -->
-            </div>
-        </section>
-
-        <!-- Arrow and "More about me" section -->
-        <div id="more-info-section">
-            <a href="javascript:void(0);" id="arrow" onclick="toggleInfo()">
-                <span id="arrow-icon">&#x25BC;</span>
-                <span id="arrow-text">More about me</span>
-            </a>
-        </div>
-
-        <!-- Hidden More Info Section -->
-        <section id="more-info" class="hidden-section">
-            <h3 id="countries-title">Countries I've Visited</h3>
-            
-            <!-- Embedded Map -->
-            <div style="max-width:980px;margin:5px auto 10px auto;font-size:14px;">
-                <div style="position:relative;padding: 0 0 67% 0;height:0;overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" 
-                        src="//www.fla-shop.com/visited-countries/embed/?st=AE%2CBH%2CCA%2CCH%2CDE%2CFR%2CGB%2CIT%2CJO%2CPK%2CQA%2CSA%2CTR%2CUS%2CVA&vc=ff9838&uc=b3c3ca&hc=40bfa6&bc=ffffff" 
-                        frameborder="0" scrolling="no">
-                    </iframe>
+        <!-- Modern Hero Section -->
+        <section id="hero" class="flex-between" style="min-height:80vh; align-items:center; position:relative; z-index:1;">
+            <!-- Left: Text -->
+            <div style="flex:1; min-width:320px; max-width:520px; padding:2rem 0 2rem 2rem;">
+                <div style="font-size:1.1rem; color:var(--secondary-color); margin-bottom:1.2rem; letter-spacing:0.5px;">HI THERE <span aria-label="wave" role="img">👋</span> I'M</div>
+                <h1 class="section-title" style="font-size:3.2rem; line-height:1.1; margin-bottom:0.5rem;">Yousuf<br>Kazmi</h1>
+                <div style="font-size:1.2rem; font-weight:700; color:var(--accent-color); margin-bottom:0.7rem; letter-spacing:0.5px;">
+                    FULL STACK DEVELOPER <span aria-label="laptop" role="img">💻</span>
                 </div>
+                <p style="color:var(--secondary-color); font-size:1.08rem; margin-bottom:2.2rem; max-width:400px;">
+                    I'm a passionate developer with a love for building seamless digital experiences. I specialize in both frontend and backend development, using modern web technologies to solve real-world problems.
+                </p>
+                <a href="mailto:yousufkazmi3131@gmail.com" class="button" style="font-size:1.15rem;">Hire Me</a>
             </div>
-
-            <!-- Travel Photo Gallery -->
-            <h3 id="gallery-title">Photo Gallery</h3>
-            <div class="photo-gallery">
-                <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946627/Timage1_veckls.jpg" alt="Travel Photo 1" class="gallery-photo">
-                <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946616/Timage4_asz4r7.jpg" alt="Travel Photo 2" class="gallery-photo">
-                <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946627/Timage3_s9v2sy.jpg" alt="Travel Photo 3" class="gallery-photo">
+            <!-- Right: Avatar -->
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; min-width:280px;">
+                <img src="assets/DeskMan.jpg" alt="Yousuf Kazmi Avatar" style="width:340px; height:340px; border-radius:50%; object-fit:cover; box-shadow:0 8px 32px rgba(0,0,0,0.18); background:#232427;">
             </div>
         </section>
-
+        <!-- (Optional) Add more sections below as needed -->
     </main>
 
-    <!-- Link to external JavaScript files -->
-    <script src="js/typeCodeAnimation.js"></script> <!-- Add this to include your new JS file -->
+    <!-- Footer (loaded via JS) -->
+    <div id="footer"></div>
+    <script src="js/typeCodeAnimation.js"></script>
     <script src="js/expandMore.js"></script>
     <script>
         fetch('components/footer.html')

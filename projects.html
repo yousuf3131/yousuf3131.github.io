@@ -4,73 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects - Yousuf Kazmi</title>
-    <!-- Link to Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
-    <!-- Link to your CSS file -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/projects.css"> <!-- Only for projects page -->
-    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/projects.css">
     <link rel="stylesheet" href="css/footer.css">
-<!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-04GNC61G4Z"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-04GNC61G4Z');
-  </script>
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="contact.html">Contact Me</a></li>
-                <li><a href="resume.html">Resume</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="projects-page" style="position:relative; min-height:100vh;">
+    <!-- Floating Decorative Shapes -->
+    <div class="floating-shape green"></div>
+    <div class="floating-shape yellow"></div>
+    <div class="floating-shape purple"></div>
+
+    <div id="navbar"></div>
+    <script>
+        fetch('components/navbar.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar').innerHTML = data);
+    </script>
 
     <main>
         <section id="projects">
-            <h2>My Projects</h2>
-            <div class="project-list">
-                <div class="project-item aws-project">
-                    <h3>AWSPractice.io</h3>
-                    <p>A quiz and flashcard tool for AWS Certified Practitioner exam prep, featuring over 500 questions. Built with .NET and React, and hosted on AWS for seamless, reliable performance.</p>
-                    <a href="https://awspractice.io" target="_blank">Visit Project</a>
-                    <img src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728946615/aws_bbx5qn.png" alt="AWS Project Image" class="aws-large-image">
+            <h1 class="section-title">My Projects</h1>
+            <div class="project-list" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:2.5rem; margin-top:2.5rem;">
+                <div class="project-item card">
+                    <img src="assets/aws.png" alt="AWSPractice.io" style="width:100%; height:160px; object-fit:cover; border-radius:var(--border-radius); margin-bottom:1rem;">
+                    <h3 style="margin:0 0 0.5rem 0;">AWSPractice.io</h3>
+                    <p style="color:var(--color-secondary);">A quiz and flashcard tool for AWS Certified Practitioner exam prep, featuring over 500 questions. Built with .NET and React, and hosted on AWS for seamless, reliable performance.</p>
+                    <a href="https://awspractice.io" target="_blank" class="button" style="margin-top:1rem; font-size:1rem;">Visit Project</a>
                 </div>
-                
-                
-                
-                
-
-                <div class="project-item">
-                    <h3>Current Work Support App</h3>
-                    <p>An internal tool created for faster ticket management and daily task automation, including text generators, database search, file search, and project tracking features.</p>
+                <div class="project-item card">
+                    <h3 style="margin:0 0 0.5rem 0;">Current Work Support App</h3>
+                    <p style="color:var(--color-secondary);">An internal tool created for faster ticket management and daily task automation, including text generators, database search, file search, and project tracking features.</p>
                 </div>
-
-                <div class="project-item">
-                    <h3>Word Ladder Game</h3>
-                    <p>A command-line word ladder game built in C++ with custom functions like `strCmpCnt`, `strCmpInd`, and more to manage and validate word ladders.</p>
+                <div class="project-item card">
+                    <h3 style="margin:0 0 0.5rem 0;">Word Ladder Game</h3>
+                    <p style="color:var(--color-secondary);">A command-line word ladder game built in C++ with custom functions like <code>strCmpCnt</code>, <code>strCmpInd</code>, and more to manage and validate word ladders.</p>
                 </div>
-
-                <!-- Add more project items as needed -->
+                <!-- Add more project cards as needed -->
             </div>
         </section>
     </main>
-    <!-- Footer -->
-    <footer id="footer"></footer>
 
-    <!-- Link to JavaScript -->
+    <!-- Footer (loaded via JS) -->
+    <div id="footer"></div>
     <script>
-        // Dynamically include footer content
-        fetch('footer.html')
+        fetch('components/footer.html')
             .then(response => response.text())
             .then(data => document.getElementById('footer').innerHTML = data);
     </script>

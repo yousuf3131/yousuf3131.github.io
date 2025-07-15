@@ -1,6 +1,6 @@
 /* General Styling */
+/* Remove body { font-family: ... } from this file. Use only in common.css. */
 body {
-    font-family: 'League Gothic', sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -29,13 +29,14 @@ body {
 #code-container {
     margin-top: 30px;
     font-family: 'Courier New', Courier, monospace;
-    background: #1e1e1e;
+    background: var(--color-surface);
     padding: 20px;
     border-radius: 8px;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: var(--color-primary);
 }
 
 /* Adjust image size specifically for larger screens (desktops) */
@@ -55,14 +56,14 @@ body {
 }
 
 #arrow {
-    color: #00e05d;
+    color: var(--color-accent);
     font-size: 24px;
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 #arrow:hover {
-    color: #00cc4b;
+    color: var(--color-accent-alt);
 }
 
 /* Hidden More Info Section */
@@ -85,7 +86,7 @@ body {
     width: 300px;
     height: auto;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--color-shadow);
     transition: transform 0.3s ease;
 }
 
@@ -142,8 +143,9 @@ body {
 }
 
 /* Home Page Specific Styles */
-.home-page {
-    background-color: var(--background-color);
+body, .home-page {
+    background: linear-gradient(135deg, var(--color-background) 0%, var(--color-surface) 100%);
+    color: var(--color-primary);
 }
 
 #code-display {

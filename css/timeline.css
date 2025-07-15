@@ -11,6 +11,10 @@
     align-items: center;
     margin-bottom: 20px;
     position: relative;
+    background: var(--color-background);
+    color: var(--color-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--color-shadow);
 }
 
 .timeline-icon {

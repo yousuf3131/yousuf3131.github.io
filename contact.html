@@ -4,48 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact - Yousuf Kazmi</title>
-    <!-- Link to Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
-    <!-- Link to your CSS file -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/contact.css"> <!-- Only for contact page -->
+    <link rel="stylesheet" href="css/contact.css">
+    <link rel="stylesheet" href="css/footer.css">
     <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="contact.html">Contact</a></li>
-                <li><a href="resume.html">Resume</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="contact-page" style="position:relative; min-height:100vh;">
+    <!-- Floating Decorative Shapes -->
+    <div class="floating-shape green"></div>
+    <div class="floating-shape yellow"></div>
+    <div class="floating-shape purple"></div>
+
+    <div id="navbar"></div>
+    <script>
+        fetch('components/navbar.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar').innerHTML = data);
+    </script>
 
     <main>
-        <section id="contact-form">
-            <h2>Contact Me</h2>
-            <!-- Formspree Form -->
-            <form action="https://formspree.io/f/xovqqlqp" method="POST">
-                <div class="form-group">
-                    <label for="email">Your Email:</label>
-                    <input type="email" id="email" name="email" required>
+        <section id="contact-form" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70vh;">
+            <h1 class="section-title">Contact Me</h1>
+            <form action="https://formspree.io/f/xovqqlqp" method="POST" class="card" style="max-width:420px; width:100%; padding:2.5rem 2rem; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label for="email" style="display:block; margin-bottom:0.5rem; color:var(--color-secondary);">Your Email:</label>
+                    <input type="email" id="email" name="email" required style="width:100%; padding:0.8em; border-radius:var(--border-radius); border:none; background:var(--color-background); color:var(--color-primary); font-size:1rem;">
                 </div>
-
-                <div class="form-group">
-                    <label for="message">Your Message:</label>
-                    <textarea id="message" name="message" rows="5" required></textarea>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label for="message" style="display:block; margin-bottom:0.5rem; color:var(--color-secondary);">Your Message:</label>
+                    <textarea id="message" name="message" rows="5" required style="width:100%; padding:0.8em; border-radius:var(--border-radius); border:none; background:var(--color-background); color:var(--color-primary); font-size:1rem;"></textarea>
                 </div>
-
-                <button type="submit">Send Message</button>
+                <button type="submit" class="button" style="width:100%; font-size:1.1rem;">Send Message</button>
             </form>
+            <div class="flex-center" style="gap:1.5rem; margin-top:2.5rem;">
+                <a href="https://github.com/yousuf3131" target="_blank" aria-label="GitHub">
+                    <img src="assets/github.png" alt="GitHub" style="width:36px; height:36px;">
+                </a>
+                <a href="mailto:yousufkazmi3131@gmail.com" target="_blank" aria-label="Email">
+                    <img src="assets/mail.png" alt="Email" style="width:36px; height:36px;">
+                </a>
+                <a href="https://www.linkedin.com/in/yousufkazmi/" target="_blank" aria-label="LinkedIn">
+                    <img src="assets/linki.png" alt="LinkedIn" style="width:36px; height:36px;">
+                </a>
+            </div>
         </section>
     </main>
 
-    <!-- Link to JavaScript for form validation or other functionality -->
-    <script src="js/contact.js"></script>
+    <!-- Footer (loaded via JS) -->
+    <div id="footer"></div>
+    <script>
+        fetch('components/footer.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('footer').innerHTML = data);
+    </script>
 </body>
 </html>

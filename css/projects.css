@@ -84,3 +84,22 @@
         max-width: 100%;
     }
 }
+
+body, .projects-page {
+    background: linear-gradient(135deg, var(--color-background) 0%, var(--color-surface) 100%);
+    color: var(--color-primary);
+}
+
+.project-item, .project-list {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--color-shadow);
+}
+
+a, a:visited {
+    color: var(--color-accent);
+}
+a:hover {
+    color: var(--color-accent-alt);
+}

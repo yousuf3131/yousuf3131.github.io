@@ -4,52 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume - Yousuf Kazmi</title>
-    <!-- Link to Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet">
-    <!-- Link to your CSS file -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/header.css">
     <link rel="stylesheet" href="css/footer.css">
-    <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-04GNC61G4Z"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-04GNC61G4Z');
-  </script>
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="contact.html">Contact Me</a></li>
-                <li><a href="resume.html">Resume</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="resume-page" style="position:relative; min-height:100vh;">
+    <!-- Floating Decorative Shapes -->
+    <div class="floating-shape green"></div>
+    <div class="floating-shape yellow"></div>
+    <div class="floating-shape purple"></div>
+
+    <div id="navbar"></div>
+    <script>
+        fetch('components/navbar.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar').innerHTML = data);
+    </script>
 
     <main>
-        <section id="resume">
-            <h2>My Resume</h2>
-            <!-- Embed the PDF with a taller height -->
-            <iframe src="https://res.cloudinary.com/dwkaho4o5/image/upload/v1728947030/Yousuf_Kazmi_Resume_frgfjz.pdf" width="100%" height="900px" style="border:none;"></iframe>
+        <section id="resume" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70vh;">
+            <h1 class="section-title">My Resume</h1>
+            <div class="card" style="max-width:900px; width:100%; margin:2rem 0; padding:0; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+                <iframe src="assets/Yousuf_Kazmi_Resume.pdf" width="100%" height="700px" style="border:none; border-radius:var(--border-radius); background:var(--color-surface);"></iframe>
+            </div>
+            <a href="assets/Yousuf_Kazmi_Resume.pdf" download class="button" style="font-size:1.1rem;">Download PDF</a>
         </section>
     </main>
 
-    <script src="js/pageTransitions.js"></script>
-
-    <!-- Footer -->
-    <footer id="footer"></footer>
-
-    <!-- Link to JavaScript -->
+    <!-- Footer (loaded via JS) -->
+    <div id="footer"></div>
     <script>
-        // Dynamically include footer content
-        fetch('footer.html')
+        fetch('components/footer.html')
             .then(response => response.text())
             .then(data => document.getElementById('footer').innerHTML = data);
     </script>

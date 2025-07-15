@@ -104,3 +104,15 @@
         width: 90%; /* Make items full-width on mobile */
     }
 }
+
+#about-me, #experience-section {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border-radius: var(--border-radius);
+}
+
+.timeline-item {
+    background: var(--color-background);
+    color: var(--color-primary);
+    box-shadow: var(--color-shadow);
+}

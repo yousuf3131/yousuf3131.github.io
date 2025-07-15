@@ -1,14 +1,19 @@
 /* Header and Navigation Styling */
 header {
-    position: fixed;
-    top: 0;
-    right: 0;
-    padding: 20px;
-    background-color: var(--background-color);
-    padding: 1rem 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: static;
     width: 100%;
+    background-color: var(--color-background);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     z-index: 1000;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 80px;
+    padding: 0 3vw;
+    width: 100%;
 }
 
 nav ul {
@@ -25,18 +30,12 @@ nav ul li {
     margin-left: 20px;
 }
 
-nav a {
+nav a, nav ul li a {
     text-decoration: none;
-    color: var(--primary-color);
-    font-size: 1.2rem;
+    color: var(--color-primary) !important;
+    font-size: 1.1rem;
     transition: color 0.3s;
-}
-
-nav ul li a {
-    text-decoration: none;
-    color: black;
-    font-size: 35px;
-    transition: color 0.3s ease;
+    font-weight: 500;
 }
 
 /* Resume link specific color */
@@ -49,10 +48,29 @@ nav ul li a[href="resume.html"]:hover {
 }
 
 /* Hover effect for all links */
-nav a:hover {
-    color: var(--accent-color);
+nav a:hover, nav ul li a:hover, nav ul li a.active {
+    color: var(--color-accent) !important;
 }
 
-nav ul li a:hover {
-    color: #555;
+.nav-cta .button {
+    margin-left: 1.5rem;
+}
+
+.navbar-logo {
+    height: 400px;
+    max-width: 900px;
+    width: auto;
+}
+
+.nav-logo {
+    padding-left: 1vw;
+}
+
+.case-studies-btn {
+    color: #fff !important;
+    background: var(--color-accent) !important;
+}
+.case-studies-btn:hover {
+    background: var(--color-accent-alt) !important;
+    color: #fff !important;
 }

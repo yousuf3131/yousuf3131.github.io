@@ -1,10 +1,6 @@
 /* Global styles */
 :root {
-    --primary-color: #333;
-    --secondary-color: #666;
-    --background-color: #fff;
-    --accent-color: #40bfa6;
-    --text-color: #333;
+    /* Remove duplicate or hardcoded color variables, use only those from common.css */
     --border-color: #e0e0e0;
     --shadow-color: rgba(0,0,0,0.1);
     transition: all 0.3s ease;
@@ -23,8 +19,8 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'League Gothic', sans-serif;
-    color: var(--primary-color);
-    background-color: var(--background-color);
+    color: var(--color-primary);
+    background-color: var(--color-background);
     overflow-x: hidden; /* Prevents horizontal scroll */
 }
 
@@ -45,7 +41,7 @@ section {
     top: 0;
     width: 10px;
     height: 100%;
-    background-color: #00e05d;
+    background-color: var(--color-success);
     z-index: -1;
 }
 
@@ -59,7 +55,7 @@ section {
 
 /* Green dots animation */
 .green-dots {
-    color: #00e05d;
+    color: var(--color-success);
     opacity: 0;
     animation: fadeInOut 1.5s infinite;
 }
@@ -87,21 +83,28 @@ section {
     font-size: 48px;
     margin-bottom: 40px;
     font-weight: bold;
+    color: var(--color-primary);
 }
 
 /* PDF Container Styling */
 .pdf-container {
     max-width: 1200px;
     margin: 0 auto;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    box-shadow: var(--color-shadow);
+    border-radius: var(--border-radius);
     overflow: hidden;
+}
+
+footer {
+    background-color: var(--color-surface);
+    color: var(--color-primary);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     #resume h2 {
         font-size: 32px;
+        color: var(--color-primary);
     }
 
     .pdf-container {

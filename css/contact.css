@@ -1,9 +1,17 @@
 /* Contact Page Specific Styling */
+body, .contact-page {
+    background: linear-gradient(135deg, var(--color-background) 0%, var(--color-surface) 100%);
+    color: var(--color-primary);
+}
+
 #contact-form {
     max-width: 600px;
     margin: 80px auto;
     padding: 20px;
-    background-color: #f9f9f9;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--color-shadow);
     text-align: center;
 }
 
@@ -37,10 +45,9 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-button[type="submit"],
-button {
-    background-color: var(--accent-color);
-    color: white;
+button, input[type="submit"] {
+    background: var(--color-accent);
+    color: var(--color-background);
     padding: 10px 20px;
     font-size: 18px;
     border: none;
@@ -50,8 +57,9 @@ button {
     margin-top: 20px;
 }
 
-button[type="submit"]:hover {
-    background-color: #00cc4b;
+button:hover, input[type="submit"]:hover {
+    background: var(--color-accent-alt);
+    color: #fff;
 }
 
 /* Responsive adjustments for smaller screens */
