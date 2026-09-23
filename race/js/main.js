@@ -4,11 +4,11 @@
 // Every browser simulates its own vehicle and shares where it is; the host runs the lobby,
 // the vote, the bots and the results, and relays everyone's positions to everyone else.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js';
-import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js';
-import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget } from './vehicles.js';
-import { sfx, engine, unlockAudio, setMuted, isMuted } from './audio.js';
-import { tiltAmount, tiltToSteer } from './tilt.js';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
+import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=3';
+import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget } from './vehicles.js?v=3';
+import { sfx, engine, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
+import { tiltAmount, tiltToSteer } from './tilt.js?v=3';
 
 // ============================================================
 // Constants and helpers
@@ -250,7 +250,7 @@ async function joinRoom() {
     setStatus('menu-status', 'Connected. Loading the garage...');
     // If the host never answers (e.g. they closed the room), don't leave the player hanging
     setTimeout(() => {
-        if (net === cn && view === 'menu') leave("Couldn't reach the host. Check they still have the room open.");
+        if (net === cn && view === 'menu') leave("The host didn't answer. Ask them to refresh the page (Ctrl+Shift+R), create a new room and send you the new code.");
     }, 15000);
 }
 
