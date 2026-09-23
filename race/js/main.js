@@ -1019,6 +1019,7 @@ function updateRace(dt) {
 function updateCamera(dt) {
     const target = me || racers.values().next().value;
     if (!target) return;
+    if (camera.view && camera.view.enabled) camera.clearViewOffset();
     camH = lerpAngle(camH, target.h, 1 - Math.exp(-4 * dt));
     const back = target.cfg.kind === 'bike' ? 8 : 9;
     camPos.lerp(new THREE.Vector3(target.x - Math.cos(camH) * back, 3.7, target.z - Math.sin(camH) * back), 1 - Math.exp(-8 * dt));
@@ -1257,10 +1258,17 @@ $('touch-attack').addEventListener('pointerdown', e => {
 // ============================================================
 // Main loop
 // ============================================================
+const compactLayout = () => innerWidth <= 1000 || innerHeight <= 560;
+
 function updateGarage(dt) {
-    camera.position.set(0, 2.3, 8.6);
+    const compact = view === 'lobby' && compactLayout();
+    camera.position.set(0, 2.3, compact ? 12 : 8.6);
     camera.lookAt(0, 0.95, 0);
     if (camera.fov !== 36) { camera.fov = 36; camera.updateProjectionMatrix(); }
+    // On phones the lobby stacks vertically with the car in the top band, so shift the render up
+    const lift = compact ? Math.max(0, innerHeight / 2 - (70 + innerHeight * 0.22)) : 0;
+    if (lift) camera.setViewOffset(innerWidth, innerHeight, 0, lift, innerWidth, innerHeight);
+    else if (camera.view && camera.view.enabled) camera.clearViewOffset();
     sun.position.set(-8, 16, 10);
     sun.target.position.set(0, 0, 0);
     if (!showcase) updateShowcase();

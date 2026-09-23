@@ -155,11 +155,58 @@ body:not(.is-host) .host-only { display: none !important; }
 .bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #8ff0cf); border-radius: 99px; }
 .lobby-actions { display: grid; gap: 8px; margin-top: auto; }
-@media (max-width: 1000px) {
-    .lobby { grid-template-columns: 1fr; grid-template-rows: auto 36vh auto; overflow: auto; pointer-events: auto; padding-top: 60px; }
-    .showcase { grid-row: 2; }
-    .lobby-side { grid-row: 1; }
-    .garage { grid-row: 3; }
+/* Phones and small screens: one scrolling column, the car on top, the main button pinned to the bottom */
+@media (max-width: 1000px), (max-height: 560px) {
+    .lobby {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        pointer-events: auto;
+        padding: 56px 12px 110px;
+    }
+    .showcase { order: 1; flex: 0 0 auto; min-height: 38vh; display: flex; flex-direction: column; justify-content: flex-end; align-self: stretch; padding-bottom: 4px; }
+    .showcase .display { font-size: 1.5rem; }
+    .showcase p { font-size: 0.85rem; max-width: 300px; }
+    .attack-chip { margin-top: 6px; font-size: 0.78rem; align-self: center; }
+    .lobby-side { order: 2; overflow: visible; flex: 0 0 auto; }
+    /* No backdrop blur here: it would trap the pinned action bar inside this panel */
+    .garage { order: 3; overflow: visible; flex: 0 0 auto; -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(14, 20, 18, 0.92); }
+    .room-box { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; padding: 10px 12px; }
+    .room-box small { display: block; }
+    .room-code { font-size: 1.5rem; margin: 0; }
+    .players { grid-template-columns: 1fr 1fr; }
+    .player.empty { display: none; }
+    .player { min-height: 0; padding: 7px 8px; font-size: 0.82rem; gap: 8px; }
+    .player .badge { display: none; }
+    .player.me .badge, .player .badge.ok { display: inline-block; }
+    .vehicle-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .lobby-actions {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        z-index: 15;
+        background: rgba(14, 20, 18, 0.94);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 10px;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+    }
+    .lobby-actions .status { font-size: 0.78rem; text-align: center; }
+}
+
+/* Short landscape phones: shrink the race HUD */
+@media (max-height: 500px) {
+    #hud .hud-tl { top: 8px; left: 10px; gap: 5px; }
+    #hud .pos { font-size: 2.2rem; }
+    #hud .pos sup { font-size: 0.9rem; }
+    #hud .chip { font-size: 0.75rem; padding: 4px 8px; }
+    #hud #minimap { width: 110px; height: 110px; top: 8px; right: 10px; }
+    #hud #speedo { font-size: 1.8rem; bottom: 10px; right: 14px; }
+    #hud #touch-attack { width: 76px; height: 76px; bottom: 70px; }
+    #hud #center-msg { top: 22%; }
+    .corner { top: 8px; }
 }
 
 /* ---------- Vote ---------- */
