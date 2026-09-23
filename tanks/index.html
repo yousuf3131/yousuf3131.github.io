@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tanks - Yousuf Kazmi</title>
     <meta name="description" content="A 3D tank battle campaign that runs in your browser. Built by Yousuf Kazmi with three.js.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -26,8 +26,75 @@
             -webkit-user-select: none;
             user-select: none;
         }
-        canvas { display: block; width: 100vw; height: 100vh; }
+        canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
         body.playing canvas { cursor: none; }
+
+        /* Touch controls: a floating joystick that appears under your finger */
+        #joy {
+            position: fixed;
+            width: 130px;
+            height: 130px;
+            margin: -65px 0 0 -65px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            display: none;
+            z-index: 5;
+        }
+        #joy.on { display: block; }
+        #joy-knob {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 58px;
+            height: 58px;
+            margin: -29px 0 0 -29px;
+            border-radius: 50%;
+            background: rgba(46, 196, 149, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+        #touch-actions {
+            position: fixed;
+            right: max(18px, env(safe-area-inset-right));
+            bottom: max(18px, env(safe-area-inset-bottom));
+            display: none;
+            z-index: 6;
+        }
+        body.touch.playing #touch-actions { display: flex; }
+        .touch-btn {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.45);
+            border: 2px solid rgba(242, 193, 78, 0.7);
+            color: #f2c14e;
+            font: 800 0.78rem 'Inter', sans-serif;
+            letter-spacing: 0.05em;
+            touch-action: none;
+        }
+        .touch-btn:active { background: rgba(242, 193, 78, 0.25); }
+        #rotate-hint {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            display: none;
+            background: rgba(0, 0, 0, 0.55);
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            border-radius: 999px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        @media (orientation: portrait) {
+            body.touch #rotate-hint { display: block; }
+            body.touch.playing #touch-actions { bottom: 64px; }
+        }
 
         /* HUD */
         #hud {
@@ -217,6 +284,9 @@
             <span class="stat">Enemies<b id="enemies">0</b></span>
         </div>
         <div class="hud-right">
+            <button class="hud-btn" id="pause-btn" type="button" aria-label="Pause">
+                <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            </button>
             <button class="hud-btn" id="mute" type="button" aria-label="Toggle sound">
                 <svg id="icon-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
                 <svg id="icon-muted" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
@@ -224,6 +294,10 @@
             <a class="hud-btn" href="../projects.html">Exit</a>
         </div>
     </div>
+
+    <div id="joy"><div id="joy-knob"></div></div>
+    <div id="touch-actions"><button class="touch-btn" id="mine-btn" type="button">MINE</button></div>
+    <div id="rotate-hint">Turn your phone sideways for a bigger arena</div>
 
     <div id="banner" class="hidden">
         <div class="kick" id="banner-kick"></div>
@@ -252,7 +326,7 @@
             </div>
             <button class="primary" id="play" type="button">Start campaign</button>
             <div class="best" id="best"></div>
-            <div class="note">Best played with a keyboard and mouse.</div>
+            <div class="note" id="menu-note">On a phone: drag anywhere to drive, tap to shoot.</div>
         </div>
     </div>
 
@@ -1233,9 +1307,16 @@ function updatePlayer(dt) {
     if (!p.alive) return;
     const cfg = p.cfg;
 
-    // Screen-relative driving: W is always "up" on screen
-    const ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-    const iz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+    // Screen-relative driving: W (or joystick up) is always "up" on screen
+    let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+    let iz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+    let throttle = 1;
+    const joyMag = Math.hypot(joy.x, joy.y);
+    if (joy.id !== null && joyMag > 0.18) {
+        ix = joy.x;
+        iz = joy.y;
+        throttle = Math.min(1, joyMag);
+    }
     const ox = p.x, oz = p.z;
     if (ix || iz) {
         const want = Math.atan2(iz, ix);
@@ -1245,18 +1326,27 @@ function updatePlayer(dt) {
         const d = p.reverse ? dR : dF;
         const turn = clamp(d, -cfg.turn * dt, cfg.turn * dt);
         p.body += turn;
-        const f = Math.max(0, Math.cos(d - turn)) ** 3;
+        const f = Math.max(0, Math.cos(d - turn)) ** 3 * throttle;
         const dir = p.reverse ? -1 : 1;
         moveTank(p, Math.cos(p.body) * cfg.speed * f * dir * dt, Math.sin(p.body) * cfg.speed * f * dir * dt);
     }
     p.vx = (p.x - ox) / dt;
     p.vz = (p.z - oz) / dt;
 
-    raycaster.setFromCamera(mouse.ndc, camera);
-    if (raycaster.ray.intersectPlane(aimPlane, tmpV)) aimPoint.copy(tmpV);
-    p.turret_a = Math.atan2(aimPoint.z - p.z, aimPoint.x - p.x);
+    if (mouse.has) {
+        raycaster.setFromCamera(mouse.ndc, camera);
+        if (raycaster.ray.intersectPlane(aimPlane, tmpV)) aimPoint.copy(tmpV);
+        p.turret_a = Math.atan2(aimPoint.z - p.z, aimPoint.x - p.x);
+    } else {
+        // Nothing aimed yet (e.g. a phone before the first tap): face where we're driving
+        p.turret_a = p.body + (p.reverse ? Math.PI : 0);
+    }
 
     if (mouse.down) fire(p);
+    // A tap on touch screens queues one shot at the tapped spot
+    if (tapShotT > 0) {
+        tapShotT = fire(p) ? 0 : tapShotT - dt;
+    }
 }
 
 // ============================================================
@@ -1561,6 +1651,8 @@ addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => {
     for (const k in keys) keys[k] = false;
     mouse.down = false;
+    touches.clear();
+    resetJoy();
     setPaused(true);
 });
 function setMouse(e) {
@@ -1568,15 +1660,88 @@ function setMouse(e) {
     mouse.ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     mouse.has = true;
 }
-canvas.addEventListener('pointermove', setMouse);
+canvas.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') setMouse(e); });
 canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') return;
     setMouse(e);
     if (e.button === 2) {
         if (state === 'play' && player.alive) layMine(player);
     } else mouse.down = true;
 });
-addEventListener('pointerup', e => { if (e.button !== 2) mouse.down = false; });
+addEventListener('pointerup', e => { if (e.pointerType !== 'touch' && e.button !== 2) mouse.down = false; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// ---------- Touch: floating joystick + tap to shoot ----------
+// The first finger down becomes a joystick centred where it landed.
+// Any quick tap (with that finger or a second one) fires at the tapped spot.
+const JOY_R = 55;
+const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
+const touches = new Map();
+let tapShotT = 0;
+const joyEl = $('joy'), knobEl = $('joy-knob');
+
+function useTouchUi() {
+    document.body.classList.add('touch');
+}
+if (window.matchMedia && matchMedia('(pointer: coarse)').matches) useTouchUi();
+
+function resetJoy() {
+    joy.id = null;
+    joy.x = joy.y = 0;
+    joyEl.classList.remove('on');
+    knobEl.style.transform = '';
+}
+
+canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    useTouchUi();
+    e.preventDefault();
+    audio();
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 });
+    if (joy.id === null) {
+        joy.id = e.pointerId;
+        joy.ox = e.clientX;
+        joy.oy = e.clientY;
+        joyEl.style.left = `${joy.ox}px`;
+        joyEl.style.top = `${joy.oy}px`;
+    }
+});
+canvas.addEventListener('pointermove', e => {
+    const t = touches.get(e.pointerId);
+    if (!t) return;
+    t.moved = Math.max(t.moved, Math.hypot(e.clientX - t.x, e.clientY - t.y));
+    if (e.pointerId !== joy.id) return;
+    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
+    const len = Math.hypot(dx, dy);
+    if (len > JOY_R) { dx *= JOY_R / len; dy *= JOY_R / len; }
+    joy.x = dx / JOY_R;
+    joy.y = dy / JOY_R;
+    knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+    // Only show the joystick once the finger actually drags, so taps don't flash it
+    if (t.moved > 8) joyEl.classList.add('on');
+});
+function endTouch(e) {
+    const t = touches.get(e.pointerId);
+    if (!t) return;
+    touches.delete(e.pointerId);
+    const quick = performance.now() - t.t < 260 && t.moved < 14;
+    if (quick && e.type === 'pointerup' && state === 'play') {
+        setMouse(e);
+        tapShotT = 0.35;
+    }
+    if (e.pointerId === joy.id) resetJoy();
+}
+canvas.addEventListener('pointerup', endTouch);
+canvas.addEventListener('pointercancel', endTouch);
+
+$('mine-btn').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state === 'play' && player.alive) layMine(player);
+});
+$('pause-btn').addEventListener('click', e => {
+    setPaused(state !== 'paused');
+    e.currentTarget.blur();
+});
 
 $('play').addEventListener('click', () => startCampaign(0));
 $('resume').addEventListener('click', () => setPaused(false));
@@ -1636,7 +1801,7 @@ function frame(now) {
                 if (!circleBlocked(b.x + nx, b.z + nz, TANK_R)) { b.x += nx; b.z += nz; }
             }
         }
-    } else if (state === 'intro' && player && player.alive) {
+    } else if (state === 'intro' && player && player.alive && mouse.has) {
         // Let the player aim while the mission card is up
         raycaster.setFromCamera(mouse.ndc, camera);
         if (raycaster.ray.intersectPlane(aimPlane, tmpV)) aimPoint.copy(tmpV);
