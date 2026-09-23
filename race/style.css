@@ -155,6 +155,17 @@ body:not(.is-host) .host-only { display: none !important; }
 .bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #8ff0cf); border-radius: 99px; }
 .lobby-actions { display: grid; gap: 8px; margin-top: auto; }
+.touch-only { display: none !important; }
+body.touch .touch-only { display: inline-flex !important; }
+.toggle { align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); cursor: pointer; }
+.toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.toggle b { display: block; font-size: 0.95rem; }
+.toggle small { color: var(--muted); font-size: 0.78rem; }
+.switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; border-radius: 99px; background: rgba(255, 255, 255, 0.15); transition: background-color 0.2s; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+.toggle input:checked + .switch { background: var(--accent); }
+.toggle input:checked + .switch::after { transform: translateX(18px); }
+.corner #btn-tilt.on { border-color: var(--accent); color: var(--accent); }
 /* Phones and small screens: one scrolling column, the car on top, the main button pinned to the bottom */
 @media (max-width: 1000px), (max-height: 560px) {
     .lobby {

@@ -8,6 +8,7 @@ import { HostNet, ClientNet, makeCode } from './net.js';
 import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js';
 import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget } from './vehicles.js';
 import { sfx, engine, unlockAudio, setMuted, isMuted } from './audio.js';
+import { tiltAmount, tiltToSteer } from './tilt.js';
 
 // ============================================================
 // Constants and helpers
@@ -229,7 +230,10 @@ async function joinRoom() {
     setStatus('menu-status', `Joining room ${code}...`);
     const cn = new ClientNet({
         onMessage: clientHandle,
-        onClose: () => { if (net === cn) leave('The host closed the room.'); },
+        onClose: () => { if (net === cn) leave('Lost connection to the host. The room may have closed.'); },
+        onStatus: text => setStatus('menu-status', text),
+        // ?net=relay skips the direct attempt; handy when a network is known to block it
+        forceRelay: new URLSearchParams(location.search).get('net') === 'relay',
     });
     try {
         myId = await cn.connect(code);
@@ -244,6 +248,10 @@ async function joinRoom() {
     roomCode = code;
     act({ t: 'hello', name: myName, vehicle: myVehicle });
     setStatus('menu-status', 'Connected. Loading the garage...');
+    // If the host never answers (e.g. they closed the room), don't leave the player hanging
+    setTimeout(() => {
+        if (net === cn && view === 'menu') leave("Couldn't reach the host. Check they still have the room open.");
+    }, 15000);
 }
 
 function startSolo() {
@@ -797,6 +805,7 @@ function playerInput() {
         // Phones: always accelerate, steer with the joystick, pull it down to brake
         throttle = joy.id !== null && joy.y > 0.5 ? -1 : 1;
         if (joy.id !== null) steer = clamp(joy.x * 1.4, -1, 1);
+        else if (tilt.on && tilt.got) steer = tiltToSteer(tilt.amount, tilt.zero);
     }
     return { steer, throttle };
 }
@@ -977,6 +986,7 @@ function updateRace(dt) {
         lastCount = 0;
         centerMsg('GO!', null, 'go', 1);
         sfx.go();
+        recenterTilt(); // however you're holding the phone at GO counts as straight ahead
     }
     const racing = raceClock >= 0;
     const list = [...racers.values()];
@@ -1255,6 +1265,77 @@ $('touch-attack').addEventListener('pointerdown', e => {
     wantAttack = true;
 });
 
+// Tilt steering (optional, phones only)
+const tilt = { on: store.get('bonkTilt') === '1', amount: 0, zero: 0, got: false, needsPermission: false };
+const needsMotionPermission = () => typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+function screenAngle() {
+    if (screen.orientation && typeof screen.orientation.angle === 'number') return screen.orientation.angle;
+    return typeof window.orientation === 'number' ? window.orientation : 0;
+}
+function onOrient(e) {
+    if (e.beta == null || e.gamma == null) return;
+    tilt.amount = tiltAmount(e.beta, e.gamma, screenAngle());
+    tilt.got = true;
+}
+function recenterTilt() {
+    if (tilt.on && tilt.got) tilt.zero = clamp(tilt.amount, -0.3, 0.3);
+}
+function syncTiltUi() {
+    $('tilt-toggle').checked = tilt.on;
+    $('btn-tilt').textContent = tilt.on ? 'Tilt on' : 'Tilt off';
+    $('btn-tilt').classList.toggle('on', tilt.on);
+}
+// Must be called from a tap: iPhones only allow asking for motion access in response to one
+async function setTilt(on) {
+    if (on) {
+        if (typeof DeviceOrientationEvent === 'undefined') {
+            toast("This device doesn't support tilt steering.");
+            on = false;
+        } else if (needsMotionPermission()) {
+            try {
+                if (await DeviceOrientationEvent.requestPermission() !== 'granted') {
+                    toast('Motion access was denied, so tilt steering is off.');
+                    on = false;
+                }
+            } catch (e) {
+                toast('Could not turn on tilt steering.');
+                on = false;
+            }
+        }
+    }
+    tilt.on = on;
+    tilt.needsPermission = false;
+    store.set('bonkTilt', on ? '1' : '0');
+    removeEventListener('deviceorientation', onOrient);
+    if (on) {
+        tilt.got = false;
+        addEventListener('deviceorientation', onOrient);
+        setTimeout(() => {
+            if (!tilt.on) return;
+            if (!tilt.got) {
+                toast('No motion sensor found, so tilt steering is off.');
+                setTilt(false);
+            } else {
+                recenterTilt();
+            }
+        }, 3000);
+        toast('Tilt steering on. Turn your phone like a wheel.');
+    }
+    syncTiltUi();
+}
+$('tilt-toggle').addEventListener('change', e => setTilt(e.target.checked));
+$('btn-tilt').addEventListener('click', e => { setTilt(!tilt.on); e.currentTarget.blur(); });
+// Remembered from last time: re-attach, asking iPhones for permission on the first tap
+if (tilt.on) {
+    if (needsMotionPermission()) {
+        tilt.needsPermission = true;
+        addEventListener('pointerdown', () => { if (tilt.on && tilt.needsPermission) setTilt(true); }, { once: true });
+    } else {
+        addEventListener('deviceorientation', onOrient);
+    }
+}
+syncTiltUi();
+
 // ============================================================
 // Main loop
 // ============================================================
@@ -1301,6 +1382,9 @@ function frame(now) {
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
 }
+
+// Read-only peek at your own racer for automated tests; only exists with #debug in the URL
+if (location.hash === '#debug') window.bonkDebug = () => (me ? { steer: me.steer, speed: me.speed, h: me.h, tilt: { ...tilt } } : null);
 
 show('menu');
 updateShowcase();

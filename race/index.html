@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
     <script type="importmap">
         {
             "imports": {
@@ -28,6 +29,7 @@
             <svg id="icon-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
             <svg id="icon-muted" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
         </button>
+        <button class="btn touch-only" id="btn-tilt" type="button">Tilt off</button>
         <button class="btn" id="btn-exit" type="button">Exit</button>
     </div>
 
@@ -78,6 +80,11 @@
                 <button type="button" data-kind="bike">Bikes</button>
             </div>
             <div class="vehicle-grid" id="vehicles"></div>
+            <label class="toggle touch-only">
+                <input type="checkbox" id="tilt-toggle">
+                <span class="switch"></span>
+                <span><b>Tilt to steer</b><small>Turn your phone like a steering wheel</small></span>
+            </label>
             <div class="lobby-actions">
                 <button class="btn primary big client-only" id="btn-ready" type="button">Ready up</button>
                 <button class="btn primary big host-only" id="btn-start" type="button">Start race</button>
