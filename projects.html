@@ -4,55 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects - Yousuf Kazmi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/projects.css">
-    <link rel="stylesheet" href="css/footer.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/site.css">
+    <script src="js/site.js"></script>
 </head>
-<body class="projects-page" style="position:relative; min-height:100vh;">
-    <!-- Floating Decorative Shapes -->
-    <div class="floating-shape green"></div>
-    <div class="floating-shape yellow"></div>
-    <div class="floating-shape purple"></div>
-
-    <div id="navbar"></div>
-    <script>
-        fetch('components/navbar.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('navbar').innerHTML = data);
-    </script>
+<body>
+    <header id="site-header"></header>
 
     <main>
-        <section id="projects">
-            <h1 class="section-title">My Projects</h1>
-            <div class="project-list" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:2.5rem; margin-top:2.5rem;">
-                <div class="project-item card">
-                    <img src="assets/aws.png" alt="AWSPractice.io" style="width:100%; height:160px; object-fit:cover; border-radius:var(--border-radius); margin-bottom:1rem;">
-                    <h3 style="margin:0 0 0.5rem 0;">AWSPractice.io</h3>
-                    <p style="color:var(--color-secondary);">A quiz and flashcard tool for AWS Certified Practitioner exam prep, featuring over 500 questions. Built with .NET and React, and hosted on AWS for seamless, reliable performance.</p>
-                    <a href="https://awspractice.io" target="_blank" class="button" style="margin-top:1rem; font-size:1rem;">Visit Project</a>
-                </div>
-                <div class="project-item card">
-                    <h3 style="margin:0 0 0.5rem 0;">Current Work Support App</h3>
-                    <p style="color:var(--color-secondary);">An internal tool created for faster ticket management and daily task automation, including text generators, database search, file search, and project tracking features.</p>
-                </div>
-                <div class="project-item card">
-                    <h3 style="margin:0 0 0.5rem 0;">Word Ladder Game</h3>
-                    <p style="color:var(--color-secondary);">A command-line word ladder game built in C++ with custom functions like <code>strCmpCnt</code>, <code>strCmpInd</code>, and more to manage and validate word ladders.</p>
-                </div>
-                <!-- Add more project cards as needed -->
+        <section class="page-head">
+            <div class="container">
+                <span class="eyebrow">Projects</span>
+                <h1>Things I've built</h1>
+                <p>A mix of production apps, internal tools and side projects.</p>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top:0;">
+            <div class="container grid">
+                <article class="card project-card">
+                    <div class="thumb logo-light"><img src="assets/myazancast-logo.png" alt="MyAzanCast logo"></div>
+                    <h3>MyAzanCast</h3>
+                    <ul class="tags"><li class="tag">Alexa Skill</li><li class="tag">Cloud</li></ul>
+                    <p>Plays the adhan automatically on Amazon Alexa devices at each prayer time. Location or mosque-based schedules, 18+ reciters, a live countdown dashboard and a mosque TV display. Free, with no ads.</p>
+                    <a href="https://myazancast.com" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
+                </article>
+
+                <article class="card project-card">
+                    <div class="thumb"><img class="logo-icon" src="assets/ummahapi-logo.png" alt="UmmahAPI logo"></div>
+                    <h3>UmmahAPI</h3>
+                    <ul class="tags"><li class="tag">REST API</li><li class="tag">Open data</li></ul>
+                    <p>A free Islamic API with 12 services in one place: Quran text, translations and recitations, 36,000+ hadith, prayer times, qibla, Hijri dates, tafsir, duas and more. No authentication needed.</p>
+                    <a href="https://ummahapi.com" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
+                </article>
+
+                <article class="card project-card">
+                    <div class="thumb"><img src="assets/aws.png" alt="AWSPractice.io"></div>
+                    <h3>AWSPractice.io</h3>
+                    <ul class="tags"><li class="tag">.NET</li><li class="tag">React</li><li class="tag">AWS</li></ul>
+                    <p>A quiz and flashcard tool for AWS Certified Cloud Practitioner exam prep, featuring over 500 questions. Built with .NET and React and hosted on AWS.</p>
+                    <a href="https://awspractice.io" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
+                </article>
+
+                <article class="card project-card">
+                    <div class="thumb">
+                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="10" y="30" width="44" height="18" rx="3"/><rect x="20" y="20" width="20" height="12" rx="3"/><path d="M40 26h16"/><circle cx="18" cy="52" r="4"/><circle cx="32" cy="52" r="4"/><circle cx="46" cy="52" r="4"/></svg>
+                    </div>
+                    <h3>Tanks</h3>
+                    <ul class="tags"><li class="tag">JavaScript</li><li class="tag">Canvas</li></ul>
+                    <p>A top-down browser tank shooter built with vanilla JavaScript and HTML Canvas. Fight waves of AI tanks with bouncing bullets.</p>
+                    <a href="tanks/" class="card-link">Play now &rarr;</a>
+                </article>
+
+                <article class="card project-card">
+                    <div class="thumb">
+                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="8" y="12" width="48" height="36" rx="4"/><path d="M8 22h48M22 56h20M32 48v8"/><path d="M18 32l6 5-6 5M30 42h12"/></svg>
+                    </div>
+                    <h3>Work Support App</h3>
+                    <ul class="tags"><li class="tag">Internal tool</li><li class="tag">Automation</li></ul>
+                    <p>An internal tool for faster ticket management and daily task automation, including text generators, database search, file search and project tracking.</p>
+                </article>
+
+                <article class="card project-card">
+                    <div class="thumb">
+                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M22 10v44M42 10v44M22 20h20M22 32h20M22 44h20"/></svg>
+                    </div>
+                    <h3>Word Ladder Game</h3>
+                    <ul class="tags"><li class="tag">C++</li><li class="tag">CLI</li></ul>
+                    <p>A command-line word ladder game built in C++ with custom functions like <code>strCmpCnt</code> and <code>strCmpInd</code> to build and validate word ladders.</p>
+                </article>
             </div>
         </section>
     </main>
 
-    <!-- Footer (loaded via JS) -->
-    <div id="footer"></div>
-    <script>
-        fetch('components/footer.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('footer').innerHTML = data);
-    </script>
+    <footer id="site-footer"></footer>
 </body>
 </html>

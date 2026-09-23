@@ -4,41 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume - Yousuf Kazmi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/footer.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/site.css">
+    <script src="js/site.js"></script>
 </head>
-<body class="resume-page" style="position:relative; min-height:100vh;">
-    <!-- Floating Decorative Shapes -->
-    <div class="floating-shape green"></div>
-    <div class="floating-shape yellow"></div>
-    <div class="floating-shape purple"></div>
-
-    <div id="navbar"></div>
-    <script>
-        fetch('components/navbar.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('navbar').innerHTML = data);
-    </script>
+<body>
+    <header id="site-header"></header>
 
     <main>
-        <section id="resume" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70vh;">
-            <h1 class="section-title">My Resume</h1>
-            <div class="card" style="max-width:900px; width:100%; margin:2rem 0; padding:0; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
-                <iframe src="assets/Yousuf_Kazmi_Resume.pdf" width="100%" height="700px" style="border:none; border-radius:var(--border-radius); background:var(--color-surface);"></iframe>
+        <section class="page-head">
+            <div class="container section-head" style="margin:0;">
+                <div>
+                    <span class="eyebrow">Resume</span>
+                    <h1 style="margin:0;">My resume</h1>
+                </div>
+                <a href="assets/Yousuf_Kazmi_Resume.pdf" download class="btn btn-primary">Download PDF</a>
             </div>
-            <a href="assets/Yousuf_Kazmi_Resume.pdf" download class="button" style="font-size:1.1rem;">Download PDF</a>
+        </section>
+
+        <section class="section" style="padding-top:0;">
+            <div class="container">
+                <iframe class="resume-frame" src="assets/Yousuf_Kazmi_Resume.pdf" title="Yousuf Kazmi resume"></iframe>
+            </div>
         </section>
     </main>
 
-    <!-- Footer (loaded via JS) -->
-    <div id="footer"></div>
-    <script>
-        fetch('components/footer.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('footer').innerHTML = data);
-    </script>
+    <footer id="site-footer"></footer>
 </body>
 </html>

@@ -3,87 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Me - Yousuf Kazmi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/about.css">
-    <link rel="stylesheet" href="css/footer.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <title>About - Yousuf Kazmi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/site.css">
+    <script src="js/site.js"></script>
 </head>
-<body class="about-page" style="position:relative; min-height:100vh;">
-    <!-- Floating Decorative Shapes -->
-    <div class="floating-shape green"></div>
-    <div class="floating-shape yellow"></div>
-    <div class="floating-shape purple"></div>
-
-    <div id="navbar"></div>
-    <script>
-        fetch('components/navbar.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('navbar').innerHTML = data);
-    </script>
+<body>
+    <header id="site-header"></header>
 
     <main>
-        <!-- Hero Section -->
-        <section id="about-hero" class="flex-center" style="gap:2.5rem; margin-top:3rem;">
-            <img src="assets/DeskMan.jpg" alt="Yousuf Kazmi Avatar" class="rounded shadow" style="width:180px; height:180px; object-fit:cover;">
-            <div>
-                <h1 class="section-title" style="margin-bottom:0.7rem;">About Me</h1>
-                <p style="font-size:1.2rem; color:var(--color-secondary); max-width:500px;">
-                    I am Yousuf Ahmed Kazmi, a passionate software developer with a strong foundation in both backend and frontend technologies. I thrive on learning and tackling challenges, constantly exploring new ways to enhance user experiences and solve complex problems.
-                </p>
-            </div>
-        </section>
-
-        <!-- Experience Timeline -->
-        <section id="experience-section" style="margin-top:3.5rem;">
-            <h2 class="section-title" style="font-size:2rem;">Professional Experience</h2>
-            <div class="horizontal-timeline flex-center" style="gap:2rem; flex-wrap:wrap;">
-                <div class="timeline-item card">
-                    <h3>Software Developer</h3>
-                    <p>OSM Worldwide</p>
-                    <p style="color:var(--color-secondary);">Nov 2023 - Present</p>
-                </div>
-                <div class="timeline-arrow" style="font-size:2rem; color:var(--color-accent);">&#x2192;</div>
-                <div class="timeline-item card">
-                    <h3>Software Engineer</h3>
-                    <p>Albiware</p>
-                    <p style="color:var(--color-secondary);">Apr 2023 - Sep 2023</p>
-                </div>
-                <div class="timeline-arrow" style="font-size:2rem; color:var(--color-accent);">&#x2192;</div>
-                <div class="timeline-item card">
-                    <h3>Software Engineer</h3>
-                    <p>Ticketmaster</p>
-                    <p style="color:var(--color-secondary);">Jun 2021 - Dec 2022</p>
-                </div>
-                <div class="timeline-arrow" style="font-size:2rem; color:var(--color-accent);">&#x2192;</div>
-                <div class="timeline-item card">
-                    <h3>Founder/Co-Owner</h3>
-                    <p>StreetWorkoutArmy</p>
-                    <p style="color:var(--color-secondary);">Apr 2021 - Present</p>
+        <section class="page-head">
+            <div class="container about-intro">
+                <img src="assets/DeskMan.jpg" alt="Portrait of Yousuf Kazmi">
+                <div>
+                    <span class="eyebrow">About</span>
+                    <h1>A bit about me</h1>
+                    <p>I'm Yousuf Ahmed Kazmi, a software developer with a strong foundation in both backend and frontend technologies. I thrive on learning and tackling challenges, and I'm always looking for new ways to improve user experiences and solve complex problems.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Hobbies/Interests Section -->
-        <section id="hobbies-section" style="margin-top:3.5rem;">
-            <h2 class="section-title" style="font-size:2rem;">Hobbies & Interests</h2>
-            <div class="flex-center" style="gap:1.2rem; flex-wrap:wrap;">
-                <span class="button" style="background:var(--color-accent); color:var(--color-background); font-size:1rem;">Woodworking</span>
-                <span class="button" style="background:var(--color-accent); color:var(--color-background); font-size:1rem;">Soccer</span>
-                <span class="button" style="background:var(--color-accent); color:var(--color-background); font-size:1rem;">Cricket</span>
-                <span class="button" style="background:var(--color-accent); color:var(--color-background); font-size:1rem;">Cooking</span>
+        <section class="section">
+            <div class="container">
+                <h2>Experience</h2>
+                <div class="card" style="margin-top:24px;">
+                    <ol class="timeline">
+                        <li>
+                            <div class="org-name">OSM Worldwide</div>
+                            <div class="date">Nov 2023 &ndash; Present</div>
+                            <ol class="roles">
+                                <li class="current">
+                                    <h3>Software Developer II</h3>
+                                    <div class="date">Feb 2026 &ndash; Present</div>
+                                </li>
+                                <li>
+                                    <h3>Software Developer</h3>
+                                    <div class="date">Nov 2023 &ndash; Feb 2026</div>
+                                </li>
+                            </ol>
+                        </li>
+                        <li>
+                            <h3>Software Engineer</h3>
+                            <div class="org">Albiware</div>
+                            <div class="date">Apr 2023 &ndash; Sep 2023</div>
+                        </li>
+                        <li>
+                            <h3>Software Engineer</h3>
+                            <div class="org">Ticketmaster</div>
+                            <div class="date">Jun 2021 &ndash; Dec 2022</div>
+                        </li>
+                        <li>
+                            <h3>Founder / Co-Owner</h3>
+                            <div class="org">StreetWorkoutArmy</div>
+                            <div class="date">Apr 2021 &ndash; Present</div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2>Outside of work</h2>
+                <p class="muted">When I'm not coding, you'll find me doing one of these.</p>
+                <div class="skills">
+                    <span class="skill">Woodworking</span>
+                    <span class="skill">Soccer</span>
+                    <span class="skill">Cricket</span>
+                    <span class="skill">Cooking</span>
+                </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer (loaded via JS) -->
-    <div id="footer"></div>
-    <script>
-        fetch('components/footer.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('footer').innerHTML = data);
-    </script>
+    <footer id="site-footer"></footer>
 </body>
 </html>

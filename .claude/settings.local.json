@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:myazancast.com)",
+      "WebFetch(domain:ummahapi.com)"
+    ]
+  }
+}

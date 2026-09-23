@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YK Portfolio</title>
-    <!-- Google Fonts: Inter for modern look -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- CSS Files -->
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/home.css">
-    <link rel="stylesheet" href="css/footer.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <title>Yousuf Kazmi - Full Stack Developer</title>
+    <meta name="description" content="Yousuf Kazmi is a full stack developer building web apps with .NET, React and AWS.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/site.css">
+    <script src="js/site.js"></script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-04GNC61G4Z"></script>
     <script>
@@ -21,50 +17,76 @@
       gtag('config', 'G-04GNC61G4Z');
     </script>
 </head>
-<body class="home-page" style="position:relative; min-height:100vh;">
-    <!-- Floating Decorative Shapes -->
-    <div class="floating-shape green"></div>
-    <div class="floating-shape yellow"></div>
-    <div class="floating-shape purple"></div>
-
-    <div id="navbar"></div>
-    <script>
-        fetch('components/navbar.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('navbar').innerHTML = data);
-    </script>
+<body>
+    <header id="site-header"></header>
 
     <main>
-        <!-- Modern Hero Section -->
-        <section id="hero" class="flex-between" style="min-height:80vh; align-items:center; position:relative; z-index:1;">
-            <!-- Left: Text -->
-            <div style="flex:1; min-width:320px; max-width:520px; padding:2rem 0 2rem 2rem;">
-                <div style="font-size:1.1rem; color:var(--secondary-color); margin-bottom:1.2rem; letter-spacing:0.5px;">HI THERE <span aria-label="wave" role="img">👋</span> I'M</div>
-                <h1 class="section-title" style="font-size:3.2rem; line-height:1.1; margin-bottom:0.5rem;">Yousuf<br>Kazmi</h1>
-                <div style="font-size:1.2rem; font-weight:700; color:var(--accent-color); margin-bottom:0.7rem; letter-spacing:0.5px;">
-                    FULL STACK DEVELOPER <span aria-label="laptop" role="img">💻</span>
+        <section class="hero">
+            <div class="container">
+                <div>
+                    <span class="eyebrow">Software Developer II at OSM Worldwide</span>
+                    <h1>Hi, I'm Yousuf Kazmi.</h1>
+                    <p class="lead">I build fast, reliable web applications from the database to the interface, using modern tools like .NET, React and AWS to solve real-world problems.</p>
+                    <div class="hero-actions">
+                        <a href="projects.html" class="btn btn-primary">View my work</a>
+                        <a href="contact.html" class="btn btn-ghost">Get in touch</a>
+                    </div>
                 </div>
-                <p style="color:var(--secondary-color); font-size:1.08rem; margin-bottom:2.2rem; max-width:400px;">
-                    I'm a passionate developer with a love for building seamless digital experiences. I specialize in both frontend and backend development, using modern web technologies to solve real-world problems.
-                </p>
-                <a href="mailto:yousufkazmi3131@gmail.com" class="button" style="font-size:1.15rem;">Hire Me</a>
-            </div>
-            <!-- Right: Avatar -->
-            <div style="flex:1; display:flex; align-items:center; justify-content:center; min-width:280px;">
-                <img src="assets/DeskMan.jpg" alt="Yousuf Kazmi Avatar" style="width:340px; height:340px; border-radius:50%; object-fit:cover; box-shadow:0 8px 32px rgba(0,0,0,0.18); background:#232427;">
+                <div class="hero-photo">
+                    <img src="assets/DeskMan2.png" alt="Portrait of Yousuf Kazmi">
+                </div>
             </div>
         </section>
-        <!-- (Optional) Add more sections below as needed -->
+
+        <section class="section">
+            <div class="container">
+                <div class="section-head">
+                    <h2>Featured projects</h2>
+                    <a href="projects.html">All projects &rarr;</a>
+                </div>
+                <div class="grid">
+                    <article class="card project-card">
+                        <div class="thumb logo-light"><img src="assets/myazancast-logo.png" alt="MyAzanCast logo"></div>
+                        <h3>MyAzanCast</h3>
+                        <ul class="tags"><li class="tag">Alexa Skill</li><li class="tag">Cloud</li></ul>
+                        <p>Automatically plays the adhan on Amazon Alexa devices at every prayer time, with 18+ reciters and a mosque TV display.</p>
+                        <a href="https://myazancast.com" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
+                    </article>
+                    <article class="card project-card">
+                        <div class="thumb"><img class="logo-icon" src="assets/ummahapi-logo.png" alt="UmmahAPI logo"></div>
+                        <h3>UmmahAPI</h3>
+                        <ul class="tags"><li class="tag">REST API</li><li class="tag">Open data</li></ul>
+                        <p>A free Islamic API with 12 services in one: Quran, 36,000+ hadith, prayer times, qibla, Hijri dates, tafsir and more.</p>
+                        <a href="https://ummahapi.com" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
+                    </article>
+                    <article class="card project-card">
+                        <div class="thumb"><img src="assets/aws.png" alt="AWSPractice.io"></div>
+                        <h3>AWSPractice.io</h3>
+                        <ul class="tags"><li class="tag">.NET</li><li class="tag">React</li><li class="tag">AWS</li></ul>
+                        <p>Quiz and flashcard tool for the AWS Certified Cloud Practitioner exam, with over 500 practice questions.</p>
+                        <a href="https://awspractice.io" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="section-head"><h2>Tools I work with</h2></div>
+                <div class="skills">
+                    <span class="skill">C# / .NET</span>
+                    <span class="skill">JavaScript</span>
+                    <span class="skill">React</span>
+                    <span class="skill">AWS</span>
+                    <span class="skill">SQL</span>
+                    <span class="skill">HTML &amp; CSS</span>
+                    <span class="skill">C++</span>
+                    <span class="skill">Git</span>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Footer (loaded via JS) -->
-    <div id="footer"></div>
-    <script src="js/typeCodeAnimation.js"></script>
-    <script src="js/expandMore.js"></script>
-    <script>
-        fetch('components/footer.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('footer').innerHTML = data);
-    </script>
+    <footer id="site-footer"></footer>
 </body>
 </html>
