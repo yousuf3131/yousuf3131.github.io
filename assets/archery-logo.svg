@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#34508f"/>
+      <stop offset="0.55" stop-color="#c9788a"/>
+      <stop offset="1" stop-color="#ffb98a"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff3cf"/>
+      <stop offset="0.35" stop-color="#ffd9a0" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f9a52"/>
+      <stop offset="1" stop-color="#2d6634"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky and sun -->
+  <rect width="660" height="300" fill="url(#sky)"/>
+  <circle cx="470" cy="190" r="120" fill="url(#sun)"/>
+  <circle cx="470" cy="190" r="34" fill="#fff1c4"/>
+
+  <!-- Hills -->
+  <path d="M0 210 C90 170 170 200 250 182 C340 160 420 196 520 176 C590 162 630 178 660 170 V300 H0 Z" fill="#7d6f98"/>
+  <path d="M0 236 C110 208 200 232 300 216 C400 200 480 226 560 212 C610 204 640 210 660 206 V300 H0 Z" fill="#5d7068"/>
+  <path d="M0 256 C120 244 220 258 330 250 C450 242 540 258 660 248 V300 H0 Z" fill="url(#ground)"/>
+  <path d="M0 256 C120 244 220 258 330 250 C450 242 540 258 660 248" fill="none" stroke="#6cc070" stroke-width="4"/>
+
+  <!-- Flight path -->
+  <path d="M190 150 Q350 50 526 152" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 13" opacity="0.9"/>
+
+  <!-- Target -->
+  <g transform="translate(560 176)">
+    <path d="M-8 20 L-26 78 M8 20 L26 78" stroke="#6b4424" stroke-width="7" stroke-linecap="round"/>
+    <ellipse rx="44" ry="46" fill="#f4efe6"/>
+    <ellipse rx="36" ry="38" fill="#e0584f"/>
+    <ellipse rx="27" ry="28" fill="#f4efe6"/>
+    <ellipse rx="18" ry="19" fill="#e0584f"/>
+    <ellipse rx="9" ry="9.5" fill="#ffd166"/>
+    <ellipse rx="44" ry="46" fill="none" stroke="#5a3a1f" stroke-width="4"/>
+  </g>
+  <!-- Arrow in the bullseye -->
+  <g transform="translate(560 176) rotate(214)">
+    <path d="M0 0 L70 0" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round"/>
+    <path d="M58 0 L80 -11 L74 0 L80 11 Z" fill="#ffffff"/>
+    <path d="M66 0 L86 -9 L82 0 L86 9 Z" fill="#f2f2f2" opacity="0.8"/>
+  </g>
+
+  <!-- Archer silhouette at full draw -->
+  <g fill="#1d2630" stroke="#1d2630" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M100 250 L112 206 L124 250" fill="none" stroke-width="9"/>
+    <path d="M100 210 C98 180 104 166 112 160 C122 164 128 176 124 210 Z" stroke-width="2"/>
+    <circle cx="116" cy="146" r="13" stroke="none"/>
+    <path d="M104 142 L128 134 L122 152 Z" stroke="none"/>
+    <!-- Quiver -->
+    <path d="M100 160 L92 196" stroke-width="10"/>
+    <path d="M97 158 L92 146 M101 158 L100 144" stroke="#f2f2f2" stroke-width="3"/>
+    <!-- Arms -->
+    <path d="M116 170 L148 160" fill="none" stroke-width="7"/>
+    <path d="M116 170 L112 166 L122 164" fill="none" stroke-width="6"/>
+    <!-- Bow and string -->
+    <path d="M142 124 Q170 162 146 198" fill="none" stroke="#6b4424" stroke-width="6"/>
+    <path d="M142 124 L112 164 L146 198" fill="none" stroke="#ffffff" stroke-width="1.8" opacity="0.9"/>
+    <!-- Nocked arrow -->
+    <path d="M112 164 L170 150" fill="none" stroke="#8a5a2b" stroke-width="4"/>
+    <path d="M168 150 L182 140 L178 151 L186 156 Z" fill="#dfe4ea" stroke="none"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g font-family="'Arial Black', 'Segoe UI Black', Impact, sans-serif" font-weight="900" text-anchor="middle">
+    <text x="334" y="62" font-size="54" letter-spacing="2" fill="#000" opacity="0.22">ARCHERY DUEL</text>
+    <text x="330" y="58" font-size="54" letter-spacing="2" fill="#ffffff">ARCHERY DUEL</text>
+    <text x="330" y="84" font-size="13" letter-spacing="6" fill="#ffe3b8">TURN-BASED SHOWDOWN</text>
+  </g>
+</svg>
