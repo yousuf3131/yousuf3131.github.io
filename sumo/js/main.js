@@ -701,7 +701,13 @@ function playerInput() {
 // Game loop
 // ============================================================
 function updateGame(dt) {
-    if (!gameActive || !me || !me.alive) return;
+    if (!gameActive) return;
+
+    // Host physics always runs (bots, collisions, round logic)
+    if (role === 'host') hostUpdate(dt);
+
+    // Player input only when alive
+    if (!me || !me.alive) { wantDash = false; return; }
 
     const { ix, iz } = playerInput();
     const inputLen = Math.hypot(ix, iz);
@@ -713,7 +719,7 @@ function updateGame(dt) {
     }
 
     // Dash
-    if (wantDash && me.dashCd <= 0 && me.alive) {
+    if (wantDash && me.dashCd <= 0) {
         wantDash = false;
         const dx = inputLen > 0.15 ? ix / inputLen : Math.cos(me.h);
         const dz = inputLen > 0.15 ? iz / inputLen : Math.sin(me.h);
@@ -746,9 +752,6 @@ function updateGame(dt) {
         sendTimer = SEND_EVERY;
         act({ t: 'st', s: [myId, me.x, me.z, me.vx, me.vz, me.h, me.dashing ? 1 : 0] });
     }
-
-    // Host runs authoritative physics
-    if (role === 'host') hostUpdate(dt);
 }
 
 function render(dt) {

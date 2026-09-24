@@ -902,71 +902,71 @@ function playerInput() {
 // Game loop
 // ============================================================
 function updateGame(dt) {
-    if (!me) return;
+    if (!gameActive) return;
 
-    if (gameActive) {
-        const { ix, iz, sprint } = playerInput();
-        const inputLen = Math.hypot(ix, iz);
+    // Host physics always runs (bots, tagging, round logic)
+    if (role === 'host') hostUpdate(dt);
 
-        // Apply input
-        if (inputLen > 0.15 && !me.dodging) {
-            me.vx += (ix / inputLen) * ACCEL * dt;
-            me.vz += (iz / inputLen) * ACCEL * dt;
-        }
+    if (!me) { wantDodge = false; return; }
 
-        // Sprint
-        me.sprinting = sprint && inputLen > 0.15 && me.stamina > 0;
+    const { ix, iz, sprint } = playerInput();
+    const inputLen = Math.hypot(ix, iz);
 
-        // Dodge
-        if (wantDodge && me.dodgeCd <= 0) {
-            wantDodge = false;
-            const dx = inputLen > 0.15 ? ix / inputLen : Math.cos(me.h);
-            const dz = inputLen > 0.15 ? iz / inputLen : Math.sin(me.h);
-            act({ t: 'dodge', dx, dz });
-            if (role !== 'host') {
-                me.dodging = true; me.dodgeT = DODGE_DUR; me.invulnT = DODGE_INVULN; me.dodgeCd = DODGE_CD;
-                const spd = DODGE_DIST / DODGE_DUR;
-                me.vx = dx * spd; me.vz = dz * spd;
-            }
-        }
+    // Apply input
+    if (inputLen > 0.15 && !me.dodging) {
+        me.vx += (ix / inputLen) * ACCEL * dt;
+        me.vz += (iz / inputLen) * ACCEL * dt;
+    }
+
+    // Sprint
+    me.sprinting = sprint && inputLen > 0.15 && me.stamina > 0;
+
+    // Dodge
+    if (wantDodge && me.dodgeCd <= 0) {
         wantDodge = false;
-
-        // Client-side prediction
+        const dx = inputLen > 0.15 ? ix / inputLen : Math.cos(me.h);
+        const dz = inputLen > 0.15 ? iz / inputLen : Math.sin(me.h);
+        act({ t: 'dodge', dx, dz });
         if (role !== 'host') {
-            if (me.dodgeT > 0) { me.dodgeT -= dt; if (me.dodgeT <= 0) me.dodging = false; }
-            if (me.invulnT > 0) me.invulnT -= dt;
-            if (me.dodgeCd > 0) me.dodgeCd -= dt;
-            if (me.graceT > 0) me.graceT -= dt;
-            // Stamina
-            if (me.sprinting && !me.dodging) {
-                me.stamina = Math.max(0, me.stamina - STAMINA_DRAIN * dt);
-                if (me.stamina <= 0) me.sprinting = false;
-            } else {
-                me.stamina = Math.min(1, me.stamina + STAMINA_REGEN * dt);
-            }
-            if (!me.dodging) {
-                const maxSpd = (me.sprinting ? SPRINT_SPEED : WALK_SPEED) * (me.powerup === 'speed' ? 1.8 : 1);
-                const speed = Math.hypot(me.vx, me.vz);
-                if (speed > maxSpd) { me.vx *= maxSpd / speed; me.vz *= maxSpd / speed; }
-                if (speed > 0.1) { const f = FRICTION * dt; const ns = Math.max(0, speed - f); me.vx *= ns / speed; me.vz *= ns / speed; }
-            }
-            const nx = me.x + me.vx * dt, nz = me.z + me.vz * dt;
-            const col = collideTerrain(nx, nz, PLAYER_R);
-            me.x = col.x; me.z = col.z;
-            if (Math.hypot(me.vx, me.vz) > 0.5) me.h = Math.atan2(me.vz, me.vx);
-            if (me.powerupT > 0) { me.powerupT -= dt; if (me.powerupT <= 0) me.powerup = null; }
-            if (me.invisT > 0) { me.invisT -= dt; if (me.invisT <= 0) me.invisible = false; }
+            me.dodging = true; me.dodgeT = DODGE_DUR; me.invulnT = DODGE_INVULN; me.dodgeCd = DODGE_CD;
+            const spd = DODGE_DIST / DODGE_DUR;
+            me.vx = dx * spd; me.vz = dz * spd;
         }
+    }
+    wantDodge = false;
 
-        // Send position
-        sendTimer -= dt;
-        if (sendTimer <= 0 && role === 'client') {
-            sendTimer = SEND_EVERY;
-            act({ t: 'st', s: [myId, me.x, me.z, me.vx, me.vz, me.h, me.sprinting ? 1 : 0] });
+    // Client-side prediction
+    if (role !== 'host') {
+        if (me.dodgeT > 0) { me.dodgeT -= dt; if (me.dodgeT <= 0) me.dodging = false; }
+        if (me.invulnT > 0) me.invulnT -= dt;
+        if (me.dodgeCd > 0) me.dodgeCd -= dt;
+        if (me.graceT > 0) me.graceT -= dt;
+        // Stamina
+        if (me.sprinting && !me.dodging) {
+            me.stamina = Math.max(0, me.stamina - STAMINA_DRAIN * dt);
+            if (me.stamina <= 0) me.sprinting = false;
+        } else {
+            me.stamina = Math.min(1, me.stamina + STAMINA_REGEN * dt);
         }
+        if (!me.dodging) {
+            const maxSpd = (me.sprinting ? SPRINT_SPEED : WALK_SPEED) * (me.powerup === 'speed' ? 1.8 : 1);
+            const speed = Math.hypot(me.vx, me.vz);
+            if (speed > maxSpd) { me.vx *= maxSpd / speed; me.vz *= maxSpd / speed; }
+            if (speed > 0.1) { const f = FRICTION * dt; const ns = Math.max(0, speed - f); me.vx *= ns / speed; me.vz *= ns / speed; }
+        }
+        const nx = me.x + me.vx * dt, nz = me.z + me.vz * dt;
+        const col = collideTerrain(nx, nz, PLAYER_R);
+        me.x = col.x; me.z = col.z;
+        if (Math.hypot(me.vx, me.vz) > 0.5) me.h = Math.atan2(me.vz, me.vx);
+        if (me.powerupT > 0) { me.powerupT -= dt; if (me.powerupT <= 0) me.powerup = null; }
+        if (me.invisT > 0) { me.invisT -= dt; if (me.invisT <= 0) me.invisible = false; }
+    }
 
-        // Host runs authoritative physics
-        if (role === 'host') hostUpdate(dt);
+    // Send position
+    sendTimer -= dt;
+    if (sendTimer <= 0 && role === 'client') {
+        sendTimer = SEND_EVERY;
+        act({ t: 'st', s: [myId, me.x, me.z, me.vx, me.vz, me.h, me.sprinting ? 1 : 0] });
     }
 }
 
