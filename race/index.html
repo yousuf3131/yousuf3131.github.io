@@ -6,7 +6,7 @@
     <title>Bonk Racers - Yousuf Kazmi</title>
     <meta name="description" content="Online multiplayer kart chaos for up to 8 players. Pick a car or bike, vote on a course, and bonk your friends off the road.">
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
     <script type="importmap">
@@ -128,6 +128,9 @@
 
     <!-- Race HUD -->
     <div id="hud" class="hidden">
+        <div id="speedlines"></div>
+        <div id="vignette"></div>
+        <div id="splat"></div>
         <div class="hud-tl">
             <div class="pos"><span id="pos">1</span><sup id="pos-suf">st</sup><small id="pos-of">/8</small></div>
             <div class="chips">
@@ -145,12 +148,23 @@
             <div><b id="ability-name">Door Slam</b><small>Get alongside someone and hit Space</small></div>
         </div>
         <div id="speedo"><span id="speed">0</span><small>KM/H</small></div>
+        <div id="nitro">
+            <div class="nitro-head"><b>NITRO</b><span id="nitro-num">0%</span><kbd>SHIFT</kbd></div>
+            <div class="nitro-track"><i id="nitro-fill"></i><span class="nitro-min"></span></div>
+        </div>
         <div id="drift-bar"><div id="drift-indicator" class="hidden"></div></div>
+        <div id="item-slot">
+            <div class="item-box"><div id="item-icon"></div><b id="item-count"></b></div>
+            <div class="item-meta"><b id="item-name">NO ITEM</b><small>E / Q / right-click</small></div>
+        </div>
+        <div id="bonus"></div>
         <div id="center-msg"></div>
         <div id="wrong-way" class="hidden">WRONG WAY</div>
         <div id="hit-flash"></div>
         <div id="joy"><div id="joy-knob"></div></div>
         <button id="touch-attack" type="button">BONK</button>
+        <button id="touch-fire" type="button" aria-label="Use item"><span id="fire-icon"></span><small>ITEM</small></button>
+        <button id="touch-nitro" type="button" aria-label="Nitro"><span>NITRO</span></button>
     </div>
 
     <!-- Results -->
@@ -185,9 +199,12 @@
                 </div>
                 <div class="controls-section">
                     <h3>Actions</h3>
-                    <div class="ctrl-row"><kbd>Space</kbd><span>Attack (get alongside an opponent)</span></div>
+                    <div class="ctrl-row"><kbd>Space</kbd><span>Side attack (get alongside an opponent)</span></div>
+                    <div class="ctrl-row"><span><kbd>E</kbd> / <kbd>Q</kbd> / right-click</span><span>Use your item from a ? box</span></div>
+                    <div class="ctrl-row"><span><kbd>S</kbd> + item</span><span>Throw it the other way (back, or lob traps ahead)</span></div>
+                    <div class="ctrl-row"><span><kbd>Shift</kbd> / <kbd>N</kbd></span><span>Nitro (once the meter is ready)</span></div>
                     <div class="ctrl-row"><kbd>S</kbd> + <kbd>A/D</kbd><span>Drift (hold brake + turn at speed)</span></div>
-                    <div class="ctrl-row"><span class="ctrl-hint">Release drift for mini-turbo boost!</span></div>
+                    <div class="ctrl-row"><span class="ctrl-hint">Drifts, near misses, slipstreams, hoops and hits fill your nitro.</span></div>
                 </div>
                 <div class="controls-section">
                     <h3>Other</h3>
@@ -195,9 +212,9 @@
                 </div>
                 <div class="controls-section touch-only">
                     <h3>Touch Controls</h3>
-                    <div class="ctrl-row"><span>Tap &amp; drag anywhere for a virtual joystick</span></div>
-                    <div class="ctrl-row"><span>BONK button to attack</span></div>
-                    <div class="ctrl-row"><span>Tilt steering available in settings</span></div>
+                    <div class="ctrl-row"><span>Tap &amp; drag anywhere for a virtual joystick (pull down to brake / drift)</span></div>
+                    <div class="ctrl-row"><span>Round yellow button: side attack. ITEM: use your item. NITRO: boost.</span></div>
+                    <div class="ctrl-row"><span>Tilt steering: the Tilt button at the top</span></div>
                 </div>
             </div>
             <div class="pause-page hidden" id="pause-settings">
@@ -210,6 +227,10 @@
                         <span>Mute All Sound</span>
                         <button class="btn" id="pause-mute" type="button">Toggle</button>
                     </div>
+                    <div class="ctrl-row">
+                        <span>Graphics (Low is smoother on phones)</span>
+                        <button class="btn" id="gfx-toggle" type="button">High</button>
+                    </div>
                 </div>
             </div>
             <button class="btn primary big" id="btn-resume" type="button">Resume</button>
@@ -218,6 +239,6 @@
 
     <div id="toasts"></div>
 
-    <script type="module" src="js/main.js?v=6"></script>
+    <script type="module" src="js/main.js?v=7"></script>
 </body>
 </html>

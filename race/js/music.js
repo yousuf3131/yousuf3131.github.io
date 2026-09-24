@@ -2,7 +2,7 @@
 // Three tracks: menu (chill), race (energetic), results (celebratory).
 // Shares the AudioContext from audio.js.
 
-import { getCtx, getMaster } from './audio.js?v=6';
+import { getCtx, getMaster } from './audio.js?v=7';
 
 let musicGain = null;
 let current = null; // { name, interval, oscs }
