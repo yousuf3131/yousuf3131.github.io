@@ -8,11 +8,14 @@
 //  - A tank's own browser decides when it has been hit and broadcasts its death.
 //  - Crates and mine explosions are decided by the host and relayed to everyone.
 //  - The host tallies kills and round wins.
-import { HostNet, ClientNet, makeCode } from './net.js?v=2';
-import * as G from './game.js?v=2';
-import { ARENAS } from './maps.js?v=2';
-import { sfx, audio, store } from './audio.js?v=2';
-import { updateBot, BOT_CFG } from './bots.js?v=2';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
+import * as G from './game.js?v=3';
+import { ARENAS } from './maps.js?v=3';
+import { sfx, audio, store } from './audio.js?v=3';
+import { updateBot, BOT_CFG } from './bots.js?v=3';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 const { $, rand } = G;
 const MAX_PLAYERS = 8;
@@ -150,6 +153,7 @@ async function createRoom() {
     role = 'host';
     myId = 'host';
     hostInit();
+    track('room_create');
     enterLobby();
 }
 
@@ -177,6 +181,7 @@ async function joinRoom() {
     setBusy(false);
     net = cn;
     role = 'client';
+    track('room_join');
     roomCode = code;
     act({ t: 'hello', name: myName });
     setStatus('menu-status', 'Connected. Waiting for the host...');
@@ -194,10 +199,12 @@ function startSolo() {
     roomCode = 'SOLO';
     hostInit();
     for (let i = 0; i < 3; i++) addBot();
+    track('play_solo');
     enterLobby();
 }
 
 function openCampaign() {
+    track('play_campaign');
     if (busy) return;
     audio();
     view = 'campaign';
@@ -800,6 +807,7 @@ function renderScoreboard() {
 // Results
 // ============================================================
 function showResults(msg) {
+    track('match_end');
     view = 'results';
     show('results');
     G.hideBanner();

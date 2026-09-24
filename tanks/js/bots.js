@@ -3,7 +3,7 @@
 import {
     tanks, mines, fire, layMine, bfs, toRow, toCol, cellX, cellZ, COLS,
     solidAt, cellAt, TANK_R, driveToward, incomingBullet, angleDiff, clamp, rand,
-} from './game.js?v=2';
+} from './game.js?v=3';
 
 export const BOT_CFG = { speed: 2.6, bulletSpeed: 7, bounces: 1, maxBullets: 3, cooldown: 0.9, turn: 7.5, turretTurn: 3.0, jitter: 0.11, smart: true, pref: 6 };
 

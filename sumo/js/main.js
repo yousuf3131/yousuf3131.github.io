@@ -1,9 +1,12 @@
 // Sumo Smash: online multiplayer arena brawler.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=4';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=4';
-import { play as playMusic, stop as stopMusic } from './music.js?v=4';
-import * as gfx from './gfx.js?v=4';
+import { HostNet, ClientNet, makeCode } from './net.js?v=5';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=5';
+import { play as playMusic, stop as stopMusic } from './music.js?v=5';
+import * as gfx from './gfx.js?v=5';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 const MAX_PLAYERS = 8;
 const BEST_OF = 5;
@@ -802,6 +805,7 @@ function renderLobby(plist) {
 // Results
 // ============================================================
 function showResults(list) {
+    track('match_end');
     view = 'results';
     show('results');
     removeArena();
@@ -839,6 +843,7 @@ async function createRoom() {
     myId = (hn.peer && hn.peer.id) || 'host_' + Math.random().toString(36).slice(2, 8);
     H.players = []; H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name: myName });
+    track('room_create');
     enterLobby();
 }
 
@@ -854,6 +859,7 @@ async function joinRoom() {
     try { myId = await cn.connect(code); } catch (e) { setStatus('menu-status', e.message, true); role = null; return; }
     net = cn; roomCode = code;
     cn.send({ t: 'hello', name: myName });
+    track('room_join');
     enterLobby();
 }
 
@@ -866,6 +872,7 @@ function startSolo() {
     roomCode = '-----'; H.players = []; H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name: myName });
     for (let i = 0; i < 3; i++) addBot();
+    track('play_solo');
     enterLobby();
 }
 

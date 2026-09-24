@@ -2,8 +2,8 @@
 // single-player campaign. Battle mode (js/main.js) plugs in through `hooks`.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { COLS, ROWS, LEVELS } from './maps.js?v=2';
-import { sfx, audio, store, isMuted, setMuted } from './audio.js?v=2';
+import { COLS, ROWS, LEVELS } from './maps.js?v=3';
+import { sfx, audio, store, isMuted, setMuted } from './audio.js?v=3';
 
 export { COLS, ROWS };
 

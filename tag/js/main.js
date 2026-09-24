@@ -1,8 +1,11 @@
 // Tag Royale: online multiplayer tag game.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=2';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=2';
-import { play as playMusic } from './music.js?v=2';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
+import { play as playMusic } from './music.js?v=3';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 const MAX_PLAYERS = 8;
 const BEST_OF = 3;
@@ -1855,6 +1858,7 @@ function renderLobby(plist) {
 // Results
 // ============================================================
 function showResults(list) {
+    track('match_end');
     view = 'results';
     gameActive = false;
     countdownEnd = 0;
@@ -1893,6 +1897,7 @@ async function createRoom() {
     myId = (hn.peer && hn.peer.id) || 'host_' + Math.random().toString(36).slice(2, 8);
     H.players = []; H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name: myName });
+    track('room_create');
     enterLobby();
 }
 
@@ -1909,6 +1914,7 @@ async function joinRoom() {
     try { myId = await cn.connect(code); } catch (e) { setStatus('menu-status', e.message, true); role = null; return; }
     net = cn; roomCode = code;
     cn.send({ t: 'hello', name: myName });
+    track('room_join');
     enterLobby();
 }
 
@@ -1921,6 +1927,7 @@ function startSolo() {
     roomCode = 'SOLO'; H.players = []; H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name: myName });
     for (let i = 0; i < 5; i++) addBot();
+    track('play_solo');
     enterLobby();
 }
 

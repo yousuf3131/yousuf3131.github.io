@@ -6,17 +6,20 @@
 // Hazards are pure functions of level time, so the host only sends when a level starts and both
 // browsers derive the same clock from it. Pings and switch presses go guide -> host -> both.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=2';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
 import {
     LEVELS, MENU_LEVEL, T, WALKER_R, parseLevel, tileAt, tileRC, newSwitchState, pressSwitch, switchActive,
     groundAt, blockedAt, hazardHit, dynPhase, buildRoute, tileDanger, starsFor, platPos, hazTime, laserOn, laserWarn, crusherY, hammerHead, bladeAngle,
-} from './levels.js?v=2';
+} from './levels.js?v=3';
 import {
     initWorld, resize as resizeWorld, setMode, buildLevel, createWalker, addPing, clearPings, activePings, fx,
     frame as renderFrame, aimSun, placeEye, walkerCam, guideCam, menuCam, PING_COLORS, DARK,
-} from './world.js?v=2';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=2';
-import { play as playMusic } from './music.js?v=2';
+} from './world.js?v=3';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
+import { play as playMusic } from './music.js?v=3';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 // ============================================================
 // Constants and helpers
@@ -171,6 +174,7 @@ async function createRoom() {
     myId = 'host';
     clockOffset = 0;
     hostInit();
+    track('room_create');
     enterLobby();
 }
 
@@ -202,6 +206,7 @@ async function joinRoom() {
     setBusy(false);
     net = cn;
     role = 'client';
+    track('room_join');
     roomCode = code;
     clockSamples = [];
     act({ t: 'hello', name: myName });
@@ -221,6 +226,7 @@ function startSolo() {
     if (busy || !readName()) return;
     unlockAudio();
     role = 'solo';
+    track('play_solo');
     myId = 'me';
     roomCode = 'SOLO';
     clockOffset = 0;
@@ -1130,6 +1136,7 @@ function onLevelResults(msg) {
 }
 
 function showFinal(results) {
+    track('match_end');
     if (view === 'final') return;
     teardownLevel();
     buildMenuScene();

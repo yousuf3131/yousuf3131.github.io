@@ -2,10 +2,13 @@
 import {
     E, canvas, view, clamp, store, audio, sfx, isMuted, setMuted, STAGES, MAX_DRAG, MIN_SPEED, MAX_SPEED,
     buildWorld, bestShot, animateArchers, render, dragShot, setMinWorldWidth,
-} from './engine.js?v=2';
-import { tournament } from './tournament.js?v=2';
-import { online } from './online.js?v=2';
-import { $, showScreen, setStatus, hideBanner, setHint } from './ui.js?v=2';
+} from './engine.js?v=3';
+import { tournament } from './tournament.js?v=3';
+import { online } from './online.js?v=3';
+import { $, showScreen, setStatus, hideBanner, setHint } from './ui.js?v=3';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 let mode = null; // null (menu) | 'tour' | 'online'
 const active = () => (mode === 'tour' ? tournament : mode === 'online' ? online : null);
@@ -40,6 +43,7 @@ function showMainMenu(reason) {
 }
 
 function startTournament(i) {
+    track('play_tournament', { stage: i + 1 });
     audio();
     mode = 'tour';
     setMinWorldWidth(0);

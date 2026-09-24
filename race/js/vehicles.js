@@ -1,5 +1,5 @@
 // The twelve rides: their stats, arcade driving physics and side attacks. Models live in models.js.
-export { ATK_TIME, buildVehicleModel, animateModel, applyCustomization, PAINT_COLORS, PATTERNS, HATS, setModelQuality } from './models.js?v=7';
+export { ATK_TIME, buildVehicleModel, animateModel, applyCustomization, PAINT_COLORS, PATTERNS, HATS, setModelQuality } from './models.js?v=8';
 
 export const NITRO_MIN = 20;    // you can fire the nitro once the meter reaches this
 export const NITRO_DRAIN = 40;  // per second, so a full tank lasts 2.5 s

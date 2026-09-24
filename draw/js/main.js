@@ -1,9 +1,12 @@
 // Drawing Duel: online multiplayer drawing and guessing game.
-import { HostNet, ClientNet, makeCode } from './net.js?v=2';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=2';
-import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=2';
-import { DrawCanvas, COLORS as DRAW_COLORS, SIZES } from './canvas.js?v=2';
-import { getRandomWords } from './words.js?v=2';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
+import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=3';
+import { DrawCanvas, COLORS as DRAW_COLORS, SIZES } from './canvas.js?v=3';
+import { getRandomWords } from './words.js?v=3';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 const MAX_PLAYERS = 8;
 const ROUND_TIME = 60;
@@ -564,6 +567,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s; re
 // Results
 // ============================================================
 function showResults(list) {
+    track('match_end');
     view = 'results';
     show('results');
     playMusic('lobby');
@@ -613,6 +617,7 @@ async function createRoom() {
     H.players = [];
     H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name: myName });
+    track('room_create');
     enterLobby();
 }
 
@@ -640,6 +645,7 @@ async function joinRoom() {
     net = cn;
     roomCode = code;
     cn.send({ t: 'hello', name: myName });
+    track('room_join');
     enterLobby();
 }
 
@@ -655,6 +661,7 @@ function startSolo() {
     H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name: myName });
     for (let i = 0; i < 3; i++) addBot();
+    track('play_solo');
     enterLobby();
 }
 

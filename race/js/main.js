@@ -5,14 +5,17 @@
 // the vote, the bots and the results, and relays everyone's positions to everyone else.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { HostNet, ClientNet, makeCode } from './net.js?v=7';
-import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap, findOverlaps } from './track.js?v=7';
-import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, NITRO_MIN, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization, setModelQuality } from './vehicles.js?v=7';
-import { ITEMS, ICONS, rollItem, buildItemBoxes, spawnProjectile, stepProjectile, spawnTrap, stepTrap, trapRadius, SHIELD_TIME, BOX_RESPAWN, ROULETTE_TIME, TRAP_ARM_TIME } from './items.js?v=7';
-import { createPost, Particles, SkidMarks, Streaks } from './fx.js?v=7';
-import { sfx, engine, driftSound, nitroSound, rumble, unlockAudio, setMuted, isMuted } from './audio.js?v=7';
-import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=7';
-import { tiltAmount, tiltToSteer } from './tilt.js?v=7';
+import { HostNet, ClientNet, makeCode } from './net.js?v=8';
+import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap, findOverlaps } from './track.js?v=8';
+import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, NITRO_MIN, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization, setModelQuality } from './vehicles.js?v=8';
+import { ITEMS, ICONS, rollItem, buildItemBoxes, spawnProjectile, stepProjectile, spawnTrap, stepTrap, trapRadius, SHIELD_TIME, BOX_RESPAWN, ROULETTE_TIME, TRAP_ARM_TIME } from './items.js?v=8';
+import { createPost, Particles, SkidMarks, Streaks } from './fx.js?v=8';
+import { sfx, engine, driftSound, nitroSound, rumble, unlockAudio, setMuted, isMuted } from './audio.js?v=8';
+import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=8';
+import { tiltAmount, tiltToSteer } from './tilt.js?v=8';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const trackEvent = (name, params) => { if (window.track) window.track(name, params); };
 
 // ============================================================
 // Constants and helpers
@@ -349,6 +352,7 @@ async function createRoom() {
     role = 'host';
     myId = 'host';
     hostInit();
+    trackEvent('room_create');
     enterLobby();
 }
 
@@ -377,6 +381,7 @@ async function joinRoom() {
     setBusy(false);
     net = cn;
     role = 'client';
+    trackEvent('room_join');
     roomCode = code;
     act({ t: 'hello', name: myName, vehicle: myVehicle, custom: myCustom });
     setStatus('menu-status', 'Connected. Loading the garage...');
@@ -395,6 +400,7 @@ function startSolo() {
     roomCode = 'SOLO';
     hostInit();
     for (let i = 0; i < 5; i++) addBot();
+    trackEvent('play_solo');
     enterLobby();
 }
 
@@ -1048,6 +1054,7 @@ function teardownRace() {
 }
 
 function startRace(msg) {
+    trackEvent('match_start', { course: msg.course, players: msg.grid.length, vehicle: myVehicle });
     teardownRace();
     const course = COURSE_BY_ID[msg.course] || COURSES[0];
     track = buildTrack(course);
@@ -2130,6 +2137,7 @@ function drawMinimap() {
 // Results
 // ============================================================
 function showResults(list) {
+    { const mine = list.find(r => r.id === myId); trackEvent('match_end', { place: mine ? mine.place : 0, players: list.length }); }
     view = 'results';
     show('results');
     $('center-msg').textContent = '';

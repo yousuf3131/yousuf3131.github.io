@@ -9,13 +9,16 @@
 //   floating point differences can never make browsers disagree.
 // - The host applies damage, then advances the turn. Each 'turn' carries the authoritative HP list.
 // - Bots run on the host using the tournament AI.
-import { HostNet, ClientNet, makeCode } from './net.js?v=2';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
 import {
     E, clamp, lerp, rand, gauss, store, view, ctx, sfx, MAX_HP, MAX_DRAG, MIN_SPEED, MAX_SPEED, SIM_DT, DAMAGE,
     buildArena, resolveShot, fireScripted, updateArrows, animateArchers, dragShot, bestShot, render,
     facingFor, angleLerp, elevationDeg, toScreenX, toScreenY, screenTransform, drawAimBox, roundRect, setMinWorldWidth,
-} from './engine.js?v=2';
-import { $, showScreen, setStatus, toast, esc, banner, hideBanner, setHint } from './ui.js?v=2';
+} from './engine.js?v=3';
+import { $, showScreen, setStatus, toast, esc, banner, hideBanner, setHint } from './ui.js?v=3';
+
+// Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
+const track = (name, params) => { if (window.track) window.track(name, params); };
 
 const MAX_PLAYERS = 6;
 const ROUNDS = 3;
@@ -519,6 +522,7 @@ function showBoard(msg) {
 const pips = n => Array.from({ length: WINS_NEEDED }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('') + (n > WINS_NEEDED ? `<em>${n}</em>` : '');
 
 function showResults(list) {
+    track('match_end');
     M.active = false;
     M.state = 'idle';
     E.drag = null;
@@ -842,6 +846,7 @@ async function createRoom() {
     solo = false;
     H.players = []; H.phase = 'lobby';
     hostHandle(myId, { t: 'hello', name });
+    track('room_create');
     enterLobby();
 }
 
@@ -871,6 +876,7 @@ async function joinRoom() {
     roomCode = code;
     lobbyPlayers = [];
     cn.send({ t: 'hello', name });
+    track('room_join');
     enterLobby();
     // The relay cannot tell us a room does not exist, so give up if nobody answers
     clearTimeout(joinTimer);
@@ -889,6 +895,7 @@ function startSolo() {
     hostHandle(myId, { t: 'hello', name });
     addBot();
     addBot();
+    track('play_solo');
     enterLobby();
 }
 

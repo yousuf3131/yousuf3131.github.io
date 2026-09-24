@@ -1,6 +1,6 @@
 // Procedural background music for Tag Royale.
 
-import { getCtx, getMaster } from './audio.js?v=2';
+import { getCtx, getMaster } from './audio.js?v=3';
 
 let musicGain = null;
 let current = null;

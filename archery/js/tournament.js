@@ -2,8 +2,8 @@
 import {
     E, $, clamp, lerp, rand, gauss, store, view, ctx, sfx, STAGES, MIN_SPEED, MAX_SPEED, MAX_DRAG,
     buildWorld, fireArrow, updateArrows, animateArchers, dragShot, bestShot, render,
-} from './engine.js?v=2';
-import { banner, hideBanner } from './ui.js?v=2';
+} from './engine.js?v=3';
+import { banner, hideBanner } from './ui.js?v=3';
 
 let state = 'menu', stateT = 0, turn = 'player';
 let stageIndex = 0;
