@@ -4,11 +4,12 @@
 // Every browser simulates its own vehicle and shares where it is; the host runs the lobby,
 // the vote, the bots and the results, and relays everyone's positions to everyone else.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=3';
-import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=3';
-import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget } from './vehicles.js?v=3';
-import { sfx, engine, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
-import { tiltAmount, tiltToSteer } from './tilt.js?v=3';
+import { HostNet, ClientNet, makeCode } from './net.js?v=4';
+import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=4';
+import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization } from './vehicles.js?v=4';
+import { sfx, engine, driftSound, unlockAudio, setMuted, isMuted } from './audio.js?v=4';
+import { play as playMusic, stop as stopMusic } from './music.js?v=4';
+import { tiltAmount, tiltToSteer } from './tilt.js?v=4';
 
 // ============================================================
 // Constants and helpers
@@ -143,6 +144,12 @@ let lobby = { players: [], phase: 'lobby', votes: {} };
 let myName = store.get('bonkName') || '';
 let myVehicle = VEHICLE_BY_ID[store.get('bonkVehicle')] ? store.get('bonkVehicle') : 'bubble';
 let garageTab = VEHICLE_BY_ID[myVehicle].kind;
+let myCustom = (() => {
+    try { return JSON.parse(localStorage.getItem('bonkCustom')) || {}; } catch { return {}; }
+})();
+function saveCustom() {
+    try { localStorage.setItem('bonkCustom', JSON.stringify(myCustom)); } catch {}
+}
 
 let track = null;
 const racers = new Map();
@@ -197,6 +204,7 @@ function readName() {
 async function createRoom() {
     if (busy || !readName()) return;
     unlockAudio();
+    playMusic('menu');
     setBusy(true);
     setStatus('menu-status', 'Creating your room...');
     let err = null;
@@ -226,6 +234,7 @@ async function joinRoom() {
     const code = $('code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (code.length !== 5) return setStatus('menu-status', 'Room codes are 5 characters.', true);
     unlockAudio();
+    playMusic('menu');
     setBusy(true);
     setStatus('menu-status', `Joining room ${code}...`);
     const cn = new ClientNet({
@@ -246,7 +255,7 @@ async function joinRoom() {
     net = cn;
     role = 'client';
     roomCode = code;
-    act({ t: 'hello', name: myName, vehicle: myVehicle });
+    act({ t: 'hello', name: myName, vehicle: myVehicle, custom: myCustom });
     setStatus('menu-status', 'Connected. Loading the garage...');
     // If the host never answers (e.g. they closed the room), don't leave the player hanging
     setTimeout(() => {
@@ -257,6 +266,7 @@ async function joinRoom() {
 function startSolo() {
     if (busy || !readName()) return;
     unlockAudio();
+    playMusic('menu');
     role = 'solo';
     myId = 'host';
     roomCode = 'SOLO';
@@ -282,6 +292,8 @@ function leave(reason) {
     show('menu');
     setStatus('menu-status', reason || '', !!reason);
     engine.set(0, false);
+    driftSound.set(0, false);
+    playMusic('menu');
 }
 
 $('btn-create').addEventListener('click', createRoom);
@@ -344,7 +356,7 @@ function hostHandle(from, msg) {
         if (H.players.has(from)) return;
         if (H.players.size >= MAX_PLAYERS) return rejectPeer(from, 'That room is full (8 racers max).');
         if (H.phase !== 'lobby') return rejectPeer(from, 'A race is in progress. Try again in a minute.');
-        const p = { id: from, name: cleanName(msg.name), vehicle: VEHICLE_BY_ID[msg.vehicle] ? msg.vehicle : 'bubble', ready: false, bot: false, color: nextColor() };
+        const p = { id: from, name: cleanName(msg.name), vehicle: VEHICLE_BY_ID[msg.vehicle] ? msg.vehicle : 'bubble', ready: false, bot: false, color: nextColor(), custom: msg.custom || {} };
         H.players.set(from, p);
         net.send(from, { t: 'welcome', you: from, code: roomCode });
         emit({ t: 'toast', text: `${p.name} joined the room` });
@@ -355,7 +367,7 @@ function hostHandle(from, msg) {
     if (!p) return;
     switch (msg.t) {
         case 'pick':
-            if (H.phase === 'lobby' && VEHICLE_BY_ID[msg.v]) { p.vehicle = msg.v; broadcastLobby(); }
+            if (H.phase === 'lobby' && VEHICLE_BY_ID[msg.v]) { p.vehicle = msg.v; p.custom = msg.custom || p.custom; broadcastLobby(); }
             break;
         case 'ready':
             if (H.phase === 'lobby') { p.ready = !!msg.r; broadcastLobby(); }
@@ -556,12 +568,14 @@ function enterLobby() {
     document.body.classList.toggle('is-host', role !== 'client');
     show('lobby');
     garage.visible = true;
+    playMusic('menu');
     buildVehicleCards();
+    buildCustomUI();
     renderLobby();
 }
 
 function statList(v) {
-    return [['Speed', v.top / 44], ['Accel', v.accel / 28], ['Grip', v.grip / 7.5], ['Weight', v.mass / 1.7]];
+    return [['Speed', v.top / 44], ['Accel', v.accel / 28], ['Grip', v.grip / 8.5], ['Weight', v.mass / 2.8]];
 }
 
 function buildVehicleCards() {
@@ -597,9 +611,58 @@ function pickVehicle(id) {
     myVehicle = id;
     store.set('bonkVehicle', id);
     sfx.click();
-    act({ t: 'pick', v: id });
+    act({ t: 'pick', v: id, custom: myCustom });
     buildVehicleCards();
     updateShowcase();
+}
+
+function buildCustomUI() {
+    // Color swatches
+    const cRow = $('color-swatches');
+    cRow.innerHTML = '';
+    for (const c of PAINT_COLORS) {
+        const sw = el('button', 'swatch' + (myCustom.color === c ? ' on' : ''));
+        sw.type = 'button';
+        sw.style.background = c;
+        sw.addEventListener('click', () => {
+            myCustom.color = c;
+            saveCustom();
+            buildCustomUI();
+            updateShowcase();
+            sfx.click();
+        });
+        cRow.append(sw);
+    }
+    // Pattern buttons
+    const pRow = $('pattern-btns');
+    pRow.innerHTML = '';
+    for (const p of PATTERNS) {
+        const b = el('button', 'pat-btn' + ((myCustom.pattern || 'solid') === p ? ' on' : ''), p);
+        b.type = 'button';
+        b.addEventListener('click', () => {
+            myCustom.pattern = p;
+            saveCustom();
+            buildCustomUI();
+            updateShowcase();
+            sfx.click();
+        });
+        pRow.append(b);
+    }
+    // Hat buttons
+    const hRow = $('hat-btns');
+    hRow.innerHTML = '';
+    for (const h of HATS) {
+        const b = el('button', 'hat-btn' + ((myCustom.hat || 'none') === h ? ' on' : ''), h);
+        b.type = 'button';
+        b.addEventListener('click', () => {
+            myCustom.hat = h;
+            saveCustom();
+            buildCustomUI();
+            updateShowcase();
+            sfx.click();
+        });
+        hRow.append(b);
+    }
 }
 
 function renderLobby() {
@@ -649,12 +712,14 @@ function updateShowcase() {
     const mine = lobby.players.find(p => p.id === myId);
     const color = mine ? mine.color : COLORS[0];
     const v = VEHICLE_BY_ID[myVehicle];
-    if (!showcase || showcase.vid !== v.id || showcase.color !== color) {
+    const customKey = JSON.stringify(myCustom);
+    if (!showcase || showcase.vid !== v.id || showcase.color !== color || showcase.customKey !== customKey) {
         const h = showcase ? showcase.state.h : 0.5;
         if (showcase) garage.remove(showcase.model.root);
         const model = buildVehicleModel(v, color);
+        applyCustomization(model, myCustom);
         garage.add(model.root);
-        showcase = { vid: v.id, color, model, state: { x: 0, z: 0, h, steer: 0, lean: 0, wheelSpin: 0, atkT: 0, atkSide: 1, stunT: 0, speed: 0 } };
+        showcase = { vid: v.id, color, customKey, model, state: { x: 0, z: 0, y: 0, h, steer: 0, lean: 0, wheelSpin: 0, atkT: 0, atkSide: 1, stunT: 0, speed: 0 } };
         showDemoT = 1.8;
     }
     $('show-name').textContent = v.name;
@@ -728,6 +793,8 @@ function renderVote() {
 function makeRacer(p, g) {
     const cfg = VEHICLE_BY_ID[p.vehicle] || VEHICLES[0];
     const model = buildVehicleModel(cfg, p.color);
+    if (p.custom) applyCustomization(model, p.custom);
+    else if (p.id === myId) applyCustomization(model, myCustom);
     scene.add(model.root);
     let tag = null;
     if (p.id !== myId) {
@@ -738,9 +805,10 @@ function makeRacer(p, g) {
     return {
         id: p.id, name: p.name, color: p.color, bot: p.bot, cfg, model, tag,
         owned: p.id === myId || (role !== 'client' && p.bot),
-        x: g.x, z: g.z, h: g.h, vx: 0, vz: 0, speed: 0, steer: 0, lean: 0, wheelSpin: 0,
+        x: g.x, z: g.z, y: 0, vy: 0, airborne: false, h: g.h, vx: 0, vz: 0, speed: 0, steer: 0, lean: 0, wheelSpin: 0,
         idx: g.i, dist: g.dist, lat: 0, fwdDot: 0, lap: 0, half: true, fin: false, finTime: 0, place: 0, rank: 1,
         atkT: 0, atkSide: 1, cd: 1.5, stunT: 0, spin: 0, boostT: 0, catchup: 1,
+        drifting: false, driftDir: 0, driftCharge: 0, driftLevel: 0,
         botLane: rand(-4, 4), laneT: rand(1, 4), botSkill: rand(0.9, 0.97), stuckT: 0, reverseT: 0,
         net: null,
     };
@@ -762,6 +830,8 @@ function teardownRace() {
         track.dispose();
         track = null;
     }
+    scene.fog = null;
+    for (const p of driftSprites) { p.life = 0; p.sprite.visible = false; }
     $('pops').innerHTML = '';
     $('center-msg').textContent = '';
     $('wrong-way').classList.add('hidden');
@@ -773,6 +843,7 @@ function startRace(msg) {
     const course = COURSE_BY_ID[msg.course] || COURSES[0];
     track = buildTrack(course);
     scene.add(track.group);
+    if (track.fog) scene.fog = track.fog;
     garage.visible = false;
     msg.grid.forEach((id, slot) => {
         const p = msg.players.find(q => q.id === id);
@@ -787,12 +858,14 @@ function startRace(msg) {
         camH = me.h;
         camPos.set(me.x - Math.cos(me.h) * 9, 3.8, me.z - Math.sin(me.h) * 9);
         $('ability-name').textContent = me.cfg.attack.name;
-        $('touch-attack').textContent = me.cfg.kind === 'car' ? 'SLAM' : me.cfg.shape === 'dirt' ? 'KICK' : 'WHACK';
+        const atkLabels = { car: 'SLAM', truck: 'CRUSH', kart: 'BASH' };
+        $('touch-attack').textContent = atkLabels[me.cfg.kind] || (me.cfg.shape === 'dirt' ? 'KICK' : 'WHACK');
     }
     setupMinimap();
     view = 'race';
     show('hud');
     toast(`${course.name}: ${course.laps} laps`);
+    playMusic('race');
 }
 
 // ============================================================
@@ -801,13 +874,14 @@ function startRace(msg) {
 function playerInput() {
     let steer = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
     let throttle = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
+    let brake = !!(keys.KeyS || keys.ArrowDown);
     if (document.body.classList.contains('touch')) {
-        // Phones: always accelerate, steer with the joystick, pull it down to brake
-        throttle = joy.id !== null && joy.y > 0.5 ? -1 : 1;
+        brake = joy.id !== null && joy.y > 0.5;
+        throttle = brake ? -1 : 1;
         if (joy.id !== null) steer = clamp(joy.x * 1.4, -1, 1);
         else if (tilt.on && tilt.got) steer = tiltToSteer(tilt.amount, tilt.zero);
     }
-    return { steer, throttle };
+    return { steer, throttle, brake };
 }
 
 function botInput(r, dt, list) {
@@ -833,7 +907,8 @@ function botInput(r, dt, list) {
     if (r !== me && !r.fin && r.cd <= 0 && Math.random() < dt * 1.5) {
         if (findAttackTarget(r, list.filter(o => o !== r)).target) tryAttack(r, list);
     }
-    return { steer, throttle };
+    const shouldDrift = curve > 0.45 && r.speed > 18 && r.botSkill > 0.93;
+    return { steer, throttle, brake: shouldDrift };
 }
 
 function tryAttack(r, list) {
@@ -914,7 +989,7 @@ function onFinish(msg) {
 
 // Compact position packet: [id, x, z, heading, vx, vz, lap, dist, steer, attacking, stunned, finished]
 function pack(r) {
-    return [r.id, +r.x.toFixed(2), +r.z.toFixed(2), +r.h.toFixed(3), +r.vx.toFixed(2), +r.vz.toFixed(2), r.lap, Math.round(r.dist * 10) / 10, +r.steer.toFixed(2), r.atkT > 0 ? 1 : 0, r.stunT > 0 ? 1 : 0, r.fin ? 1 : 0];
+    return [r.id, +r.x.toFixed(2), +r.z.toFixed(2), +r.h.toFixed(3), +r.vx.toFixed(2), +r.vz.toFixed(2), r.lap, Math.round(r.dist * 10) / 10, +r.steer.toFixed(2), r.atkT > 0 ? 1 : 0, r.stunT > 0 ? 1 : 0, r.fin ? 1 : 0, +(r.y || 0).toFixed(2)];
 }
 
 function applyStates(arr) {
@@ -923,8 +998,9 @@ function applyStates(arr) {
         const r = racers.get(s[0]);
         if (!r || r.owned) continue;
         const [, x, z, h, vx, vz, lap, dist, steer, , stun, fin] = s;
+        const y = s[12] || 0;
         if (!r.net) { r.x = x; r.z = z; r.h = h; }
-        r.net = { x, z, h, vx, vz, t: now };
+        r.net = { x, z, h, vx, vz, y, t: now };
         r.lap = lap;
         r.dist = dist;
         r.steer = steer;
@@ -940,13 +1016,15 @@ function interpolateRemote(r, dt) {
     const k = 1 - Math.exp(-12 * dt);
     if (Math.hypot(px - r.x, pz - r.z) > 12) { r.x = px; r.z = pz; }
     else { r.x += (px - r.x) * k; r.z += (pz - r.z) * k; }
+    r.y = r.y || 0;
+    r.y += ((n.y || 0) - r.y) * k;
     r.h = lerpAngle(r.h, n.h, k);
     r.vx = n.vx;
     r.vz = n.vz;
     r.speed = Math.hypot(n.vx, n.vz);
     r.wheelSpin += (r.speed * dt) / 0.42;
     const sf = clamp(r.speed / r.cfg.top, 0, 1);
-    r.lean = r.cfg.kind === 'bike' ? r.steer * sf * 0.5 : -r.steer * sf * 0.06;
+    r.lean = r.cfg.kind === 'bike' ? r.steer * sf * 0.5 : r.cfg.kind === 'atv' ? r.steer * sf * 0.15 : -r.steer * sf * 0.06;
     if (r.stunT > 0) r.stunT = Math.max(0, r.stunT - dt * 0.2);
 }
 
@@ -1007,8 +1085,12 @@ function updateRace(dt) {
             const ev = stepPhysics(r, input, dt, track, list.filter(o => o !== r));
             if (r === me) {
                 if (ev.boost) sfx.boost();
+                if (ev.miniturbo) { sfx.miniturbo(ev.miniturbo); }
                 if (ev.bump > 6) { sfx.bump(); shake = Math.max(shake, Math.min(0.5, ev.bump / 30)); }
+                if (ev.hoop) sfx.boost();
+                if (ev.land) { sfx.bump(); shake = Math.max(shake, 0.15); }
             }
+            if (r === me && r.drifting) emitDriftParticles(r, dt);
             if (racing) updateLap(r, prev);
         } else if (r.net) {
             interpolateRemote(r, dt);
@@ -1016,11 +1098,13 @@ function updateRace(dt) {
         animateModel(r.model, r, dt);
     }
     wantAttack = false;
+    updateDriftParticles(dt);
     sendStates(dt);
     updateCamera(dt);
     updateTags();
     if (view === 'race') updateHud(ranked, dt);
     engine.set(me ? clamp(Math.abs(me.speed) / me.cfg.top, 0, 1.3) : 0, view === 'race' && !!me);
+    driftSound.set(me ? me.driftLevel : 0, view === 'race' && !!me && me.drifting);
 }
 
 // ============================================================
@@ -1032,14 +1116,15 @@ function updateCamera(dt) {
     if (camera.view && camera.view.enabled) camera.clearViewOffset();
     camH = lerpAngle(camH, target.h, 1 - Math.exp(-4 * dt));
     const back = target.cfg.kind === 'bike' ? 8 : 9;
-    camPos.lerp(new THREE.Vector3(target.x - Math.cos(camH) * back, 3.7, target.z - Math.sin(camH) * back), 1 - Math.exp(-8 * dt));
+    const ty = target.y || 0;
+    camPos.lerp(new THREE.Vector3(target.x - Math.cos(camH) * back, ty + 3.7, target.z - Math.sin(camH) * back), 1 - Math.exp(-8 * dt));
     camera.position.copy(camPos);
     if (shake > 0) {
         camera.position.x += rand(-shake, shake) * 0.4;
         camera.position.y += rand(-shake, shake) * 0.4;
         shake = Math.max(0, shake - dt * 2);
     }
-    camera.lookAt(target.x + Math.cos(camH) * 6, 1.3, target.z + Math.sin(camH) * 6);
+    camera.lookAt(target.x + Math.cos(camH) * 6, ty + 1.3, target.z + Math.sin(camH) * 6);
     const fov = 62 + clamp(Math.abs(target.speed) / target.cfg.top, 0, 1.35) * 12;
     if (Math.abs(camera.fov - fov) > 0.05) {
         camera.fov += (fov - camera.fov) * (1 - Math.exp(-4 * dt));
@@ -1125,6 +1210,21 @@ function updateHud(ranked, dt) {
     $('touch-attack').style.opacity = me.cd <= 0 ? '1' : '0.45';
     $('speed').textContent = Math.round(Math.abs(me.speed) * 3.6);
 
+    // Drift indicator
+    const di = $('drift-indicator');
+    if (me.drifting) {
+        di.classList.remove('hidden');
+        const pct = clamp(me.driftCharge / 3.5, 0, 1) * 100;
+        di.style.width = `${pct}%`;
+        di.classList.toggle('level1', me.driftLevel === 1);
+        di.classList.toggle('level2', me.driftLevel === 2);
+        di.classList.toggle('level3', me.driftLevel === 3);
+    } else {
+        di.classList.add('hidden');
+        di.style.width = '0';
+        di.classList.remove('level1', 'level2', 'level3');
+    }
+
     if (raceClock > 1 && !me.fin && me.fwdDot < -4) wrongT += dt; else wrongT = 0;
     $('wrong-way').classList.toggle('hidden', wrongT < 0.8);
     drawMinimap();
@@ -1180,6 +1280,52 @@ function drawMinimap() {
 }
 
 // ============================================================
+// Drift particles
+// ============================================================
+const DRIFT_POOL = 24;
+const driftSprites = [];
+const driftColors = [0x666666, 0x4488ff, 0xff8844, 0xcc44ff];
+{
+    const sparkGeo = new THREE.PlaneGeometry(0.5, 0.5);
+    for (let i = 0; i < DRIFT_POOL; i++) {
+        const mat = new THREE.SpriteMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+        const s = new THREE.Sprite(mat);
+        s.visible = false;
+        scene.add(s);
+        driftSprites.push({ sprite: s, life: 0, maxLife: 0 });
+    }
+}
+let driftIdx = 0;
+function emitDriftParticles(r, dt) {
+    const fx = Math.cos(r.h), fz = Math.sin(r.h);
+    const rx = -fz, rz = fx;
+    const backX = r.x - fx * (r.cfg.radius * 0.9);
+    const backZ = r.z - fz * (r.cfg.radius * 0.9);
+    for (let i = 0; i < 2; i++) {
+        const p = driftSprites[driftIdx];
+        driftIdx = (driftIdx + 1) % DRIFT_POOL;
+        const side = i === 0 ? 1 : -1;
+        p.sprite.position.set(backX + rx * side * 0.8 + rand(-0.3, 0.3), 0.2, backZ + rz * side * 0.8 + rand(-0.3, 0.3));
+        p.sprite.material.color.setHex(r.driftLevel > 0 ? driftColors[r.driftLevel] : 0xcccccc);
+        p.sprite.material.opacity = 0.7;
+        p.sprite.scale.setScalar(r.driftLevel > 0 ? 0.4 + r.driftLevel * 0.15 : 0.35);
+        p.sprite.visible = true;
+        p.life = 0.4;
+        p.maxLife = 0.4;
+    }
+}
+function updateDriftParticles(dt) {
+    for (const p of driftSprites) {
+        if (p.life <= 0) continue;
+        p.life -= dt;
+        if (p.life <= 0) { p.sprite.visible = false; continue; }
+        p.sprite.material.opacity = (p.life / p.maxLife) * 0.6;
+        p.sprite.position.y += dt * 1.2;
+        p.sprite.scale.multiplyScalar(1 + dt * 1.5);
+    }
+}
+
+// ============================================================
 // Results
 // ============================================================
 function showResults(list) {
@@ -1205,6 +1351,8 @@ function showResults(list) {
     const bonker = [...list].sort((a, b) => b.bonks - a.bonks)[0];
     $('results-award').textContent = bonker && bonker.bonks ? `Most bonks: ${bonker.name} with ${bonker.bonks}` : 'A remarkably polite race. Nobody bonked anybody.';
     engine.set(0, false);
+    driftSound.set(0, false);
+    playMusic('results');
 }
 
 // ============================================================
@@ -1366,6 +1514,7 @@ function updateGarage(dt) {
     animateModel(showcase.model, s, dt);
     showcase.model.root.position.y = 0.3;
     engine.set(0, false);
+    driftSound.set(0, false);
 }
 
 let last = performance.now();

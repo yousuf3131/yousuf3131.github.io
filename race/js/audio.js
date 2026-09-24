@@ -5,6 +5,8 @@ let master = null;
 let muted = (() => { try { return localStorage.getItem('bonkMuted') === '1'; } catch (e) { return false; } })();
 
 export const isMuted = () => muted;
+export const getCtx = () => ctx;
+export const getMaster = () => master;
 
 export function setMuted(m) {
     muted = m;
@@ -70,8 +72,15 @@ export const sfx = {
     bump: () => { noise(0.1, 0.25, 300); tone(90, 50, 0.12, 'sine', 0.25); },
     lap: () => { tone(660, 660, 0.12, 'triangle', 0.1); tone(990, 990, 0.22, 'triangle', 0.1, 0.1); },
     finish: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.28, 'triangle', 0.1, i * 0.12)),
+    horn: (v = 1) => { tone(180, 160, 0.5, 'sawtooth', 0.3 * v); tone(240, 220, 0.45, 'square', 0.15 * v); noise(0.15, 0.15 * v, 300, 0.5); },
     click: () => tone(900, 700, 0.05, 'triangle', 0.05),
     join: () => tone(600, 900, 0.12, 'triangle', 0.08),
+    miniturbo: (level = 1) => {
+        const f = [0, 500, 650, 850][level];
+        tone(f, f * 2, 0.3, 'sawtooth', 0.06);
+        tone(f * 1.5, f * 2.5, 0.25, 'triangle', 0.04);
+        noise(0.2, 0.12, 1400);
+    },
 };
 
 // A single droning oscillator for your own engine, pitched by speed
@@ -93,5 +102,30 @@ export const engine = {
         this.osc.frequency.setTargetAtTime(45 + ratio * 120, t, 0.05);
         this.filter.frequency.setTargetAtTime(380 + ratio * 900, t, 0.05);
         this.gain.gain.setTargetAtTime(on ? 0.045 : 0, t, 0.1);
+    },
+};
+
+// Continuous tire screech during drift, pitch rises with charge level
+export const driftSound = {
+    osc: null,
+    set(level, on) {
+        if (!ctx) return;
+        if (!this.osc) {
+            this.osc = ctx.createOscillator();
+            this.osc.type = 'sawtooth';
+            this.filter = ctx.createBiquadFilter();
+            this.filter.type = 'bandpass';
+            this.filter.Q.value = 2;
+            this.gain = ctx.createGain();
+            this.gain.gain.value = 0;
+            this.osc.connect(this.filter).connect(this.gain).connect(master);
+            this.osc.start();
+        }
+        const t = ctx.currentTime;
+        const freqs = [120, 180, 260, 380];
+        const filters = [500, 700, 1000, 1400];
+        this.osc.frequency.setTargetAtTime(freqs[level] || 120, t, 0.08);
+        this.filter.frequency.setTargetAtTime(filters[level] || 500, t, 0.08);
+        this.gain.gain.setTargetAtTime(on ? 0.025 : 0, t, on ? 0.06 : 0.15);
     },
 };

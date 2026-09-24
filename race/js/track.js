@@ -7,6 +7,17 @@ const RUNOFF = 5;    // sand between the curb and the barrier
 const N = 1400;      // samples along the centre line
 const TREE_MAX = 320;
 
+// Per-track visual theme defaults
+const THEME_DEFAULT = {
+    ground: '#5ea94f', groundSpeckle: ['#6cb85a', '#4f9444', '#74c062', '#58a04b'],
+    road: '#3a3e45', roadSpeckle: ['#43474f', '#33363c', '#4a4e56'],
+    sand: '#e2c48e', sandSpeckle: ['#d6b67c', '#ecd3a4', '#cfae72'],
+    curb: ['#e0473f', '#f5f5f5'], wall: ['#2f63d8', '#f3f5f8'],
+    fog: '#b0d8c0', sky: '#7ec8e3',
+    treeHue: [0.25, 0.36], treeSat: [0.4, 0.6], treeLit: [0.26, 0.38],
+    hillColor: 0x6f9a6a,
+};
+
 export const COURSES = [
     {
         id: 'coast',
@@ -24,18 +35,135 @@ export const COURSES = [
     {
         id: 'city',
         name: 'Neon City',
-        desc: 'Night streets, tight 90 degree corners and nowhere to hide.',
+        desc: 'Night streets, tight 90-degree corners and nowhere to hide.',
         laps: 3,
-        available: false,
+        available: true,
         points: [[0, 0], [140, 0], [140, -120], [40, -120], [40, -200], [-120, -200], [-120, -40], [-40, -40], [-40, 60], [-140, 60], [-140, 140], [0, 140]],
+        pads: [[0.15, 0], [0.5, -3], [0.82, 3]],
+        theme: {
+            ground: '#2a2a35', groundSpeckle: ['#33333f', '#222230', '#3a3a48'],
+            road: '#1e1e28', roadSpeckle: ['#252530', '#1a1a24', '#2e2e3a'],
+            sand: '#3a3542', sandSpeckle: ['#44404e', '#332f3c', '#4a4558'],
+            curb: ['#ff2266', '#222233'], wall: ['#6622cc', '#1a1a2e'],
+            fog: '#1a1028', sky: '#0d0818',
+            treeHue: [0.75, 0.85], treeSat: [0.5, 0.7], treeLit: [0.2, 0.3],
+            hillColor: 0x221833, scenery: 'city',
+        },
+        hazards: [
+            { type: 'water', pos: 0.35, lat: 0, radius: 4 },
+        ],
     },
     {
         id: 'canyon',
         name: 'Dust Canyon',
         desc: 'Fast, sweeping bends through the desert.',
         laps: 3,
-        available: false,
+        available: true,
         points: [[0, 0], [160, -40], [220, -160], [120, -240], [-40, -200], [-180, -240], [-240, -100], [-160, 40], [-60, 20], [-100, 120], [60, 140]],
+        pads: [[0.08, 0], [0.38, -4], [0.65, 2], [0.88, 0]],
+        theme: {
+            ground: '#c4a05a', groundSpeckle: ['#d4b06a', '#b89048', '#caa860'],
+            road: '#8a7a5e', roadSpeckle: ['#948466', '#7e7054', '#a08e6e'],
+            sand: '#dcc080', sandSpeckle: ['#e8cc8e', '#d0b470', '#f0d898'],
+            curb: ['#cc5522', '#f0e8d0'], wall: ['#994411', '#e8d8b8'],
+            fog: '#d8c8a0', sky: '#e8c870',
+            treeHue: [0.08, 0.12], treeSat: [0.3, 0.5], treeLit: [0.25, 0.35],
+            hillColor: 0xa88850, scenery: 'rocks',
+        },
+        hazards: [
+            { type: 'ramp', pos: 0.22, lat: 0, width: 10, height: 3.5 },
+            { type: 'fire', pos: 0.55, lat: 3, radius: 3 },
+        ],
+    },
+    {
+        id: 'volcano',
+        name: 'Volcano Valley',
+        desc: 'Lava flows, big ramps, and fireballs raining from above.',
+        laps: 3,
+        available: true,
+        points: [
+            [0, 0], [100, -20], [180, -80], [200, -170], [150, -230], [60, -250],
+            [-40, -220], [-110, -160], [-80, -80], [-140, -30], [-200, -80],
+            [-220, -170], [-160, -230], [-100, -280], [0, -300], [80, -280],
+            [140, -310], [120, -360], [40, -370], [-40, -340], [-100, -360],
+            [-140, -320], [-120, -260], [-60, -200], [20, -160], [60, -100],
+            [40, -40], [-20, 20],
+        ],
+        pads: [[0.05, 0], [0.3, -3], [0.6, 2], [0.85, 0]],
+        theme: {
+            ground: '#3a2a1a', groundSpeckle: ['#4a3828', '#2e2016', '#543e2c'],
+            road: '#2e2222', roadSpeckle: ['#3a2a2a', '#241a1a', '#443333'],
+            sand: '#5a3a20', sandSpeckle: ['#6a4830', '#4e3018', '#7a5838'],
+            curb: ['#ff4400', '#331100'], wall: ['#882200', '#441100'],
+            fog: '#4a2010', sky: '#2a1008',
+            treeHue: [0.02, 0.06], treeSat: [0.6, 0.8], treeLit: [0.15, 0.25],
+            hillColor: 0x3a2010, scenery: 'volcano',
+        },
+        hazards: [
+            { type: 'ramp', pos: 0.15, lat: 0, width: 12, height: 4 },
+            { type: 'fire', pos: 0.35, lat: -3, radius: 3.5 },
+            { type: 'fire', pos: 0.52, lat: 4, radius: 3 },
+            { type: 'ramp', pos: 0.7, lat: 0, width: 10, height: 3 },
+            { type: 'hoop', pos: 0.72, lat: 0 },
+        ],
+    },
+    {
+        id: 'aqua',
+        name: 'Aqua Park',
+        desc: 'Water zones, ramps into hoops, and splash sections galore.',
+        laps: 3,
+        available: true,
+        points: [
+            [0, 0], [110, 10], [180, -30], [220, -100], [180, -180], [100, -200],
+            [40, -160], [-20, -200], [-100, -220], [-160, -180], [-140, -100],
+            [-180, -40], [-140, 30], [-80, 60], [-40, 20],
+        ],
+        pads: [[0.08, 0], [0.45, -2], [0.75, 3]],
+        theme: {
+            ground: '#3a9a6a', groundSpeckle: ['#48aa78', '#2e8a5c', '#55bb85'],
+            road: '#3a5a7a', roadSpeckle: ['#446a8a', '#304e6a', '#4e7a9a'],
+            sand: '#e8dcc0', sandSpeckle: ['#f0e8d0', '#dcd0b0', '#f8f0d8'],
+            curb: ['#00aaff', '#e0f8ff'], wall: ['#0088cc', '#c0e8ff'],
+            fog: '#a0d8e8', sky: '#60c0e0',
+            treeHue: [0.45, 0.55], treeSat: [0.4, 0.6], treeLit: [0.3, 0.4],
+            hillColor: 0x4a9a6a, scenery: 'aqua',
+        },
+        hazards: [
+            { type: 'water', pos: 0.2, lat: 0, radius: 5 },
+            { type: 'ramp', pos: 0.35, lat: 0, width: 10, height: 3 },
+            { type: 'hoop', pos: 0.37, lat: 0 },
+            { type: 'water', pos: 0.6, lat: -3, radius: 4 },
+            { type: 'water', pos: 0.8, lat: 3, radius: 3.5 },
+        ],
+    },
+    {
+        id: 'frost',
+        name: 'Frozen Summit',
+        desc: 'Icy bends, ski jumps, and slippery surfaces at the top of the world.',
+        laps: 3,
+        available: true,
+        points: [
+            [0, 0], [100, -10], [170, -60], [200, -140], [160, -210], [80, -230],
+            [0, -190], [-60, -240], [-140, -260], [-200, -210], [-180, -130],
+            [-220, -60], [-180, 20], [-100, 40], [-40, 10],
+        ],
+        pads: [[0.1, 0], [0.4, -3], [0.7, 2], [0.92, 0]],
+        theme: {
+            ground: '#d8e8f0', groundSpeckle: ['#e0f0f8', '#c8d8e8', '#f0f8ff'],
+            road: '#8898a8', roadSpeckle: ['#90a0b0', '#7888a0', '#a0b0c0'],
+            sand: '#c0d0e0', sandSpeckle: ['#d0dce8', '#b0c4d4', '#d8e4f0'],
+            curb: ['#4488cc', '#e0f0ff'], wall: ['#3366aa', '#c8e0f8'],
+            fog: '#c8d8e8', sky: '#90b8d8',
+            treeHue: [0.52, 0.58], treeSat: [0.15, 0.3], treeLit: [0.5, 0.65],
+            hillColor: 0xc0d0e0, scenery: 'ice',
+        },
+        hazards: [
+            { type: 'water', pos: 0.18, lat: 0, radius: 5 },
+            { type: 'ramp', pos: 0.4, lat: 0, width: 12, height: 4.5 },
+            { type: 'hoop', pos: 0.42, lat: 0 },
+            { type: 'water', pos: 0.65, lat: -4, radius: 4 },
+            { type: 'ramp', pos: 0.85, lat: 0, width: 10, height: 3 },
+        ],
     },
 ];
 export const COURSE_BY_ID = Object.fromEntries(COURSES.map(c => [c.id, c]));
@@ -101,9 +229,11 @@ export function drawCourseMap(ctx, course, w, h) {
 }
 
 export function buildTrack(course) {
+    const T = { ...THEME_DEFAULT, ...(course.theme || {}) };
+
     // ---------- Centre line samples ----------
     const pts = makeCurve(course).getSpacedPoints(N);
-    const px = new Float32Array(N), pz = new Float32Array(N);
+    const px = new Float32Array(N), pz = new Float32Array(N), py = new Float32Array(N);
     const tx = new Float32Array(N), tz = new Float32Array(N);
     const nx = new Float32Array(N), nz = new Float32Array(N);
     const heading = new Float32Array(N), cum = new Float32Array(N);
@@ -120,7 +250,23 @@ export function buildTrack(course) {
     }
     const step = total / N;
 
+    // ---------- Hazards: write height data for ramps ----------
+    const hazardZones = [];
+    for (const h of (course.hazards || [])) {
+        const center = Math.floor(h.pos * N) % N;
+        if (h.type === 'ramp') {
+            const halfW = Math.round((h.width || 10) / step / 2);
+            for (let o = -halfW; o <= halfW; o++) {
+                const k = (center + o + N) % N;
+                const t = 1 - Math.abs(o) / halfW;
+                py[k] = Math.max(py[k], (h.height || 3) * Math.sin(t * Math.PI));
+            }
+        }
+        hazardZones.push({ ...h, idx: center, dist: cum[center] });
+    }
+
     // ---------- Queries ----------
+    function heightAt(idx) { return py[(idx + N) % N]; }
     function project(x, z, hint) {
         let best = 0, bd = Infinity;
         if (hint == null || hint < 0) {
@@ -140,7 +286,7 @@ export function buildTrack(course) {
         let dist = cum[i] + rx * tx[i] + rz * tz[i];
         if (dist < 0) dist += total;
         if (dist >= total) dist -= total;
-        return { i, lat: rx * nx[i] + rz * nz[i], dist, nx: nx[i], nz: nz[i], tx: tx[i], tz: tz[i] };
+        return { i, lat: rx * nx[i] + rz * nz[i], dist, nx: nx[i], nz: nz[i], tx: tx[i], tz: tz[i], y: py[i] };
     }
     function pointAhead(i, dist, lat) {
         const j = (i + Math.round(dist / step)) % N;
@@ -166,20 +312,20 @@ export function buildTrack(course) {
     const mat = opts => { const m = new THREE.MeshStandardMaterial(opts); disposables.push(m); return m; };
     const tex = (...a) => { const t = canvasTex(...a); disposables.push(t); return t; };
 
-    const grassTex = tex(256, 256, (g, w, h) => { g.fillStyle = '#5ea94f'; g.fillRect(0, 0, w, h); speckle(g, w, h, 4000, ['#6cb85a', '#4f9444', '#74c062', '#58a04b']); });
+    const grassTex = tex(256, 256, (g, w, h) => { g.fillStyle = T.ground; g.fillRect(0, 0, w, h); speckle(g, w, h, 4000, T.groundSpeckle); });
     grassTex.repeat.set(260, 260);
     const roadTex = tex(256, 256, (g, w, h) => {
-        g.fillStyle = '#3a3e45'; g.fillRect(0, 0, w, h);
-        speckle(g, w, h, 5000, ['#43474f', '#33363c', '#4a4e56']);
+        g.fillStyle = T.road; g.fillRect(0, 0, w, h);
+        speckle(g, w, h, 5000, T.roadSpeckle);
         g.fillStyle = '#f4f4f4';
         g.fillRect(10, 0, 6, h); g.fillRect(w - 16, 0, 6, h);
         g.fillRect(w / 2 - 3, 0, 6, h / 2);
     });
-    const sandTex = tex(128, 128, (g, w, h) => { g.fillStyle = '#e2c48e'; g.fillRect(0, 0, w, h); speckle(g, w, h, 1500, ['#d6b67c', '#ecd3a4', '#cfae72']); });
-    const curbTex = tex(16, 64, (g, w, h) => { g.fillStyle = '#e0473f'; g.fillRect(0, 0, w, h / 2); g.fillStyle = '#f5f5f5'; g.fillRect(0, h / 2, w, h / 2); });
+    const sandTex = tex(128, 128, (g, w, h) => { g.fillStyle = T.sand; g.fillRect(0, 0, w, h); speckle(g, w, h, 1500, T.sandSpeckle); });
+    const curbTex = tex(16, 64, (g, w, h) => { g.fillStyle = T.curb[0]; g.fillRect(0, 0, w, h / 2); g.fillStyle = T.curb[1]; g.fillRect(0, h / 2, w, h / 2); });
     const wallTex = tex(32, 64, (g, w, h) => {
-        g.fillStyle = '#2f63d8'; g.fillRect(0, 0, w, h / 2);
-        g.fillStyle = '#f3f5f8'; g.fillRect(0, h / 2, w, h / 2);
+        g.fillStyle = T.wall[0]; g.fillRect(0, 0, w, h / 2);
+        g.fillStyle = T.wall[1]; g.fillRect(0, h / 2, w, h / 2);
         g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, 0, 5, h);
     });
     const checkTex = tex(64, 64, (g, w) => {
@@ -213,8 +359,9 @@ export function buildTrack(course) {
         const pos = new Float32Array((N + 1) * 6), uv = new Float32Array((N + 1) * 4), idx = [];
         for (let i = 0; i <= N; i++) {
             const k = i % N, v = (i === N ? total : cum[k]) / vLen;
-            if (wallHeight) pos.set([px[k] + nx[k] * a, 0, pz[k] + nz[k] * a, px[k] + nx[k] * a, wallHeight, pz[k] + nz[k] * a], i * 6);
-            else pos.set([px[k] + nx[k] * a, y, pz[k] + nz[k] * a, px[k] + nx[k] * b, y, pz[k] + nz[k] * b], i * 6);
+            const hy = py[k];
+            if (wallHeight) pos.set([px[k] + nx[k] * a, hy, pz[k] + nz[k] * a, px[k] + nx[k] * a, hy + wallHeight, pz[k] + nz[k] * a], i * 6);
+            else pos.set([px[k] + nx[k] * a, y + hy, pz[k] + nz[k] * a, px[k] + nx[k] * b, y + hy, pz[k] + nz[k] * b], i * 6);
             uv.set([0, v, 1, v], i * 4);
             if (i < N) { const s = i * 2; idx.push(s, s + 2, s + 1, s + 1, s + 2, s + 3); }
         }
@@ -348,7 +495,7 @@ export function buildTrack(course) {
             dummy.updateMatrix();
             trunks.setMatrixAt(count, dummy.matrix);
             leaves.setMatrixAt(count, dummy.matrix);
-            leaves.setColorAt(count, col.setHSL(rand(0.25, 0.36), rand(0.4, 0.6), rand(0.26, 0.38)));
+            leaves.setColorAt(count, col.setHSL(rand(T.treeHue[0], T.treeHue[1]), rand(T.treeSat[0], T.treeSat[1]), rand(T.treeLit[0], T.treeLit[1])));
             count++;
         }
         trunks.count = leaves.count = count;
@@ -357,7 +504,7 @@ export function buildTrack(course) {
     group.add(trunks, leaves);
 
     // Distant low-poly hills for the horizon
-    const hillMat = mat({ color: 0x6f9a6a, roughness: 1, flatShading: true });
+    const hillMat = mat({ color: T.hillColor, roughness: 1, flatShading: true });
     const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
     for (let i = 0; i < 16; i++) {
         const a = (i / 16) * Math.PI * 2 + rand(-0.1, 0.1), r = rand(560, 760), hgt = rand(60, 170);
@@ -366,11 +513,132 @@ export function buildTrack(course) {
         group.add(cone);
     }
 
+    // ---------- Hazard visuals ----------
+    const hazardMeshes = [];
+    for (const hz of hazardZones) {
+        const j = hz.idx;
+        const hx = px[j] + nx[j] * (hz.lat || 0);
+        const hz2 = pz[j] + nz[j] * (hz.lat || 0);
+        const hy = py[j];
+        if (hz.type === 'fire') {
+            // Glowing red/orange circle on ground
+            const r = hz.radius || 3;
+            const fg = new THREE.CircleGeometry(r, 16);
+            fg.rotateX(-Math.PI / 2);
+            const fm = new THREE.Mesh(fg, mat({
+                color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.6,
+                transparent: true, opacity: 0.7, roughness: 0.3,
+                polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+            }));
+            fm.position.set(hx, hy + 0.04, hz2);
+            group.add(fm);
+            hazardMeshes.push(fm);
+        } else if (hz.type === 'water') {
+            const r = hz.radius || 4;
+            const wg = new THREE.CircleGeometry(r, 16);
+            wg.rotateX(-Math.PI / 2);
+            const wm = new THREE.Mesh(wg, mat({
+                color: 0x2288dd, emissive: 0x1166aa, emissiveIntensity: 0.3,
+                transparent: true, opacity: 0.6, roughness: 0.2,
+                polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+            }));
+            wm.position.set(hx, hy + 0.03, hz2);
+            group.add(wm);
+            hazardMeshes.push(wm);
+        } else if (hz.type === 'hoop') {
+            const hoopG = new THREE.TorusGeometry(4, 0.35, 8, 24);
+            const hoopM = new THREE.Mesh(hoopG, mat({
+                color: 0xf2c14e, emissive: 0xf2c14e, emissiveIntensity: 0.5, roughness: 0.3,
+            }));
+            hoopM.position.set(hx, hy + 4, hz2);
+            hoopM.rotation.y = -heading[j] + Math.PI / 2;
+            group.add(hoopM);
+            hazardMeshes.push(hoopM);
+        }
+    }
+
+    // ---------- Theme-specific scenery ----------
+    if (T.scenery === 'city') {
+        // Neon buildings scattered around
+        const buildMat = mat({ color: 0x222244, roughness: 0.6 });
+        const neonMats = [mat({ color: 0xff22aa, emissive: 0xff22aa, emissiveIntensity: 0.4 }), mat({ color: 0x22ffcc, emissive: 0x22ffcc, emissiveIntensity: 0.4 }), mat({ color: 0x6622ff, emissive: 0x6622ff, emissiveIntensity: 0.4 })];
+        for (let i = 0; i < 40; i++) {
+            const x = rand(minX - 100, maxX + 100), z = rand(minZ - 100, maxZ + 100);
+            if (nearest(x, z) < edge + 8) continue;
+            const bh = rand(8, 35), bw = rand(4, 10), bd = rand(4, 10);
+            const b = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), buildMat);
+            b.position.set(x, bh / 2, z);
+            b.castShadow = true;
+            group.add(b);
+            // Neon strip
+            const strip = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.2, 0.5, bd + 0.2), neonMats[i % 3]);
+            strip.position.set(x, bh * rand(0.3, 0.8), z);
+            group.add(strip);
+        }
+    } else if (T.scenery === 'rocks') {
+        // Rock formations for canyon
+        const rockMat = mat({ color: 0x886644, roughness: 1, flatShading: true });
+        for (let i = 0; i < 30; i++) {
+            const x = rand(minX - 80, maxX + 80), z = rand(minZ - 80, maxZ + 80);
+            if (nearest(x, z) < edge + 6) continue;
+            const rh = rand(3, 12), rw = rand(2, 6);
+            const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rw, 0), rockMat);
+            rock.position.set(x, rh / 2 - 1, z);
+            rock.scale.set(1, rh / rw, 1);
+            rock.rotation.set(rand(0, 0.3), rand(0, Math.PI), rand(0, 0.3));
+            rock.castShadow = true;
+            group.add(rock);
+        }
+    } else if (T.scenery === 'volcano') {
+        // Big central volcano + lava pools
+        const volMat = mat({ color: 0x3a2010, roughness: 1, flatShading: true });
+        const volcano = new THREE.Mesh(new THREE.ConeGeometry(120, 180, 12), volMat);
+        volcano.position.set(cx, 80, cz);
+        group.add(volcano);
+        const lavaMat = mat({ color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.8, transparent: true, opacity: 0.8 });
+        const crater = new THREE.Mesh(new THREE.CircleGeometry(25, 12), lavaMat);
+        crater.rotation.x = -Math.PI / 2;
+        crater.position.set(cx, 170, cz);
+        group.add(crater);
+    } else if (T.scenery === 'aqua') {
+        // Big water plane in the center, floating platforms
+        const waterMat = mat({ color: 0x2288dd, emissive: 0x1166aa, emissiveIntensity: 0.2, transparent: true, opacity: 0.5 });
+        const waterPlane = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), waterMat);
+        waterPlane.rotation.x = -Math.PI / 2;
+        waterPlane.position.y = -0.5;
+        group.add(waterPlane);
+    } else if (T.scenery === 'ice') {
+        // Icebergs scattered around
+        const iceMat = mat({ color: 0xc8e8ff, roughness: 0.2, flatShading: true, transparent: true, opacity: 0.8 });
+        for (let i = 0; i < 20; i++) {
+            const x = rand(minX - 100, maxX + 100), z = rand(minZ - 100, maxZ + 100);
+            if (nearest(x, z) < edge + 8) continue;
+            const ih = rand(5, 20), iw = rand(3, 8);
+            const ice = new THREE.Mesh(new THREE.DodecahedronGeometry(iw, 0), iceMat);
+            ice.position.set(x, ih / 3, z);
+            ice.scale.set(1, ih / iw, 1);
+            ice.rotation.y = rand(0, Math.PI);
+            group.add(ice);
+        }
+    }
+
+    // ---------- Fog ----------
+    const fog = new THREE.FogExp2(new THREE.Color(T.fog), 0.0018);
+
     return {
-        group, course, total, step, N, px, pz, tx, tz, heading, pads,
+        group, course, total, step, N, px, pz, py, tx, tz, heading, pads,
         laps: course.laps, halfWidth: HW, runoff: RUNOFF,
-        project, pointAhead, curvatureAhead, gridPos,
-        update(dt) { chevTex.offset.x -= dt * 1.4; },
+        hazardZones, fog, theme: T,
+        project, pointAhead, curvatureAhead, gridPos, heightAt,
+        update(dt) {
+            chevTex.offset.x -= dt * 1.4;
+            // Animate hoops (gentle bob)
+            for (const m of hazardMeshes) {
+                if (m.geometry.type === 'TorusGeometry') {
+                    m.rotation.z = Math.sin(performance.now() * 0.002) * 0.08;
+                }
+            }
+        },
         dispose() {
             group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
             for (const d of disposables) d.dispose();

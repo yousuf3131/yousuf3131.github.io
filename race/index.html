@@ -6,7 +6,7 @@
     <title>Bonk Racers - Yousuf Kazmi</title>
     <meta name="description" content="Online multiplayer kart chaos for up to 8 players. Pick a car or bike, vote on a course, and bonk your friends off the road.">
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
     <script type="importmap">
@@ -78,8 +78,26 @@
             <div class="tabs" id="tabs">
                 <button type="button" data-kind="car">Cars</button>
                 <button type="button" data-kind="bike">Bikes</button>
+                <button type="button" data-kind="truck">Trucks</button>
+                <button type="button" data-kind="kart">Karts</button>
+                <button type="button" data-kind="atv">ATVs</button>
             </div>
             <div class="vehicle-grid" id="vehicles"></div>
+            <div class="section-title">Customize</div>
+            <div class="custom-row">
+                <div class="custom-group">
+                    <small>Color</small>
+                    <div class="swatch-row" id="color-swatches"></div>
+                </div>
+                <div class="custom-group">
+                    <small>Pattern</small>
+                    <div class="swatch-row" id="pattern-btns"></div>
+                </div>
+                <div class="custom-group">
+                    <small>Hat</small>
+                    <div class="swatch-row" id="hat-btns"></div>
+                </div>
+            </div>
             <label class="toggle touch-only">
                 <input type="checkbox" id="tilt-toggle">
                 <span class="switch"></span>
@@ -127,6 +145,7 @@
             <div><b id="ability-name">Door Slam</b><small>Get alongside someone and hit Space</small></div>
         </div>
         <div id="speedo"><span id="speed">0</span><small>KM/H</small></div>
+        <div id="drift-bar"><div id="drift-indicator" class="hidden"></div></div>
         <div id="center-msg"></div>
         <div id="wrong-way" class="hidden">WRONG WAY</div>
         <div id="hit-flash"></div>
@@ -150,6 +169,6 @@
 
     <div id="toasts"></div>
 
-    <script type="module" src="js/main.js?v=3"></script>
+    <script type="module" src="js/main.js?v=4"></script>
 </body>
 </html>

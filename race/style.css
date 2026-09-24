@@ -154,6 +154,16 @@ body:not(.is-host) .host-only { display: none !important; }
 .stats { display: grid; grid-template-columns: 56px 1fr; gap: 4px 10px; align-items: center; font-size: 0.72rem; color: var(--muted); font-weight: 700; }
 .bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #8ff0cf); border-radius: 99px; }
+.custom-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+.custom-group { flex: 1; min-width: 80px; }
+.custom-group small { display: block; font-weight: 700; color: var(--muted); margin-bottom: 6px; font-size: 0.72rem; }
+.swatch-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color 0.15s; }
+.swatch:hover { border-color: rgba(255,255,255,0.5); }
+.swatch.on { border-color: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.pat-btn, .hat-btn { font-family: inherit; font-size: 0.68rem; font-weight: 700; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer; }
+.pat-btn:hover, .hat-btn:hover { border-color: rgba(46,196,149,0.5); }
+.pat-btn.on, .hat-btn.on { border-color: var(--accent); background: rgba(46,196,149,0.12); }
 .lobby-actions { display: grid; gap: 8px; margin-top: auto; }
 .touch-only { display: none !important; }
 body.touch .touch-only { display: inline-flex !important; }
@@ -278,6 +288,12 @@ body.touch .touch-only { display: inline-flex !important; }
 #ability small { color: var(--muted); font-size: 0.75rem; font-weight: 600; }
 #speedo { position: absolute; bottom: 18px; right: 22px; text-align: right; font-family: 'Bungee', sans-serif; font-size: 2.6rem; line-height: 1; text-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
 #speedo small { display: block; font-family: 'Inter', sans-serif; font-weight: 800; font-size: 0.72rem; color: rgba(255, 255, 255, 0.75); letter-spacing: 0.15em; }
+#drift-bar { position: absolute; bottom: 78px; right: 22px; width: 120px; height: 8px; background: rgba(0, 0, 0, 0.4); border-radius: 4px; overflow: hidden; }
+#drift-indicator { height: 100%; width: 0; border-radius: 4px; transition: width 0.1s linear, background 0.15s; background: #666; }
+#drift-indicator.level1 { background: #4488ff; box-shadow: 0 0 8px #4488ff; }
+#drift-indicator.level2 { background: #ff8844; box-shadow: 0 0 10px #ff8844; }
+#drift-indicator.level3 { background: #cc44ff; box-shadow: 0 0 14px #cc44ff; animation: drift-pulse 0.35s infinite alternate; }
+@keyframes drift-pulse { to { box-shadow: 0 0 22px #cc44ff; } }
 #center-msg {
     position: absolute;
     top: 28%;
