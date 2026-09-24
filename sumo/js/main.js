@@ -517,7 +517,7 @@ function hostUpdate(dt) {
         const winnerId = winner ? winner[0] : null;
         const winnerName = winner ? H.players.find(p => p.id === winner[0])?.name : 'Nobody';
         emit({ t: 'roundEnd', winner: winnerId, winnerName, scores: H.players.map(p => ({ id: p.id, name: p.name, wins: p.wins, color: p.color })) });
-        sfx.reveal();
+        sfx.go();
 
         // Check game end
         const gameWinner = H.players.find(p => p.wins >= Math.ceil(BEST_OF / 2));
@@ -564,9 +564,9 @@ function clientHandle(msg) {
             }
             $('round-num').textContent = `${msg.round}/${BEST_OF}`;
             showCenterMsg('3', true);
-            sfx.countdown();
-            setTimeout(() => { showCenterMsg('2', true); sfx.countdown(); }, 1000);
-            setTimeout(() => { showCenterMsg('1', true); sfx.countdown(); }, 2000);
+            sfx.count();
+            setTimeout(() => { showCenterMsg('2', true); sfx.count(); }, 1000);
+            setTimeout(() => { showCenterMsg('1', true); sfx.count(); }, 2000);
             setTimeout(() => { showCenterMsg('GO!', true); }, 3000);
             break;
         }
@@ -838,7 +838,7 @@ function showResults(list) {
     removeArena();
     players.clear();
     playMusic('results');
-    sfx.reveal();
+    sfx.go();
     const ol = $('results-list');
     ol.innerHTML = '';
     for (const p of list) {

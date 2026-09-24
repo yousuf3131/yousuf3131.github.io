@@ -204,6 +204,45 @@ function buildPlayerModel(color) {
     return group;
 }
 
+// ============================================================
+// Name labels (canvas-textured sprites above each player)
+// ============================================================
+function makeNameSprite(name, isMe) {
+    const canvas2 = document.createElement('canvas');
+    const ctx2 = canvas2.getContext('2d');
+    canvas2.width = 256; canvas2.height = 64;
+    ctx2.clearRect(0, 0, 256, 64);
+    // Background pill
+    ctx2.fillStyle = isMe ? 'rgba(59,130,246,0.7)' : 'rgba(0,0,0,0.55)';
+    const textW = ctx2.measureText(name).width; // measure first for sizing
+    ctx2.font = 'bold 28px Inter, sans-serif';
+    const tw = ctx2.measureText(name).width;
+    const px = (256 - tw) / 2;
+    ctx2.beginPath();
+    ctx2.roundRect(px - 12, 8, tw + 24, 44, 12);
+    ctx2.fill();
+    // Border for "you"
+    if (isMe) {
+        ctx2.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx2.lineWidth = 2;
+        ctx2.stroke();
+    }
+    // Text
+    ctx2.fillStyle = '#ffffff';
+    ctx2.textAlign = 'center';
+    ctx2.textBaseline = 'middle';
+    ctx2.font = 'bold 28px Inter, sans-serif';
+    ctx2.fillText(name, 128, 32);
+    const tex = new THREE.CanvasTexture(canvas2);
+    tex.minFilter = THREE.LinearFilter;
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(3, 0.75, 1);
+    sprite.position.y = 2.3;
+    sprite.renderOrder = 999;
+    return sprite;
+}
+
 const IT_COLOR = new THREE.Color(0xe0584f);
 const SAFE_COLOR = new THREE.Color(0x2ec495);
 
@@ -649,6 +688,8 @@ function clientHandle(msg) {
             scene.children.filter(c => c._isPlayer || c._isPowerup).forEach(c => scene.remove(c));
             for (const s of msg.spawns) {
                 const model = buildPlayerModel(s.color);
+                const nameLabel = makeNameSprite(s.name, s.id === myId);
+                model.add(nameLabel);
                 model.position.set(s.x, 0, s.z);
                 model._isPlayer = true;
                 scene.add(model);
