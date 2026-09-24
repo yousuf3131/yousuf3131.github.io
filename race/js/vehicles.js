@@ -889,7 +889,7 @@ export function stepPhysics(r, input, dt, track, others) {
 
     // --- Height / airborne physics ---
     const groundY = f.y || 0;
-    if (r.y == null) { r.y = groundY; r.vy = 0; r.airborne = false; }
+    if (r.y == null) { r.y = groundY; r.vy = 0; r.airborne = false; r._prevGroundY = groundY; }
     if (r.airborne) {
         r.vy -= 30 * dt;       // gravity
         r.y += r.vy * dt;
@@ -901,16 +901,17 @@ export function stepPhysics(r, input, dt, track, others) {
             ev.land = true;
         }
     } else {
-        if (groundY > r.y + 0.3) {
-            // Ramp launch
-            const slope = groundY - r.y;
-            r.vy = slope * 3 + Math.abs(r.speed) * 0.18;
+        const prevGY = r._prevGroundY || 0;
+        const dropping = groundY < prevGY - 0.15;
+        // Always follow ground when grounded (drive up/down slopes)
+        r.y = groundY;
+        // Launch only at ramp peak: ground starts dropping and we have speed
+        if (dropping && r.y > 0.3 && Math.abs(r.speed) > 8) {
+            r.vy = Math.abs(r.speed) * 0.15 + 2;
             r.airborne = true;
-            r.y = groundY;
-        } else {
-            r.y = groundY;
         }
     }
+    r._prevGroundY = groundY;
 
     for (const pad of track.pads) {
         let dd = Math.abs(f.dist - pad.dist);

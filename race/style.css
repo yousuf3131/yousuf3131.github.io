@@ -393,3 +393,21 @@ body.touch .touch-only { display: inline-flex !important; }
 body.touch #touch-attack { display: block; }
 body.touch #ability { display: none; }
 body.touch .standings { display: none; }
+
+/* ---------- Pause menu ---------- */
+.pause-panel { width: 100%; max-width: 480px; padding: 28px 26px; text-align: center; }
+.pause-panel h2 { font-family: 'Bungee', sans-serif; font-size: 2rem; margin-bottom: 16px; }
+.pause-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.pause-tab { flex: 1; font-size: 0.85rem; padding: 9px; }
+.pause-tab.on { background: rgba(46, 196, 149, 0.15); border-color: var(--accent); color: var(--accent); }
+.pause-page { text-align: left; margin-bottom: 18px; }
+.controls-section { margin-bottom: 14px; }
+.controls-section h3 { font-size: 0.78rem; font-weight: 800; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+.ctrl-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.88rem; }
+.ctrl-row:last-child { border-bottom: none; }
+.ctrl-row kbd { display: inline-block; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; padding: 3px 9px; font-family: 'Inter', monospace; font-size: 0.78rem; font-weight: 700; min-width: 32px; text-align: center; }
+.ctrl-row span { color: var(--muted); font-weight: 600; }
+.ctrl-hint { font-style: italic; color: var(--warn) !important; font-size: 0.82rem; }
+.slider { -webkit-appearance: none; appearance: none; width: 140px; height: 6px; background: rgba(255,255,255,0.12); border-radius: 3px; outline: none; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+.slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }

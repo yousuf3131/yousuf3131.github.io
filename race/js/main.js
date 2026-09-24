@@ -4,12 +4,12 @@
 // Every browser simulates its own vehicle and shares where it is; the host runs the lobby,
 // the vote, the bots and the results, and relays everyone's positions to everyone else.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=4';
-import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=4';
-import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization } from './vehicles.js?v=4';
-import { sfx, engine, driftSound, unlockAudio, setMuted, isMuted } from './audio.js?v=4';
-import { play as playMusic, stop as stopMusic } from './music.js?v=4';
-import { tiltAmount, tiltToSteer } from './tilt.js?v=4';
+import { HostNet, ClientNet, makeCode } from './net.js?v=5';
+import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=5';
+import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization } from './vehicles.js?v=5';
+import { sfx, engine, driftSound, unlockAudio, setMuted, isMuted } from './audio.js?v=5';
+import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=5';
+import { tiltAmount, tiltToSteer } from './tilt.js?v=5';
 
 // ============================================================
 // Constants and helpers
@@ -172,6 +172,44 @@ function show(id) {
     for (const s of ['menu', 'lobby', 'vote', 'results']) $(s).classList.toggle('hidden', s !== id);
     $('hud').classList.toggle('hidden', id !== 'hud');
 }
+
+// ============================================================
+// Pause menu
+// ============================================================
+let paused = false;
+
+function togglePause() {
+    if (view !== 'race') return;
+    paused = !paused;
+    $('pause').classList.toggle('hidden', !paused);
+    // Sync settings UI when opening
+    if (paused) {
+        $('music-vol').value = Math.round(getMusicVolume() * 100);
+        $('pause-mute').textContent = isMuted() ? 'Unmute' : 'Mute';
+    }
+}
+
+$('btn-resume').addEventListener('click', togglePause);
+
+// Tab switching
+for (const tab of document.querySelectorAll('.pause-tab')) {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.pause-tab').forEach(t => t.classList.remove('on'));
+        tab.classList.add('on');
+        $('pause-controls').classList.toggle('hidden', tab.dataset.tab !== 'controls');
+        $('pause-settings').classList.toggle('hidden', tab.dataset.tab !== 'settings');
+    });
+}
+
+// Settings controls
+$('music-vol').addEventListener('input', e => {
+    setMusicVolume(parseInt(e.target.value, 10) / 100);
+});
+$('pause-mute').addEventListener('click', () => {
+    setMuted(!isMuted());
+    syncMute();
+    $('pause-mute').textContent = isMuted() ? 'Unmute' : 'Mute';
+});
 
 // ============================================================
 // Menu
@@ -823,6 +861,8 @@ function removeRacer(id) {
 }
 
 function teardownRace() {
+    paused = false;
+    $('pause').classList.add('hidden');
     for (const id of [...racers.keys()]) removeRacer(id);
     me = null;
     if (track) {
@@ -1361,6 +1401,8 @@ function showResults(list) {
 const keys = {};
 addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
+    if (e.code === 'Escape') { togglePause(); return; }
+    if (paused) return;
     keys[e.code] = true;
     if (view === 'race') {
         if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'ShiftLeft') wantAttack = true;
@@ -1521,8 +1563,8 @@ let last = performance.now();
 function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (track && racers.size && (view === 'race' || view === 'results')) updateRace(dt);
-    else updateGarage(dt);
+    if (track && racers.size && (view === 'race' || view === 'results') && !paused) updateRace(dt);
+    else if (!paused) updateGarage(dt);
     if (view === 'vote') $('vote-timer').textContent = Math.max(0, Math.ceil((voteEnds - now) / 1000));
     if (centerT > 0 && centerT !== Infinity) {
         centerT -= dt;

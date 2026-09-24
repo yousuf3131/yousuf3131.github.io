@@ -255,11 +255,14 @@ export function buildTrack(course) {
     for (const h of (course.hazards || [])) {
         const center = Math.floor(h.pos * N) % N;
         if (h.type === 'ramp') {
-            const halfW = Math.round((h.width || 10) / step / 2);
+            // Spread across more samples for a gentle slope (3x the width value)
+            const rampLen = (h.width || 10) * 3;
+            const halfW = Math.max(20, Math.round(rampLen / step / 2));
             for (let o = -halfW; o <= halfW; o++) {
                 const k = (center + o + N) % N;
                 const t = 1 - Math.abs(o) / halfW;
-                py[k] = Math.max(py[k], (h.height || 3) * Math.sin(t * Math.PI));
+                // Smooth bell curve instead of sin for gentler slopes
+                py[k] = Math.max(py[k], (h.height || 3) * t * t * (3 - 2 * t));
             }
         }
         hazardZones.push({ ...h, idx: center, dist: cum[center] });
