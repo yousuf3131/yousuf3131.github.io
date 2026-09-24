@@ -1,9 +1,9 @@
 // Drawing Duel: online multiplayer drawing and guessing game.
-import { HostNet, ClientNet, makeCode } from './net.js?v=1';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=1';
-import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=1';
-import { DrawCanvas, COLORS as DRAW_COLORS, SIZES } from './canvas.js?v=1';
-import { getRandomWords } from './words.js?v=1';
+import { HostNet, ClientNet, makeCode } from './net.js?v=2';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=2';
+import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=2';
+import { DrawCanvas, COLORS as DRAW_COLORS, SIZES } from './canvas.js?v=2';
+import { getRandomWords } from './words.js?v=2';
 
 const MAX_PLAYERS = 8;
 const ROUND_TIME = 60;
@@ -92,6 +92,8 @@ function hostHandle(from, msg) {
     const p = H.players.find(p => p.id === from);
     switch (msg.t) {
         case 'hello': {
+            // The relay can deliver a message twice; never add the same person twice
+            if (H.players.some(p => p.id === from)) return;
             if (H.players.length >= MAX_PLAYERS) { if (net) net.send(from, { t: 'reject', reason: 'Room is full.' }); return; }
             if (H.phase !== 'lobby') { if (net) net.send(from, { t: 'reject', reason: 'Game already in progress.' }); return; }
             const color = COLORS[H.players.length % COLORS.length];
@@ -166,6 +168,18 @@ function getDrawer() { return H.players[H.drawerIdx]; }
 
 function emitLobby() {
     emit({ t: 'lobby', players: H.players.map(p => ({ id: p.id, name: p.name, color: p.color, ready: p.ready, bot: p.bot, score: p.score })), phase: H.phase });
+}
+
+// Host removes someone from the lobby. Bots just go; real players are told why, then disconnected.
+function kickPlayer(id) {
+    const idx = H.players.findIndex(p => p.id === id);
+    if (role !== 'host' || H.phase !== 'lobby' || idx < 0 || id === myId) return;
+    const p = H.players[idx];
+    if (p.bot) { H.players.splice(idx, 1); emitLobby(); return; }
+    if (!net) return;
+    net.send(id, { t: 'reject', reason: 'The host removed you from the room.' });
+    setTimeout(() => net && net.kick(id), 600);
+    hostLeave(id);
 }
 
 function addBot() {
@@ -301,8 +315,7 @@ function clientHandle(msg) {
             roomCode = msg.code;
             break;
         case 'reject':
-            setStatus('menu-status', msg.reason, true);
-            leave();
+            leave(msg.reason);
             return;
         case 'lobby':
             players = msg.players;
@@ -532,6 +545,7 @@ function renderLobby() {
             <span class="who"><b>${esc(p.name)}</b>${p.bot ? '<small>Bot</small>' : ''}</span>
             ${p.id === myId ? '<span class="badge host">You</span>' : ''}
             ${p.ready ? '<span class="badge ok">Ready</span>' : ''}
+            ${role === 'host' && p.id !== myId && H.phase === 'lobby' ? `<button class="kick" type="button" data-kick="${esc(p.id)}">Remove</button>` : ''}
         `;
         list.appendChild(li);
     }
@@ -668,6 +682,12 @@ function leave(reason) {
 // ============================================================
 // Event listeners
 // ============================================================
+$('players').addEventListener('click', e => {
+    const id = e.target && e.target.dataset ? e.target.dataset.kick : null;
+    if (!id) return;
+    const p = H.players.find(x => x.id === id);
+    if (p && (p.bot || confirm(`Remove ${p.name} from the room?`))) kickPlayer(id);
+});
 $('btn-create').addEventListener('click', createRoom);
 $('btn-join').addEventListener('click', joinRoom);
 $('btn-solo').addEventListener('click', startSolo);

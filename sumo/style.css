@@ -3,7 +3,7 @@
     --accent-ink: #3e0a0a;
     --warn: #f2c14e;
     --bad: #e0584f;
-    --panel: rgba(18, 14, 14, 0.88);
+    --panel: rgba(22, 15, 15, 0.8);
     --panel-2: rgba(255, 255, 255, 0.05);
     --line: rgba(255, 255, 255, 0.1);
     --text: #f4f0ee;
@@ -16,7 +16,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #12100e; col
 h1, h2, h3 { margin: 0; }
 button { font-family: inherit; cursor: pointer; }
 .display { font-family: 'Bungee', 'Inter', sans-serif; letter-spacing: 0.02em; }
-.screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; }
+.screen { position: fixed; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding: 16px; overflow: auto; }
+.screen > .panel { margin-block: auto; }
+@media (max-height: 520px) { .screen { padding-top: 58px; } }
 .screen.dim { background: radial-gradient(ellipse at center, rgba(10, 8, 8, 0.35), rgba(10, 8, 8, 0.72)); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; backdrop-filter: blur(10px); box-shadow: 0 24px 70px rgba(0,0,0,0.45); }
 .btn { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-weight: 700; font-size: 0.95rem; padding: 11px 18px; border-radius: 12px; transition: transform 0.12s, background-color 0.2s, border-color 0.2s; }
@@ -111,3 +113,7 @@ body:not(.is-host) .host-only { display: none !important; }
 #touch-dash { position: absolute; right: max(22px, env(safe-area-inset-right)); bottom: 96px; width: 88px; height: 88px; border-radius: 50%; background: rgba(242,193,78,0.18); border: 3px solid var(--warn); color: #ffe2a0; font-family: 'Bungee', sans-serif; font-size: 0.85rem; pointer-events: auto; touch-action: none; display: none; }
 body.touch #touch-dash { display: block; }
 body.touch #dash-cd { display: none; }
+
+/* Host-only remove button in the lobby list */
+.kick { margin-left: 6px; background: none; border: 1px solid var(--line); color: var(--muted); font-family: inherit; font-size: 0.72rem; font-weight: 700; padding: 4px 9px; border-radius: 8px; cursor: pointer; }
+.kick:hover { border-color: #e0584f; color: #ff8a80; }

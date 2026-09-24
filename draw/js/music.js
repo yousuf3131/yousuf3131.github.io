@@ -1,6 +1,6 @@
 // Procedural background music for Drawing Duel.
 
-import { getCtx, getMaster } from './audio.js?v=1';
+import { getCtx, getMaster } from './audio.js?v=2';
 
 let musicGain = null;
 let current = null;

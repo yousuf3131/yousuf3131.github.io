@@ -233,3 +233,7 @@ body:not(.is-host) .host-only { display: none !important; }
     .timer-big { font-size: 1.4rem; }
     .word-card { font-size: 1rem; padding: 14px 22px; }
 }
+
+/* Host-only remove button in the lobby list */
+.kick { margin-left: 6px; background: none; border: 1px solid var(--line); color: var(--muted); font-family: inherit; font-size: 0.72rem; font-weight: 700; padding: 4px 9px; border-radius: 8px; cursor: pointer; }
+.kick:hover { border-color: #e0584f; color: #ff8a80; }

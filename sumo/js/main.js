@@ -1,8 +1,9 @@
 // Sumo Smash: online multiplayer arena brawler.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=1';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=1';
-import { play as playMusic, stop as stopMusic } from './music.js?v=1';
+import { HostNet, ClientNet, makeCode } from './net.js?v=3';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
+import { play as playMusic, stop as stopMusic } from './music.js?v=3';
+import * as gfx from './gfx.js?v=3';
 
 const MAX_PLAYERS = 8;
 const BEST_OF = 5;
@@ -35,117 +36,49 @@ renderer.setSize(innerWidth, innerHeight);
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1510);
 
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, 200);
 camera.position.set(0, 28, 18);
 camera.lookAt(0, 0, 0);
+const camBase = new THREE.Vector3(0, 28, 18);
+const camLook = new THREE.Vector3(0, 0, 0);
 
-scene.add(new THREE.HemisphereLight(0xffeedd, 0x443322, 1.0));
-const sun = new THREE.DirectionalLight(0xfff4e8, 0.8);
-sun.position.set(10, 20, 8);
-scene.add(sun);
+gfx.initWorld(renderer, scene, camera);
 
 // ============================================================
 // Arena
 // ============================================================
 let platformR = PLATFORM_R;
-let platformMesh = null;
-let edgeRing = null;
-let waterPlane = null;
+let shrinkClock = SHRINK_INTERVAL; // cosmetic only: drives the pre-shrink warning glow
 
 function buildArena() {
-    // Platform
-    const geo = new THREE.CylinderGeometry(PLATFORM_R, PLATFORM_R, 1, 64);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8 });
-    platformMesh = new THREE.Mesh(geo, mat);
-    platformMesh.position.y = -0.5;
-    scene.add(platformMesh);
-
-    // Edge ring
-    const ringGeo = new THREE.TorusGeometry(PLATFORM_R, 0.15, 8, 64);
-    const ringMat = new THREE.MeshStandardMaterial({ color: 0xf2c14e, emissive: 0x8b6914, emissiveIntensity: 0.5 });
-    edgeRing = new THREE.Mesh(ringGeo, ringMat);
-    edgeRing.rotation.x = Math.PI / 2;
-    edgeRing.position.y = 0.02;
-    scene.add(edgeRing);
-
-    // Water below
-    const waterGeo = new THREE.PlaneGeometry(200, 200);
-    const waterMat = new THREE.MeshStandardMaterial({ color: 0x1a3a5c, transparent: true, opacity: 0.6 });
-    waterPlane = new THREE.Mesh(waterGeo, waterMat);
-    waterPlane.rotation.x = -Math.PI / 2;
-    waterPlane.position.y = -8;
-    scene.add(waterPlane);
-
     platformR = PLATFORM_R;
+    gfx.setMode(true);
+    gfx.setRingRadius(PLATFORM_R);
+    camBase.set(0, 28, 18);
+    camLook.set(0, 0, 0);
 }
 
-function updatePlatformSize(r) {
+function updatePlatformSize(r, withFx) {
     platformR = r;
-    if (platformMesh) {
-        platformMesh.scale.x = r / PLATFORM_R;
-        platformMesh.scale.z = r / PLATFORM_R;
-    }
-    if (edgeRing) {
-        edgeRing.scale.x = r / PLATFORM_R;
-        edgeRing.scale.z = r / PLATFORM_R;
-    }
+    gfx.setRingRadius(r, withFx);
 }
 
 function removeArena() {
-    if (platformMesh) { scene.remove(platformMesh); platformMesh = null; }
-    if (edgeRing) { scene.remove(edgeRing); edgeRing = null; }
-    if (waterPlane) { scene.remove(waterPlane); waterPlane = null; }
+    scene.children.filter(c => c._isPlayer || c._isPowerup).forEach(c => scene.remove(c));
+    platformR = PLATFORM_R;
+    gfx.setMode(false);
 }
 
 // ============================================================
-// Player models
+// Player and power-up models (see gfx.js)
 // ============================================================
 function buildPlayerModel(color) {
-    const group = new THREE.Group();
-    // Body sphere
-    const bodyGeo = new THREE.SphereGeometry(PLAYER_R, 16, 12);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: 0.5 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = PLAYER_R + 0.15;
-    group.add(body);
-    // Base cylinder
-    const baseGeo = new THREE.CylinderGeometry(0.5, 0.6, 0.3, 16);
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
-    const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.y = 0.15;
-    group.add(base);
-    // Eyes
-    const eyeGeo = new THREE.SphereGeometry(0.12, 8, 6);
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const pupilGeo = new THREE.SphereGeometry(0.07, 6, 4);
-    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-    for (const side of [-1, 1]) {
-        const eye = new THREE.Mesh(eyeGeo, eyeMat);
-        eye.position.set(side * 0.25, PLAYER_R + 0.35, 0.6);
-        group.add(eye);
-        const pupil = new THREE.Mesh(pupilGeo, pupilMat);
-        pupil.position.set(side * 0.25, PLAYER_R + 0.35, 0.68);
-        group.add(pupil);
-    }
-    group._bodyMat = bodyMat;
-    group._body = body;
-    return group;
+    return gfx.buildWrestler(color, Math.max(0, COLORS.indexOf(color)));
 }
 
-// ============================================================
-// Power-up models
-// ============================================================
 function buildPowerupModel(type) {
-    const group = new THREE.Group();
-    const colors = { speed: 0x3b82f6, heavy: 0xf97316, shield: 0x2ec495 };
-    const mat = new THREE.MeshStandardMaterial({ color: colors[type] || 0xffffff, emissive: colors[type] || 0xffffff, emissiveIntensity: 0.4 });
-    const geo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
-    const mesh = new THREE.Mesh(geo, mat);
-    group.add(mesh);
-    group.position.y = 1.5;
-    return group;
+    return gfx.buildPowerup(type);
 }
 
 // ============================================================
@@ -201,6 +134,8 @@ function emit(msg) { if (role === 'host' && net) net.broadcast(msg); clientHandl
 function hostHandle(from, msg) {
     switch (msg.t) {
         case 'hello': {
+            // The relay can deliver a message twice; never add the same person twice
+            if (H.players.some(p => p.id === from)) return;
             if (H.players.length >= MAX_PLAYERS) { if (net) net.send(from, { t: 'reject', reason: 'Room is full.' }); return; }
             if (H.phase !== 'lobby') { if (net) net.send(from, { t: 'reject', reason: 'Game in progress.' }); return; }
             const color = COLORS[H.players.length % COLORS.length];
@@ -259,6 +194,18 @@ function hostLeave(id) {
 
 function emitLobby() {
     emit({ t: 'lobby', players: H.players.map(p => ({ id: p.id, name: p.name, color: p.color, ready: p.ready, bot: p.bot, wins: p.wins })) });
+}
+
+// Host removes someone from the lobby. Bots just go; real players are told why, then disconnected.
+function kickPlayer(id) {
+    const idx = H.players.findIndex(p => p.id === id);
+    if (role !== 'host' || H.phase !== 'lobby' || idx < 0 || id === myId) return;
+    const p = H.players[idx];
+    if (p.bot) { H.players.splice(idx, 1); emitLobby(); return; }
+    if (!net) return;
+    net.send(id, { t: 'reject', reason: 'The host removed you from the room.' });
+    setTimeout(() => net && net.kick(id), 600);
+    hostLeave(id);
 }
 
 function addBot() {
@@ -538,7 +485,7 @@ function hostUpdate(dt) {
 function clientHandle(msg) {
     switch (msg.t) {
         case 'welcome': myId = msg.you; roomCode = msg.code; break;
-        case 'reject': setStatus('menu-status', msg.reason, true); leave(); return;
+        case 'reject': leave(msg.reason); return;
         case 'lobby': renderLobby(msg.players); break;
         case 'toast': toast(msg.text); break;
         case 'gameStart':
@@ -552,11 +499,15 @@ function clientHandle(msg) {
             players.clear();
             // Remove old models
             scene.children.filter(c => c._isPlayer || c._isPowerup).forEach(c => scene.remove(c));
+            gfx.clearRound();
             updatePlatformSize(msg.platformR);
+            shrinkClock = SHRINK_INTERVAL;
             for (const s of msg.spawns) {
                 const model = buildPlayerModel(s.color);
                 model.position.set(s.x, 0, s.z);
+                model.userData.a.yaw = Math.atan2(-s.x, -s.z); // face the centre
                 model._isPlayer = true;
+                gfx.setMarker(model, s.id === myId);
                 scene.add(model);
                 const p = { x: s.x, z: s.z, vx: 0, vz: 0, h: 0, alive: true, dashing: false, dashCd: 0, dashT: 0, mass: 1, powerup: null, powerupT: 0, shieldHp: 0, model, bot: s.bot, wins: s.wins, name: s.name, color: s.color, fallT: 0, botThinkT: 0, botTargetX: 0, botTargetZ: 0, _id: s.id };
                 players.set(s.id, p);
@@ -570,7 +521,7 @@ function clientHandle(msg) {
             setTimeout(() => { showCenterMsg('GO!', true); }, 3000);
             break;
         }
-        case 'go': gameActive = true; break;
+        case 'go': gameActive = true; shrinkClock = SHRINK_INTERVAL; break;
         case 'sts':
             if (role === 'host') break; // host already has authoritative state
             for (const s of msg.a) {
@@ -593,12 +544,13 @@ function clientHandle(msg) {
             break;
         }
         case 'shrink':
-            updatePlatformSize(msg.r);
+            updatePlatformSize(msg.r, true);
+            shrinkClock = SHRINK_INTERVAL;
             sfx.shrink();
             break;
         case 'powerup': {
             const model = buildPowerupModel(msg.type);
-            model.position.set(msg.x, 1.5, msg.z);
+            model.position.set(msg.x, 0, msg.z);
             model._isPowerup = true;
             model._uid = msg.uid;
             scene.add(model);
@@ -606,18 +558,28 @@ function clientHandle(msg) {
         }
         case 'grabbed': {
             const pu = scene.children.find(c => c._isPowerup && c._uid === msg.uid);
-            if (pu) scene.remove(pu);
+            if (pu) { scene.remove(pu); gfx.sparkle(pu.position.x, 1.3, pu.position.z, gfx.puColor(msg.type)); }
             const p = players.get(msg.id);
             if (p) { p.powerup = msg.type; p.powerupT = 5; if (msg.type === 'shield') p.shieldHp = 1; }
+            if (p && p.model) gfx.setPowerupVisual(p.model, msg.type);
             sfx.powerup();
             break;
         }
-        case 'hitEvt': sfx.hit(); break;
-        case 'roundEnd':
+        case 'hitEvt': {
+            const a = players.get(msg.from), b = players.get(msg.target);
+            const mine = msg.from === myId || msg.target === myId;
+            gfx.hit(a && a.model, b && b.model, mine ? 0.4 : 0.15);
+            sfx.hit();
+            break;
+        }
+        case 'roundEnd': {
             gameActive = false;
+            const w = players.get(msg.winner);
+            if (w && w.model && w.alive) gfx.celebrate(w.model);
             showCenterMsg(msg.winnerName + ' wins!', true);
             updateScoreRow(msg.scores);
             break;
+        }
         case 'results': showResults(msg.list); break;
         case 'toLobby':
             view = 'lobby';
@@ -757,41 +719,42 @@ function updateGame(dt) {
 function render(dt) {
     // Update models
     for (const [id, p] of players) {
-        if (!p.model) continue;
+        const m = p.model;
+        if (!m) continue;
         if (p.alive) {
-            p.model.position.x += (p.x - p.model.position.x) * Math.min(1, dt * 15);
-            p.model.position.z += (p.z - p.model.position.z) * Math.min(1, dt * 15);
-            p.model.position.y = 0;
-            p.model.rotation.y = -p.h + Math.PI / 2;
-            // Dash squash-stretch
-            if (p.dashing) {
-                p.model.scale.set(1.3, 0.8, 0.7);
-            } else {
-                p.model.scale.lerp(new THREE.Vector3(1, 1, 1), dt * 8);
-            }
-        } else if (p.fallT > 0) {
-            p.fallT -= dt;
-            p.model.position.y -= dt * 15;
-            p.model.rotation.x += dt * 5;
-            p.model.scale.multiplyScalar(1 - dt * 2);
+            m.position.x += (p.x - m.position.x) * Math.min(1, dt * 15);
+            m.position.z += (p.z - m.position.z) * Math.min(1, dt * 15);
+            const d = Math.hypot(m.position.x, m.position.z);
+            m.position.y = gfx.edgeLift(d);
+            gfx.animateWrestler(m, { speed: Math.hypot(p.vx, p.vz), dashing: p.dashing, yaw: -p.h + Math.PI / 2, edge: gfx.edgeTeeter(d) }, dt);
+        } else {
+            gfx.startFall(m, p.vx, p.vz);
+            gfx.updateFall(m, dt);
         }
     }
 
-    // Rotate power-ups
-    for (const c of scene.children) {
-        if (c._isPowerup) {
-            c.rotation.y += dt * 2;
-            c.position.y = 1.5 + Math.sin(Date.now() * 0.003) * 0.3;
-        }
-    }
+    for (const c of scene.children) if (c._isPowerup) gfx.animatePowerup(c, dt);
 
-    // Camera
-    if (me && me.alive) {
-        const tx = me.x * 0.3, tz = me.z * 0.3 + 18;
-        camera.position.x += (tx - camera.position.x) * dt * 3;
-        camera.position.z += (tz - camera.position.z) * dt * 3;
-        camera.lookAt(me.x * 0.3, 0, me.z * 0.3);
-    }
+    // Warning glow over the band that the next shrink will remove
+    if (gameActive) shrinkClock -= dt;
+    const warn = gameActive && platformR > MIN_PLATFORM_R && shrinkClock < 3 ? 1 - Math.max(0, shrinkClock) / 3 : 0;
+    gfx.setDanger(warn, Math.max(MIN_PLATFORM_R, platformR - SHRINK_AMT));
+
+    gfx.update(dt);
+
+    // Camera: follow me while alive, drift back to an overview when out
+    const follow = me && me.alive;
+    const tx = follow ? me.x * 0.3 : 0, tz = follow ? me.z * 0.3 : 0;
+    const k = Math.min(1, dt * (follow ? 3 : 1.2));
+    // Pull back on narrow (portrait) screens so the ring still fits
+    const far = Math.pow(clamp(1.3 / camera.aspect, 1, 2.2), 0.75);
+    camBase.x += (tx - camBase.x) * k;
+    camBase.z += (tz + 18 * far - camBase.z) * k;
+    camBase.y = 28 * far;
+    camLook.x += (tx - camLook.x) * k;
+    camLook.z += (tz - camLook.z) * k;
+    camera.position.copy(camBase).add(gfx.getShake());
+    camera.lookAt(camLook);
 
     // HUD
     const aliveCount = [...players.values()].filter(p => p.alive).length;
@@ -827,7 +790,7 @@ function renderLobby(plist) {
     for (const p of plist) {
         const li = document.createElement('li');
         li.className = 'player' + (p.id === myId ? ' me' : '');
-        li.innerHTML = `<span class="dot" style="background:${p.color}"></span><span class="who"><b>${esc(p.name)}</b></span>${p.id === myId ? '<span class="badge host">You</span>' : ''}${p.ready ? '<span class="badge ok">Ready</span>' : ''}`;
+        li.innerHTML = `<span class="dot" style="background:${p.color}"></span><span class="who"><b>${esc(p.name)}</b></span>${p.id === myId ? '<span class="badge host">You</span>' : ''}${p.ready ? '<span class="badge ok">Ready</span>' : ''}${role === 'host' && p.id !== myId && H.phase === 'lobby' ? `<button class="kick" type="button" data-kick="${esc(p.id)}">Remove</button>` : ''}`;
         list.appendChild(li);
     }
 }
@@ -917,6 +880,12 @@ function leave(reason) {
 // ============================================================
 // Event listeners
 // ============================================================
+$('players').addEventListener('click', e => {
+    const id = e.target && e.target.dataset ? e.target.dataset.kick : null;
+    if (!id) return;
+    const p = H.players.find(x => x.id === id);
+    if (p && (p.bot || confirm(`Remove ${p.name} from the room?`))) kickPlayer(id);
+});
 $('btn-create').addEventListener('click', createRoom);
 $('btn-join').addEventListener('click', joinRoom);
 $('btn-solo').addEventListener('click', startSolo);
@@ -952,7 +921,7 @@ function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     if (view === 'game' || gameActive) { updateGame(dt); render(dt); }
-    else { renderer.render(scene, camera); }
+    else { gfx.update(dt); renderer.render(scene, camera); }
     requestAnimationFrame(frame);
 }
 

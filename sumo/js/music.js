@@ -1,6 +1,6 @@
 // Procedural background music for Sumo Smash.
 
-import { getCtx, getMaster } from './audio.js?v=1';
+import { getCtx, getMaster } from './audio.js?v=3';
 
 let musicGain = null;
 let current = null;

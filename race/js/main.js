@@ -4,12 +4,12 @@
 // Every browser simulates its own vehicle and shares where it is; the host runs the lobby,
 // the vote, the bots and the results, and relays everyone's positions to everyone else.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=5';
-import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=5';
-import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization } from './vehicles.js?v=5';
-import { sfx, engine, driftSound, unlockAudio, setMuted, isMuted } from './audio.js?v=5';
-import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=5';
-import { tiltAmount, tiltToSteer } from './tilt.js?v=5';
+import { HostNet, ClientNet, makeCode } from './net.js?v=6';
+import { COURSES, COURSE_BY_ID, buildTrack, drawCourseMap } from './track.js?v=6';
+import { VEHICLES, VEHICLE_BY_ID, ATK_TIME, buildVehicleModel, animateModel, stepPhysics, findAttackTarget, PAINT_COLORS, PATTERNS, HATS, applyCustomization } from './vehicles.js?v=6';
+import { sfx, engine, driftSound, unlockAudio, setMuted, isMuted } from './audio.js?v=6';
+import { play as playMusic, stop as stopMusic, setMusicVolume, getMusicVolume } from './music.js?v=6';
+import { tiltAmount, tiltToSteer } from './tilt.js?v=6';
 
 // ============================================================
 // Constants and helpers
@@ -441,13 +441,13 @@ function rejectPeer(id, reason) {
     setTimeout(() => net && net.kick(id), 600);
 }
 
-function hostLeave(id) {
+function hostLeave(id, how = 'left') {
     const p = H.players.get(id);
     if (!p) return;
     H.players.delete(id);
     H.votes.delete(id);
     H.states.delete(id);
-    emit({ t: 'toast', text: `${p.name} left` });
+    emit({ t: 'toast', text: `${p.name} ${how}` });
     broadcastLobby();
     if (H.phase === 'vote' && allHumansVoted()) finishVote();
     if (H.phase === 'race') checkRaceDone();
@@ -467,6 +467,13 @@ function removeBot(id) {
         H.players.delete(id);
         broadcastLobby();
     }
+}
+// Host removes a real player from the lobby: tell them why, then drop their connection
+function kickPlayer(id) {
+    const p = H.players.get(id);
+    if (!p || p.bot || p.host || H.phase !== 'lobby' || !net) return;
+    rejectPeer(id, 'The host removed you from the room.');
+    hostLeave(id, 'was removed');
 }
 
 const allHumansVoted = () => [...H.players.values()].filter(p => !p.bot).every(p => H.votes.has(p.id));
@@ -719,11 +726,14 @@ function renderLobby() {
         if (p.host) li.append(el('span', 'badge host', 'Host'));
         else if (p.bot) li.append(el('span', 'badge', 'Bot'));
         else li.append(el('span', 'badge' + (p.ready ? ' ok' : ''), p.ready ? 'Ready' : 'Picking'));
-        if (isHost && p.bot && lobby.phase === 'lobby') {
+        if (isHost && !p.host && lobby.phase === 'lobby') {
             const x = el('button', 'kick', '×');
             x.type = 'button';
-            x.title = 'Remove bot';
-            x.addEventListener('click', () => removeBot(p.id));
+            x.title = p.bot ? 'Remove bot' : `Remove ${p.name}`;
+            x.addEventListener('click', () => {
+                if (p.bot) removeBot(p.id);
+                else if (confirm(`Remove ${p.name} from the room?`)) kickPlayer(p.id);
+            });
             li.append(x);
         }
         list.append(li);
