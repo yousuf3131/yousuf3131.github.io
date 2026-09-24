@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <circle cx="60" cy="65" r="45" fill="#2a1a0a" stroke="#d4a574" stroke-width="4"/>
+  <circle cx="60" cy="65" r="38" fill="none" stroke="#f2c14e" stroke-width="2" stroke-dasharray="8 4"/>
+  <circle cx="42" cy="58" r="14" fill="#e0584f" stroke="#b91c1c" stroke-width="2"/>
+  <circle cx="42" cy="52" r="3" fill="white"/><circle cx="42" cy="52" r="1.5" fill="#111"/>
+  <circle cx="78" cy="58" r="14" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
+  <circle cx="78" cy="52" r="3" fill="white"/><circle cx="78" cy="52" r="1.5" fill="#111"/>
+  <path d="M56 58 L64 58" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M56 55 L50 50" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+  <path d="M64 55 L70 50" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+  <text x="60" y="100" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="14" fill="#f2c14e">SUMO</text>
+</svg>

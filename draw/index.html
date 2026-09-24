@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drawing Duel - Yousuf Kazmi</title>
+    <meta name="description" content="Online multiplayer drawing and guessing game for up to 8 players. One draws, everyone guesses!">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=1">
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
+</head>
+<body>
+    <!-- Corner controls -->
+    <div class="corner">
+        <button class="btn" id="btn-mute" type="button" aria-label="Toggle sound">
+            <svg id="icon-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+            <svg id="icon-muted" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+        </button>
+        <button class="btn" id="btn-exit" type="button">Exit</button>
+    </div>
+
+    <!-- Main menu -->
+    <div id="menu" class="screen">
+        <div class="panel menu-panel">
+            <div class="logo">DRAWING<span>DUEL</span></div>
+            <p class="tagline">Online drawing and guessing for up to 8 players. One draws, everyone guesses!</p>
+            <div id="invite" class="invite hidden"></div>
+            <div class="menu-form">
+                <label for="name">Your name</label>
+                <input class="field" id="name" maxlength="14" autocomplete="nickname" placeholder="e.g. Picasso">
+                <button class="btn primary big" id="btn-create" type="button">Create a room</button>
+                <div class="divider">OR JOIN A FRIEND</div>
+                <div class="join-row">
+                    <input class="field" id="code" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false">
+                    <button class="btn" id="btn-join" type="button">Join</button>
+                </div>
+                <button class="btn big" id="btn-solo" type="button">Play solo against bots</button>
+            </div>
+            <div id="menu-status" class="status"></div>
+        </div>
+    </div>
+
+    <!-- Lobby -->
+    <div id="lobby" class="screen hidden">
+        <div class="panel lobby-panel">
+            <div class="room-box">
+                <small>Room code</small>
+                <div class="room-code" id="room-code">-----</div>
+                <button class="btn" id="btn-copy" type="button">Copy invite link</button>
+            </div>
+            <div class="section-title">Players <small id="count">1/8</small></div>
+            <ul class="players" id="players"></ul>
+            <div class="lobby-actions">
+                <button class="btn host-only" id="btn-bot" type="button">Add a bot</button>
+                <button class="btn primary big client-only" id="btn-ready" type="button">Ready up</button>
+                <button class="btn primary big host-only" id="btn-start" type="button">Start game</button>
+                <div id="lobby-status" class="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game screen -->
+    <div id="game" class="screen hidden">
+        <div class="game-layout">
+            <!-- Game info bar -->
+            <div class="game-bar">
+                <div class="game-info">
+                    <span class="chip">Round <b id="round-num">1/10</b></span>
+                    <span class="chip"><b id="drawer-name">Drawing...</b></span>
+                </div>
+                <div class="timer-big" id="timer">60</div>
+                <div class="hint-display" id="hint">_ _ _ _ _</div>
+            </div>
+
+            <!-- Drawing canvas area -->
+            <div class="canvas-wrap">
+                <canvas id="draw-canvas" width="600" height="400"></canvas>
+            </div>
+
+            <!-- Toolbar (drawer only) -->
+            <div id="toolbar" class="toolbar hidden">
+                <div class="tool-group">
+                    <div id="color-row" class="color-row"></div>
+                </div>
+                <div class="tool-group">
+                    <div id="size-row" class="size-row"></div>
+                    <button class="tool-btn" id="tool-eraser" type="button">Eraser</button>
+                    <button class="tool-btn" id="tool-fill" type="button">Fill</button>
+                    <button class="tool-btn" id="tool-undo" type="button">Undo</button>
+                    <button class="tool-btn danger" id="tool-clear" type="button">Clear</button>
+                </div>
+            </div>
+
+            <!-- Word choice (drawer only, overlay) -->
+            <div id="word-choice" class="word-choice hidden">
+                <div class="kicker">Choose a word to draw</div>
+                <div class="word-cards" id="word-cards"></div>
+            </div>
+
+            <!-- Chat / guess area -->
+            <div class="chat-area">
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-row">
+                    <input class="field" id="chat-input" maxlength="60" placeholder="Type your guess..." autocomplete="off" spellcheck="false">
+                    <button class="btn" id="btn-send" type="button">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="screen dim hidden">
+        <div class="panel results-panel">
+            <div class="kicker">Game over</div>
+            <h2 id="results-title">Final Scores</h2>
+            <ol class="results-list" id="results-list"></ol>
+            <div class="results-actions">
+                <button class="btn primary host-only" id="btn-again" type="button">Back to the lobby</button>
+                <span class="status client-only">Waiting for the host...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toasts"></div>
+
+    <script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>
