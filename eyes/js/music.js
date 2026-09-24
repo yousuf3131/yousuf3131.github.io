@@ -1,6 +1,6 @@
 // Procedural background music for Eyes & Legs. Quiet and a little mysterious, so the pings stay easy to hear.
 
-import { getCtx, getMaster } from './audio.js?v=1';
+import { getCtx, getMaster } from './audio.js?v=2';
 
 let musicGain = null;
 let current = null;

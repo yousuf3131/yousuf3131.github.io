@@ -11,7 +11,7 @@
 // streaming them. Switches the guide flips can pause hazards; that shifts a hazard's own clock.
 
 export const T = 2;              // tile size in world units
-export const LIGHT_R = 4.6;      // radius of the walker's pool of light
+export const LIGHT_R = 1.7;      // radius of the walker's light: just themselves, the dark hides everything else
 export const PIVOT_Y = 4.4;      // hammer pivot height
 export const CRUSH_TOP = 3.2;    // crusher resting height (bottom face)
 export const WALKER_R = 0.32;

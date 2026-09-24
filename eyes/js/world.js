@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {
     T, LIGHT_R, PIVOT_Y, SWITCH_COLORS, hazTime, hammerAngle, bladeAngle, laserOn, laserWarn,
     crusherY, crusherWarn, platPos, dynPhase, switchActive, isPaused,
-} from './levels.js?v=1';
+} from './levels.js?v=2';
 
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
