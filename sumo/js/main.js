@@ -1,9 +1,9 @@
 // Sumo Smash: online multiplayer arena brawler.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=3';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=3';
-import { play as playMusic, stop as stopMusic } from './music.js?v=3';
-import * as gfx from './gfx.js?v=3';
+import { HostNet, ClientNet, makeCode } from './net.js?v=4';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=4';
+import { play as playMusic, stop as stopMusic } from './music.js?v=4';
+import * as gfx from './gfx.js?v=4';
 
 const MAX_PLAYERS = 8;
 const BEST_OF = 5;
@@ -126,6 +126,8 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s; re
 // Messaging
 // ============================================================
 function act(msg) { if (role === 'client') net.send(msg); else hostHandle(myId, msg); }
+// Read-only peek at your own wrestler for automated tests; only exists with #debug in the URL
+if (location.hash === '#debug') window.sumoDebug = () => (me ? { dashing: me.dashing, dashCd: me.dashCd, alive: me.alive, x: me.x, z: me.z } : null);
 function emit(msg) { if (role === 'host' && net) net.broadcast(msg); clientHandle(msg); }
 
 // ============================================================
@@ -309,7 +311,8 @@ function hostUpdate(dt) {
             // Attack
             const a = Math.atan2(nearP.z - p.z, nearP.x - p.x);
             if (Math.random() > 0.2) { // 80% accuracy
-                act({ t: 'dash', dx: Math.cos(a), dz: Math.sin(a) });
+                // Dash as the bot itself (act() would send it as the host's own player)
+                hostHandle(id, { t: 'dash', dx: Math.cos(a), dz: Math.sin(a) });
             }
             p.botTargetX = Math.cos(a); p.botTargetZ = Math.sin(a);
         } else if (nearP) {
