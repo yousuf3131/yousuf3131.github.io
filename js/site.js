@@ -71,8 +71,8 @@
                 `<small>&copy; ${new Date().getFullYear()} Yousuf Kazmi</small>` +
                 '<div class="socials">' +
                     `<a href="https://github.com/yousuf3131" target="_blank" rel="noopener" aria-label="GitHub">${icons.github}</a>` +
-                    `<a href="https://www.linkedin.com/in/yousufkazmi/" target="_blank" rel="noopener" aria-label="LinkedIn">${icons.linkedin}</a>` +
-                    `<a href="mailto:yousufkazmi3131@gmail.com" aria-label="Email">${icons.mail}</a>` +
+                    `<a href="https://www.linkedin.com/in/yoahka/" target="_blank" rel="noopener" aria-label="LinkedIn">${icons.linkedin}</a>` +
+                    `<a href="mailto:yousufsak99@gmail.com" aria-label="Email">${icons.mail}</a>` +
                 '</div>' +
             '</div>';
     }
