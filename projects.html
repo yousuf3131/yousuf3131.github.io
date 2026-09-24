@@ -16,12 +16,20 @@
             <div class="container">
                 <span class="eyebrow">Projects</span>
                 <h1>Things I've built</h1>
-                <p>A mix of production apps, internal tools and side projects.</p>
+                <p>Production apps and tools, plus a collection of online multiplayer games built from scratch.</p>
+                <p class="jump-links"><a href="#products">Products and tools</a> <span aria-hidden="true">&middot;</span> <a href="#games">Games</a></p>
             </div>
         </section>
 
-        <section class="section" style="padding-top:0;">
-            <div class="container grid">
+        <section class="section" id="products" style="padding-top:0;">
+            <div class="container">
+                <div class="section-head">
+                    <div>
+                        <span class="eyebrow">Products and tools</span>
+                        <h2>Real-world apps</h2>
+                    </div>
+                </div>
+                <div class="grid">
                 <article class="card project-card">
                     <div class="thumb logo-light"><img src="assets/myazancast-logo.png" alt="MyAzanCast logo"></div>
                     <h3>MyAzanCast</h3>
@@ -46,6 +54,28 @@
                     <a href="https://awspractice.io" target="_blank" rel="noopener" class="card-link">Visit site &rarr;</a>
                 </article>
 
+                <article class="card project-card">
+                    <div class="thumb">
+                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="8" y="12" width="48" height="36" rx="4"/><path d="M8 22h48M22 56h20M32 48v8"/><path d="M18 32l6 5-6 5M30 42h12"/></svg>
+                    </div>
+                    <h3>Work Support App</h3>
+                    <ul class="tags"><li class="tag">Internal tool</li><li class="tag">Automation</li></ul>
+                    <p>An internal tool for faster ticket management and daily task automation, including text generators, database search, file search and project tracking.</p>
+                </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="games">
+            <div class="container">
+                <div class="section-head">
+                    <div>
+                        <span class="eyebrow">Games</span>
+                        <h2>Play in your browser</h2>
+                        <p class="muted" style="margin:6px 0 0;">Online multiplayer with friends on phone or PC. No install, no account: create a room and share the link.</p>
+                    </div>
+                </div>
+                <div class="grid">
                 <article class="card project-card">
                     <div class="thumb"><img src="assets/race-logo.svg" alt="Bonk Racers game logo"></div>
                     <h3>Bonk Racers</h3>
@@ -104,21 +134,13 @@
 
                 <article class="card project-card">
                     <div class="thumb">
-                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="8" y="12" width="48" height="36" rx="4"/><path d="M8 22h48M22 56h20M32 48v8"/><path d="M18 32l6 5-6 5M30 42h12"/></svg>
-                    </div>
-                    <h3>Work Support App</h3>
-                    <ul class="tags"><li class="tag">Internal tool</li><li class="tag">Automation</li></ul>
-                    <p>An internal tool for faster ticket management and daily task automation, including text generators, database search, file search and project tracking.</p>
-                </article>
-
-                <article class="card project-card">
-                    <div class="thumb">
                         <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M22 10v44M42 10v44M22 20h20M22 32h20M22 44h20"/></svg>
                     </div>
                     <h3>Word Ladder Game</h3>
                     <ul class="tags"><li class="tag">C++</li><li class="tag">CLI</li></ul>
                     <p>A command-line word ladder game built in C++ with custom functions like <code>strCmpCnt</code> and <code>strCmpInd</code> to build and validate word ladders.</p>
                 </article>
+                </div>
             </div>
         </section>
     </main>

@@ -74,6 +74,10 @@ p { margin: 0 0 1em; }
 
 .page-head { padding: 64px 0 32px; }
 .page-head p { color: var(--muted); max-width: 620px; font-size: 1.1rem; }
+.jump-links { display: flex; gap: 10px; align-items: center; font-weight: 600; font-size: 0.98rem; }
+.jump-links span { color: var(--border); }
+html { scroll-behavior: smooth; }
+section[id] { scroll-margin-top: 84px; } /* keep headings clear of the sticky header */
 
 .eyebrow {
     display: inline-block;
