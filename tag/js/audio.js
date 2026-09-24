@@ -90,6 +90,31 @@ export const sfx = {
         tone(800, 800, 0.08, 'triangle', 0.1, 0.14);
         tone(1000, 1000, 0.12, 'triangle', 0.1, 0.21);
     },
+    hit: () => {
+        // You tagged someone: bright rising two-step
+        tone(520, 1040, 0.12, 'square', 0.09);
+        tone(780, 1560, 0.16, 'triangle', 0.12, 0.07);
+        noise(0.08, 0.1, 2500, 2);
+    },
+    youreIt: () => {
+        // You became IT: two-tone siren over a low thud
+        tone(880, 440, 0.22, 'sawtooth', 0.12);
+        tone(880, 440, 0.22, 'sawtooth', 0.12, 0.26);
+        tone(120, 50, 0.4, 'sine', 0.3);
+        noise(0.25, 0.14, 400, 1.5);
+    },
+    tick: () => tone(1250, 1250, 0.05, 'square', 0.05),
+    win: () => {
+        tone(523, 523, 0.14, 'triangle', 0.12);
+        tone(659, 659, 0.14, 'triangle', 0.12, 0.12);
+        tone(784, 784, 0.14, 'triangle', 0.12, 0.24);
+        tone(1047, 1047, 0.3, 'triangle', 0.13, 0.36);
+    },
+    lose: () => {
+        tone(392, 392, 0.16, 'triangle', 0.1);
+        tone(330, 330, 0.16, 'triangle', 0.1, 0.15);
+        tone(262, 200, 0.4, 'triangle', 0.1, 0.3);
+    },
     count: () => {
         // Countdown beep
         tone(520, 520, 0.18, 'square', 0.08);
