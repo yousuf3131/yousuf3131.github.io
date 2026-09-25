@@ -14,16 +14,16 @@ import { tiltAmount, tiltToSteer } from './tilt.js';
 /* ── constants ─────────────────────────────────────────── */
 const MAX_PLAYERS = 8;
 const BEST_OF     = 5;
-const BASE_SPEED  = 20;
-const BOOST_SPEED = 30;
+const BASE_SPEED  = 40;
+const BOOST_SPEED = 60;
 const BOOST_DUR   = 2;
 const BOOST_MAX   = 3;
 const TURN_RATE   = 3.0;
 const TURN_RATE_BOOST = 2.1;
-const TRAIL_H     = 1.2;
-const TRAIL_SAMPLE_DIST = 1.5;
+const TRAIL_H     = 2.5;
+const TRAIL_SAMPLE_DIST = 2.5;
 const TRAIL_TURN_THRESH = 0.04;
-const MAX_TRAIL_PTS = 2000;
+const MAX_TRAIL_PTS = 6000;
 const SKIP_SELF_SEGS = 5;
 const GRID_SIZE   = 5;
 const SEND_EVERY  = 0.05;
@@ -39,14 +39,14 @@ const BOT_NAMES = ['Tron','Quorra','Rinzler','CLU','Flynn','Sark','Ram','Yori'];
 
 /* ── arenas ────────────────────────────────────────────── */
 const ARENAS = [
-    { id:'classic', name:'Classic Grid', w:80, h:60, walls:[], theme:{ grid:0x00ccff, wall:0x00ffff, floor:0x060618, fog:0x020210 } },
-    { id:'maze', name:'The Maze', w:90, h:70,
-      walls:[ {x1:-15,z1:-25,x2:-15,z2:5},{x1:15,z1:-5,x2:15,z2:25},{x1:-30,z1:10,x2:-10,z2:10},{x1:10,z1:-10,x2:30,z2:-10},{x1:0,z1:-20,x2:0,z2:-5},{x1:-5,z1:15,x2:10,z2:15} ],
+    { id:'classic', name:'Classic Grid', w:240, h:180, walls:[], theme:{ grid:0x00ccff, wall:0x00ffff, floor:0x060618, fog:0x020210 } },
+    { id:'maze', name:'The Maze', w:260, h:200,
+      walls:[ {x1:-45,z1:-75,x2:-45,z2:15},{x1:45,z1:-15,x2:45,z2:75},{x1:-90,z1:30,x2:-30,z2:30},{x1:30,z1:-30,x2:90,z2:-30},{x1:0,z1:-60,x2:0,z2:-15},{x1:-15,z1:45,x2:30,z2:45} ],
       theme:{ grid:0xff00ff, wall:0xff44ff, floor:0x0a0418, fog:0x060210 } },
-    { id:'corridors', name:'Corridors', w:100, h:80,
-      walls:[ {x1:-20,z1:-30,x2:-20,z2:-5},{x1:20,z1:5,x2:20,z2:30},{x1:-35,z1:0,x2:-10,z2:0},{x1:10,z1:0,x2:35,z2:0},{x1:-20,z1:20,x2:20,z2:20},{x1:-20,z1:-20,x2:20,z2:-20} ],
+    { id:'corridors', name:'Corridors', w:300, h:240,
+      walls:[ {x1:-60,z1:-90,x2:-60,z2:-15},{x1:60,z1:15,x2:60,z2:90},{x1:-105,z1:0,x2:-30,z2:0},{x1:30,z1:0,x2:105,z2:0},{x1:-60,z1:60,x2:60,z2:60},{x1:-60,z1:-60,x2:60,z2:-60} ],
       theme:{ grid:0xffaa00, wall:0xff8800, floor:0x0a0800, fog:0x060400 } },
-    { id:'shift', name:'Moving Walls', w:85, h:65, walls:'dynamic',
+    { id:'shift', name:'Moving Walls', w:250, h:200, walls:'dynamic',
       theme:{ grid:0x44ff44, wall:0x22ff66, floor:0x040a04, fog:0x020602 } },
 ];
 
@@ -68,7 +68,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene  = new THREE.Scene();
 scene.background = new THREE.Color(0x020208);
-scene.fog = new THREE.Fog(0x020208, 80, 200);
+scene.fog = new THREE.Fog(0x020208, 120, 400);
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.5, 500);
 camera.position.set(0, 50, 35);
@@ -105,6 +105,8 @@ let net = null, gameActive = false, paused = false;
 const players = new Map();
 let me = null;
 let shake = 0;
+let camAngle = 0;
+let camSide = 0;
 
 /* host-only state */
 const H = {
@@ -439,11 +441,11 @@ function nextRound() {
 
 function generateDynamicWalls(arena) {
     const walls = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
         const vertical = Math.random() > 0.5;
-        const len = 10 + Math.random() * 15;
-        const cx = (Math.random() - 0.5) * (arena.w - 20);
-        const cz = (Math.random() - 0.5) * (arena.h - 20);
+        const len = 30 + Math.random() * 45;
+        const cx = (Math.random() - 0.5) * (arena.w - 60);
+        const cz = (Math.random() - 0.5) * (arena.h - 60);
         if (vertical) walls.push({ x1: cx, z1: cz - len / 2, x2: cx, z2: cz + len / 2 });
         else walls.push({ x1: cx - len / 2, z1: cz, x2: cx + len / 2, z2: cz });
     }
@@ -479,7 +481,7 @@ function roundStart(msg) {
         if (p.model) scene.remove(p.model);
         p.model = buildCycle(s.color);
         p.model.position.set(s.x, 0, s.z);
-        p.model.rotation.y = -s.h + Math.PI / 2;
+        p.model.rotation.y = -s.h;
         scene.add(p.model);
 
         // Build trail mesh
@@ -508,7 +510,7 @@ function buildArena(arena) {
     scene.fog.color.set(theme.fog);
 
     // floor
-    const floorGeo = new THREE.PlaneGeometry(arena.w + 30, arena.h + 30);
+    const floorGeo = new THREE.PlaneGeometry(arena.w + 60, arena.h + 60);
     const floorMat = new THREE.ShaderMaterial({
         uniforms: { uGridColor: { value: gridColor }, uAlpha: { value: 0.3 } },
         vertexShader: FLOOR_VERT,
@@ -522,7 +524,7 @@ function buildArena(arena) {
 
     // dark floor base
     const baseMat = new THREE.MeshBasicMaterial({ color: theme.floor });
-    const baseGeo = new THREE.PlaneGeometry(arena.w + 30, arena.h + 30);
+    const baseGeo = new THREE.PlaneGeometry(arena.w + 60, arena.h + 60);
     const base = new THREE.Mesh(baseGeo, baseMat);
     base.rotation.x = -Math.PI / 2;
     base.position.y = -0.02;
@@ -680,72 +682,208 @@ function updateTrailMeshWithGaps(p) {
     updateTrailMesh(p);
 }
 
-/* ── lightcycle model ──────────────────────────────────── */
+/* ── lightcycle model (inspired by Bonk Racers dirt bike) ─ */
 function buildCycle(color) {
     const group = new THREE.Group();
     const c = new THREE.Color(color);
+    const S = 1.8; // scale up for visibility at chase cam distance
 
-    const bodyMat = new THREE.MeshStandardMaterial({
-        color: c, emissive: c, emissiveIntensity: 0.8,
-        metalness: 0.7, roughness: 0.3,
+    const paint = new THREE.MeshStandardMaterial({
+        color: c, emissive: c, emissiveIntensity: 0.7,
+        metalness: 0.5, roughness: 0.35,
     });
-    const darkMat = new THREE.MeshStandardMaterial({
-        color: 0x111122, emissive: c, emissiveIntensity: 0.15,
-        metalness: 0.5, roughness: 0.5,
+    const chrome = new THREE.MeshStandardMaterial({
+        color: 0xd8dde3, emissive: c, emissiveIntensity: 0.15,
+        roughness: 0.15, metalness: 0.9,
     });
+    const dark = new THREE.MeshStandardMaterial({
+        color: 0x111122, emissive: c, emissiveIntensity: 0.1,
+        metalness: 0.4, roughness: 0.6,
+    });
+    const tireMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a1a, roughness: 0.9, metalness: 0,
+    });
+    const glowMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85 });
 
-    // Main body
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 2.2), bodyMat);
-    body.position.y = 0.55;
-    group.add(body);
+    // Frame tubes (main spine)
+    const frameTube = (x1,y1,z1,x2,y2,z2,r) => {
+        const len = Math.hypot(x2-x1,y2-y1,z2-z1);
+        const geo = new THREE.CylinderGeometry(r*S, r*S, len, 8);
+        const m = new THREE.Mesh(geo, chrome);
+        m.position.set((x1+x2)/2*S,(y1+y2)/2*S,(z1+z2)/2*S);
+        const dir = new THREE.Vector3(x2-x1,y2-y1,z2-z1).normalize();
+        m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+        return m;
+    };
 
-    // Front fairing (narrower wedge)
-    const frontGeo = new THREE.BoxGeometry(0.3, 0.3, 0.8);
-    const front = new THREE.Mesh(frontGeo, bodyMat);
-    front.position.set(0, 0.55, 1.3);
-    group.add(front);
+    // Main frame
+    group.add(frameTube(-0.8,0.5,0, 0.5,0.7,0, 0.03));  // lower tube
+    group.add(frameTube(-0.4,0.5,0, 0.2,1.1,0, 0.03));   // seat tube
+    group.add(frameTube(0.2,1.1,0, 0.7,1.0,0, 0.025));   // top tube to steering
+    group.add(frameTube(0.7,1.0,0, 0.9,0.45,0, 0.025));   // fork
+
+    // Tank (fuel tank shape)
+    const tank = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22*S, 10, 8),
+        paint
+    );
+    tank.scale.set(1.6, 0.7, 0.9);
+    tank.position.set(0.15*S, 0.85*S, 0);
+    group.add(tank);
+
+    // Seat
+    const seat = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5*S, 0.08*S, 0.28*S, 1, 1, 1),
+        dark
+    );
+    seat.position.set(-0.15*S, 0.78*S, 0);
+    group.add(seat);
+
+    // Engine block
+    const engine = new THREE.Mesh(
+        new THREE.BoxGeometry(0.28*S, 0.22*S, 0.24*S),
+        dark
+    );
+    engine.position.set(0.05*S, 0.45*S, 0);
+    group.add(engine);
+
+    // Exhaust pipe glow
+    const exhaust = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03*S, 0.04*S, 0.6*S, 8),
+        glowMat
+    );
+    exhaust.position.set(-0.65*S, 0.38*S, 0.13*S);
+    exhaust.rotation.z = Math.PI/2 + 0.15;
+    group.add(exhaust);
 
     // Front wheel
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: c, emissiveIntensity: 0.3 });
-    const fw = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.07, 8, 16), wheelMat);
-    fw.rotation.y = Math.PI / 2;
-    fw.position.set(0, 0.32, 1.1);
-    group.add(fw);
+    const wheelR = 0.38 * S;
+    const fwTire = new THREE.Mesh(new THREE.TorusGeometry(wheelR, 0.06*S, 10, 24), tireMat);
+    fwTire.rotation.y = Math.PI/2;
+    fwTire.position.set(0.9*S, wheelR, 0);
+    group.add(fwTire);
+    const fwRim = new THREE.Mesh(new THREE.TorusGeometry(wheelR*0.65, 0.02*S, 6, 20), chrome);
+    fwRim.rotation.y = Math.PI/2;
+    fwRim.position.copy(fwTire.position);
+    group.add(fwRim);
+    // Spokes
+    for (let i = 0; i < 8; i++) {
+        const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.008*S,0.008*S,wheelR*1.6,4), chrome);
+        spoke.rotation.z = (i/8)*Math.PI;
+        spoke.position.copy(fwTire.position);
+        spoke.rotation.y = Math.PI/2;
+        group.add(spoke);
+    }
 
     // Rear wheel
-    const rw = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 8, 16), wheelMat);
-    rw.rotation.y = Math.PI / 2;
-    rw.position.set(0, 0.35, -0.8);
-    group.add(rw);
+    const rwR = 0.4 * S;
+    const rwTire = new THREE.Mesh(new THREE.TorusGeometry(rwR, 0.08*S, 10, 24), tireMat);
+    rwTire.rotation.y = Math.PI/2;
+    rwTire.position.set(-0.85*S, rwR, 0);
+    group.add(rwTire);
+    const rwRim = new THREE.Mesh(new THREE.TorusGeometry(rwR*0.6, 0.025*S, 6, 20), chrome);
+    rwRim.rotation.y = Math.PI/2;
+    rwRim.position.copy(rwTire.position);
+    group.add(rwRim);
+    for (let i = 0; i < 8; i++) {
+        const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.008*S,0.008*S,rwR*1.5,4), chrome);
+        spoke.rotation.z = (i/8)*Math.PI;
+        spoke.position.copy(rwTire.position);
+        spoke.rotation.y = Math.PI/2;
+        group.add(spoke);
+    }
 
+    // Front fender
+    const fender = new THREE.Mesh(
+        new THREE.SphereGeometry(wheelR + 0.04*S, 8, 6, 0, Math.PI),
+        paint
+    );
+    fender.scale.set(0.5, 1, 1);
+    fender.rotation.x = Math.PI;
+    fender.position.copy(fwTire.position);
+    fender.position.y += 0.12*S;
+    group.add(fender);
+
+    // Handlebars
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.015*S,0.015*S,0.5*S,6), chrome);
+    bar.rotation.z = Math.PI/2;
+    bar.position.set(0.72*S, 1.08*S, 0);
+    group.add(bar);
+    // Handlebar grips
+    const gripL = new THREE.Mesh(new THREE.CylinderGeometry(0.025*S,0.025*S,0.08*S,6), dark);
+    gripL.rotation.z = Math.PI/2;
+    gripL.position.set(0.72*S, 1.08*S, 0.27*S);
+    group.add(gripL);
+    const gripR = gripL.clone();
+    gripR.position.z = -0.27*S;
+    group.add(gripR);
+
+    // Headlight
+    const headlight = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06*S, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 2 })
+    );
+    headlight.position.set(0.82*S, 0.95*S, 0);
+    group.add(headlight);
+
+    // Rider
+    const suitMat = new THREE.MeshStandardMaterial({
+        color: 0x0a0a14, emissive: c, emissiveIntensity: 0.08,
+        roughness: 0.7, metalness: 0.2,
+    });
     // Rider torso
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.45), darkMat);
-    torso.position.set(0, 1.05, -0.05);
-    torso.rotation.x = -0.3;
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.12*S, 0.3*S, 4, 8), suitMat);
+    torso.position.set(-0.0*S, 1.15*S, 0);
+    torso.rotation.z = 0.35; // lean forward
     group.add(torso);
-
-    // Head
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), darkMat);
-    head.position.set(0, 1.38, 0.12);
-    group.add(head);
-
+    // Head with helmet
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.11*S, 8, 8), paint);
+    helmet.position.set(0.18*S, 1.4*S, 0);
+    group.add(helmet);
     // Visor
     const visor = new THREE.Mesh(
-        new THREE.BoxGeometry(0.3, 0.06, 0.02),
+        new THREE.BoxGeometry(0.04*S, 0.05*S, 0.2*S),
         new THREE.MeshBasicMaterial({ color: c })
     );
-    visor.position.set(0, 1.36, 0.27);
+    visor.position.set(0.28*S, 1.38*S, 0);
     group.add(visor);
+    // Arms (simple capsules reaching to handlebars)
+    const armMat = suitMat;
+    for (const side of [-1, 1]) {
+        const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.04*S, 0.35*S, 3, 6), armMat);
+        arm.position.set(0.35*S, 1.2*S, side*0.14*S);
+        arm.rotation.z = 0.8;
+        group.add(arm);
+    }
+    // Legs
+    for (const side of [-1, 1]) {
+        const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.05*S, 0.25*S, 3, 6), suitMat);
+        thigh.position.set(-0.15*S, 0.72*S, side*0.12*S);
+        thigh.rotation.z = -0.3;
+        group.add(thigh);
+        const boot = new THREE.Mesh(new THREE.BoxGeometry(0.12*S, 0.06*S, 0.08*S),
+            new THREE.MeshStandardMaterial({ color: 0x1a1210, roughness: 0.7 }));
+        boot.position.set(0.05*S, 0.42*S, side*0.13*S);
+        group.add(boot);
+    }
 
-    // Engine glow (rear)
-    const engineGlow = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2, 0.15, 0.1),
-        new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.8 })
+    // Neon underglow strip
+    const underglow = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6*S, 0.02*S, 0.04*S),
+        glowMat
     );
-    engineGlow.position.set(0, 0.5, -1.25);
+    underglow.position.set(0, 0.08*S, 0);
+    group.add(underglow);
+
+    // Engine glow (rear exhaust tip)
+    const engineGlow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05*S, 6, 6),
+        glowMat
+    );
+    engineGlow.position.set(-0.95*S, 0.35*S, 0.13*S);
     group.add(engineGlow);
 
-    group.userData = { wheelFront: fw, wheelRear: rw, color: c, engineGlow };
+    group.userData = { wheelFront: fwTire, wheelRear: rwTire, color: c, engineGlow, fwRim, rwRim };
     return group;
 }
 
@@ -1165,7 +1303,7 @@ function render(dt) {
         if (!p.model) continue;
         if (p.alive) {
             p.model.position.set(p.x, 0, p.z);
-            p.model.rotation.y = -p.h + Math.PI / 2;
+            p.model.rotation.y = -p.h;
             // Wheel spin
             const spinRate = p.speed * 2.5;
             if (p.model.userData.wheelFront) p.model.userData.wheelFront.rotation.x += spinRate * dt;
@@ -1190,28 +1328,51 @@ function render(dt) {
         m.position.y = 0.8 + Math.sin(performance.now() / 400) * 0.2;
     }
 
-    // Camera
+    // Chase camera (Bonk Racers style)
     if (me && me.alive) {
-        const aspect = camera.aspect;
-        const camDist = aspect < 1 ? 55 : 45;
-        const camH = aspect < 1 ? 50 : 40;
-        const lookX = me.x + Math.cos(me.h) * 5;
-        const lookZ = me.z + Math.sin(me.h) * 5;
-        camera.position.x += (me.x - Math.cos(me.h) * 8 - camera.position.x) * (1 - Math.exp(-4 * dt));
-        camera.position.z += (me.z - Math.sin(me.h) * 8 + 15 - camera.position.z) * (1 - Math.exp(-4 * dt));
-        camera.position.y += (camH - camera.position.y) * (1 - Math.exp(-4 * dt));
-        camera.lookAt(lookX, 0, lookZ);
-        // FOV expansion on boost
-        const targetFov = me.boosting ? 65 : 55;
+        // Smooth camera heading — lags behind the cycle for speed feel
+        camAngle += (((-me.h + Math.PI / 2) - camAngle + Math.PI * 3) % (Math.PI * 2) - Math.PI) * (1 - Math.exp(-3.6 * dt));
+
+        const spd01 = Math.min(me.speed / BOOST_SPEED, 1.4);
+        const boostKick = me.boosting ? 1 : 0;
+
+        // Distance behind: pulls back at higher speed
+        const back = 10 + spd01 * 2 - boostKick * 2;
+        // Height above ground
+        const height = 4.5 - boostKick * 0.4;
+        // Side sway from turning
+        camSide += (-me.turnInput * spd01 * 1.2 - camSide) * (1 - Math.exp(-3 * dt));
+
+        const rx = Math.cos(camAngle + Math.PI);
+        const rz = Math.sin(camAngle + Math.PI);
+        const perpX = -rz, perpZ = rx;
+
+        const tx = me.x + rx * back + perpX * camSide;
+        const tz = me.z + rz * back + perpZ * camSide;
+        const ty = height;
+
+        camera.position.x += (tx - camera.position.x) * (1 - Math.exp(-8 * dt));
+        camera.position.y += (ty - camera.position.y) * (1 - Math.exp(-8 * dt));
+        camera.position.z += (tz - camera.position.z) * (1 - Math.exp(-8 * dt));
+
+        // Look ahead of the cycle
+        const lookX = me.x + Math.cos(-camAngle + Math.PI / 2) * 8;
+        const lookZ = me.z + Math.sin(-camAngle + Math.PI / 2) * 8;
+        camera.lookAt(lookX, 1.5, lookZ);
+
+        // Dynamic FOV
+        const targetFov = 62 + spd01 * 11 + boostKick * 11;
         camera.fov += (targetFov - camera.fov) * (1 - Math.exp(-5 * dt));
         camera.updateProjectionMatrix();
     } else if (currentArena) {
-        // Overview
+        // Overview when dead
         const cx = 0, cz = 0;
         camera.position.x += (cx - camera.position.x) * (1 - Math.exp(-2 * dt));
-        camera.position.z += (cz + 20 - camera.position.z) * (1 - Math.exp(-2 * dt));
-        camera.position.y += (60 - camera.position.y) * (1 - Math.exp(-2 * dt));
+        camera.position.z += (cz + 40 - camera.position.z) * (1 - Math.exp(-2 * dt));
+        camera.position.y += (100 - camera.position.y) * (1 - Math.exp(-2 * dt));
         camera.lookAt(cx, 0, cz);
+        camera.fov += (55 - camera.fov) * (1 - Math.exp(-3 * dt));
+        camera.updateProjectionMatrix();
     }
 
     // Screen shake
@@ -1276,7 +1437,7 @@ function showResults(list) {
         li.innerHTML = `<span class="place">${p.place}</span><span class="dot" style="background:${p.color}"></span><b>${esc(p.name)}</b><span class="score">${p.wins} wins</span>`;
         ol.appendChild(li);
     }
-    $('results-title').textContent = list[0]?.name + ' wins!';
+    $('results-title').textContent = (list[0] ? list[0].name : 'Nobody') + ' wins!';
 }
 
 /* ── lobby / menu ──────────────────────────────────────── */
