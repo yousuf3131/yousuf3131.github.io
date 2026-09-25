@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../js/analytics.js?v=2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Deadline - Yousuf Kazmi</title>
+    <meta name="description" content="Tron-style lightcycle arena for up to 8 players. Leave glowing trails, dodge walls, and be the last one riding!">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --accent: #00e5ff;
+            --accent-ink: #001a1f;
+            --accent2: #ff00ff;
+            --warn: #ffea00;
+            --bad: #ff3344;
+            --panel: rgba(2, 8, 20, 0.85);
+            --panel-2: rgba(0, 229, 255, 0.05);
+            --line: rgba(0, 229, 255, 0.15);
+            --text: #e0f7ff;
+            --muted: #5aa8b8;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #010208; color: var(--text); font-family: 'Inter', system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+        #c { display: block; width: 100vw; height: 100vh; touch-action: none; }
+        .hidden { display: none !important; }
+        h1, h2, h3 { margin: 0; }
+        button { font-family: inherit; cursor: pointer; }
+        .display { font-family: 'Bungee', 'Inter', sans-serif; letter-spacing: 0.02em; }
+        .screen { position: fixed; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding: 16px; overflow: auto; }
+        .screen > .panel { margin-block: auto; }
+        @media (max-height: 520px) { .screen { padding-top: 58px; } }
+        .screen.dim { background: radial-gradient(ellipse at center, rgba(0, 5, 15, 0.35), rgba(0, 5, 15, 0.72)); }
+        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; backdrop-filter: blur(10px); box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,255,0.05); }
+        .btn { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-weight: 700; font-size: 0.95rem; padding: 11px 18px; border-radius: 12px; transition: transform 0.12s, background-color 0.2s, border-color 0.2s; }
+        .btn:hover { border-color: var(--accent); }
+        .btn:active { transform: translateY(1px); }
+        .btn.primary { background: var(--accent); color: #000; border-color: transparent; font-weight: 800; }
+        .btn.primary:hover { background: #33ecff; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn.big { width: 100%; font-size: 1.02rem; padding: 14px 20px; }
+        .field { width: 100%; font: 600 1rem 'Inter', sans-serif; color: var(--text); background: rgba(0,0,0,0.5); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; outline: none; -webkit-user-select: text; user-select: text; }
+        .field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,255,0.18); }
+        .kicker { color: var(--accent); font-weight: 800; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; }
+        .status { min-height: 1.3em; color: var(--muted); font-size: 0.88rem; }
+        .status.error { color: #ff8a80; }
+        body.is-host .client-only { display: none !important; }
+        body:not(.is-host) .host-only { display: none !important; }
+
+        .menu-panel { width: 100%; max-width: 420px; padding: 30px 26px; text-align: center; }
+        .logo { font-family: 'Bungee', sans-serif; font-size: clamp(2.4rem, 10vw, 3.4rem); line-height: 0.95; color: var(--accent); text-shadow: 0 0 20px rgba(0,229,255,0.5), 0 0 60px rgba(0,229,255,0.2); }
+        .logo span { display: block; color: var(--accent2); font-size: 0.45em; letter-spacing: 0.2em; text-shadow: 0 0 20px rgba(255,0,255,0.5), 0 0 60px rgba(255,0,255,0.2); }
+        .tagline { color: var(--muted); margin: 14px auto 20px; max-width: 330px; line-height: 1.5; }
+        .menu-form { display: grid; gap: 10px; text-align: left; margin-bottom: 10px; }
+        .menu-form label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+        .join-row { display: flex; gap: 8px; }
+        .join-row .field { text-transform: uppercase; letter-spacing: 0.3em; font-weight: 800; text-align: center; }
+        .divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.15em; margin: 6px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+        .invite { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.3); color: #a0eeff; border-radius: 12px; padding: 10px 12px; font-weight: 600; font-size: 0.9rem; margin-bottom: 14px; }
+
+        .lobby-panel { width: 100%; max-width: 440px; padding: 22px; }
+        .room-box { background: rgba(0,0,0,0.4); border: 1px dashed rgba(0,229,255,0.25); border-radius: 14px; padding: 12px; text-align: center; margin-bottom: 14px; }
+        .room-box small { color: var(--muted); font-weight: 800; font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; }
+        .room-code { font-family: 'Bungee', sans-serif; font-size: 2rem; letter-spacing: 0.12em; color: var(--accent); margin: 2px 0 8px; }
+        .section-title { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; margin-bottom: 8px; }
+        .section-title small { color: var(--muted); font-weight: 700; }
+        .players { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; margin-bottom: 14px; }
+        .player { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--panel-2); border: 1px solid transparent; font-size: 0.9rem; }
+        .player.me { border-color: rgba(0,229,255,0.4); }
+        .player .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .player .who { flex: 1; }
+        .player .who b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .badge { font-size: 0.64rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--muted); text-transform: uppercase; }
+        .badge.ok { background: rgba(0,229,255,0.15); color: var(--accent); }
+        .badge.host { background: rgba(255,234,0,0.16); color: var(--warn); }
+        .lobby-actions { display: grid; gap: 8px; }
+        .chip { background: rgba(0,0,0,0.5); border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; font-weight: 800; font-size: 0.85rem; color: var(--muted); }
+        .chip b { color: #fff; }
+
+        /* HUD */
+        #hud { position: fixed; inset: 0; pointer-events: none; }
+        .hud-tl { position: absolute; top: 14px; left: 16px; display: grid; gap: 6px; }
+        .alive-count { font-weight: 800; font-size: 0.9rem; color: var(--accent); }
+        .score-row { display: flex; gap: 4px; flex-wrap: wrap; }
+        .score-dot { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 8px; }
+        .score-dot i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        #center-msg { position: absolute; top: 28%; left: 0; right: 0; text-align: center; font-family: 'Bungee', sans-serif; font-size: clamp(3rem, 12vw, 7rem); color: #fff; text-shadow: 0 0 20px rgba(0,229,255,0.6), 0 0 60px rgba(0,229,255,0.3); }
+        #center-msg.pop { animation: pop 0.5s cubic-bezier(0.2,1.6,0.4,1); }
+        @keyframes pop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #boost-hud { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; background: rgba(0,0,0,0.55); border: 1px solid var(--line); border-radius: 999px; padding: 10px 22px; white-space: nowrap; }
+        #boost-hud b { display: block; font-size: 0.95rem; color: var(--accent); }
+        #boost-hud small { color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+        .boost-charges { display: flex; gap: 6px; }
+        .charge { width: 14px; height: 14px; border-radius: 50%; background: rgba(0,229,255,0.15); border: 2px solid rgba(0,229,255,0.4); transition: background 0.2s; }
+        .charge.full { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px rgba(0,229,255,0.5); }
+        #powerup-hud { position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 10px; border: 1px solid var(--line); }
+        #powerup-icon { font-size: 1.2rem; }
+        #powerup-name { font-weight: 800; font-size: 0.85rem; color: var(--accent); }
+
+        .results-panel { width: 100%; max-width: 500px; padding: 26px; text-align: center; }
+        .results-panel h2 { font-family: 'Bungee', sans-serif; font-size: clamp(1.6rem, 5vw, 2.2rem); margin: 6px 0 16px; color: var(--accent); }
+        .results-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; text-align: left; }
+        .results-list li { display: grid; grid-template-columns: 40px 14px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); }
+        .results-list li.me { background: rgba(0,229,255,0.1); outline: 1px solid rgba(0,229,255,0.4); }
+        .results-list .place { font-family: 'Bungee', sans-serif; font-size: 1.3rem; text-align: center; color: var(--muted); }
+        .results-list li:nth-child(1) .place { color: #ffd166; }
+        .results-list li:nth-child(2) .place { color: #dfe6ee; }
+        .results-list li:nth-child(3) .place { color: #e0a068; }
+        .results-list .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .results-list .score { font-weight: 800; }
+        .results-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; align-items: center; }
+        .corner { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 20; }
+        .corner .btn { padding: 7px 12px; font-size: 0.8rem; background: rgba(0,0,0,0.55); display: inline-flex; align-items: center; }
+        .corner svg { width: 16px; height: 16px; }
+        #toasts { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; z-index: 30; pointer-events: none; justify-items: center; }
+        .toast { background: rgba(0,10,20,0.8); border: 1px solid var(--line); padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; animation: toast 3.2s forwards; }
+        @keyframes toast { 0% { opacity: 0; transform: translateY(8px); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+        /* Touch */
+        #touch-left, #touch-right { position: fixed; top: 0; width: 45%; height: 100%; background: none; border: none; display: none; pointer-events: auto; touch-action: none; z-index: 10; }
+        #touch-left { left: 0; }
+        #touch-right { right: 0; }
+        #touch-boost { position: fixed; right: max(22px, env(safe-area-inset-right)); bottom: 96px; width: 88px; height: 88px; border-radius: 50%; background: rgba(0,229,255,0.12); border: 3px solid var(--accent); color: var(--accent); font-family: 'Bungee', sans-serif; font-size: 0.8rem; pointer-events: auto; touch-action: none; display: none; z-index: 11; }
+        body.touch #touch-left, body.touch #touch-right, body.touch #touch-boost { display: block; }
+        body.touch #boost-hud { display: none; }
+
+        .kick { margin-left: 6px; background: none; border: 1px solid var(--line); color: var(--muted); font-family: inherit; font-size: 0.72rem; font-weight: 700; padding: 4px 9px; border-radius: 8px; cursor: pointer; }
+        .kick:hover { border-color: var(--bad); color: #ff8a80; }
+
+        /* Pause */
+        #pause { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,2,8,0.7); z-index: 50; }
+        #pause .panel { max-width: 340px; padding: 26px; text-align: center; }
+        #pause h2 { font-family: 'Bungee', sans-serif; color: var(--accent); margin-bottom: 12px; }
+        #pause .controls-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; text-align: left; margin: 14px 0; font-size: 0.88rem; }
+        #pause .controls-grid kbd { background: rgba(0,229,255,0.1); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; font-family: 'Bungee', sans-serif; font-size: 0.75rem; color: var(--accent); }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    <div class="corner">
+        <button class="btn" id="btn-mute" type="button" aria-label="Toggle sound">
+            <svg id="icon-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+            <svg id="icon-muted" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+        </button>
+        <button class="btn" id="btn-exit" type="button">Exit</button>
+    </div>
+
+    <!-- Menu -->
+    <div id="menu" class="screen">
+        <div class="panel menu-panel">
+            <div class="logo">DEADLINE<span>LIGHTCYCLE ARENA</span></div>
+            <p class="tagline">Ride a lightcycle that leaves a glowing trail behind it. Hit any trail or wall and you're out. Last rider wins.</p>
+            <div id="invite" class="invite hidden"></div>
+            <div class="menu-form">
+                <label for="name">Your name</label>
+                <input class="field" id="name" maxlength="14" autocomplete="nickname" placeholder="e.g. Tron">
+                <button class="btn primary big" id="btn-create" type="button">Create a room</button>
+                <div class="divider">OR JOIN A FRIEND</div>
+                <div class="join-row">
+                    <input class="field" id="code" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false">
+                    <button class="btn" id="btn-join" type="button">Join</button>
+                </div>
+                <button class="btn big" id="btn-solo" type="button">Play solo against bots</button>
+            </div>
+            <div id="menu-status" class="status"></div>
+        </div>
+    </div>
+
+    <!-- Lobby -->
+    <div id="lobby" class="screen hidden">
+        <div class="panel lobby-panel">
+            <div class="room-box">
+                <small>Room code</small>
+                <div class="room-code" id="room-code">-----</div>
+                <button class="btn" id="btn-copy" type="button">Copy invite link</button>
+            </div>
+            <div class="section-title">Players <small id="count">1/8</small></div>
+            <ul class="players" id="players"></ul>
+            <div class="lobby-actions">
+                <button class="btn host-only" id="btn-bot" type="button">Add a bot</button>
+                <button class="btn primary big client-only" id="btn-ready" type="button">Ready up</button>
+                <button class="btn primary big host-only" id="btn-start" type="button">Start game</button>
+                <div id="lobby-status" class="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div class="hud-tl">
+            <div class="round-info"><span class="chip">Round <b id="round-num">1/5</b></span></div>
+            <div class="score-row" id="score-row"></div>
+            <div class="alive-count" id="alive-count">8 alive</div>
+        </div>
+        <div id="center-msg"></div>
+        <div id="boost-hud">
+            <div class="boost-charges" id="boost-charges">
+                <span class="charge full"></span>
+                <span class="charge full"></span>
+                <span class="charge full"></span>
+            </div>
+            <div><b>BOOST</b> <small>Space</small></div>
+        </div>
+        <div id="powerup-hud" class="hidden">
+            <span id="powerup-icon"></span>
+            <div><b id="powerup-name">SHIELD</b></div>
+        </div>
+        <button id="touch-left" type="button"></button>
+        <button id="touch-right" type="button"></button>
+        <button id="touch-boost" type="button">BOOST</button>
+    </div>
+
+    <!-- Pause -->
+    <div id="pause" class="hidden">
+        <div class="panel">
+            <h2>Paused</h2>
+            <div class="controls-grid">
+                <kbd>A / D</kbd><span>Turn left / right</span>
+                <kbd>SPACE</kbd><span>Boost (3 charges)</span>
+                <kbd>ESC</kbd><span>Pause / resume</span>
+            </div>
+            <button class="btn primary" id="btn-resume" type="button">Resume</button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="screen dim hidden">
+        <div class="panel results-panel">
+            <div class="kicker">Game over</div>
+            <h2 id="results-title">Results</h2>
+            <ol class="results-list" id="results-list"></ol>
+            <div class="results-actions">
+                <button class="btn primary host-only" id="btn-again" type="button">Back to the lobby</button>
+                <span class="status client-only">Waiting for the host...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toasts"></div>
+    <script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>
