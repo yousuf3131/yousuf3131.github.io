@@ -6,7 +6,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HostNet, ClientNet, makeCode } from './net.js?v=6';
+import { HostNet, ClientNet, makeCode } from './net.js?v=8';
 import { sfx, isMuted, setMuted, unlockAudio, startEngine, updateEngine, stopEngine } from './audio.js?v=5';
 import { startMusic, stopMusic, setMusicVolume } from './music.js?v=5';
 import { tiltAmount, tiltToSteer } from './tilt.js?v=5';
