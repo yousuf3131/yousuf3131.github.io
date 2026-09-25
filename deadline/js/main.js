@@ -32,6 +32,8 @@ const POWERUP_MIN = 8;
 const POWERUP_MAX = 12;
 const MAX_POWERUPS = 2;
 const GAP_SEGS    = 15;
+const TRAIL_MAX_LEN = 300;
+const TRAIL_FADE_LEN = 40;
 const CYCLE_R     = 0.6;
 
 const COLORS = ['#00e5ff','#ff0055','#39ff14','#ffea00','#bf5fff','#ff6d00','#ff69b4','#e0e0e0'];
@@ -125,18 +127,22 @@ let currentArena = null;
 
 /* ── trail shader ──────────────────────────────────────── */
 const TRAIL_VERT = `
+attribute float aFade;
 varying float vHeight;
+varying float vFade;
 void main(){
     vHeight = position.y / ${TRAIL_H.toFixed(1)};
+    vFade = aFade;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
 }`;
 const TRAIL_FRAG = `
 uniform vec3 uColor;
 varying float vHeight;
+varying float vFade;
 void main(){
     float core = smoothstep(0.8,0.0,vHeight)*0.8+0.2;
     vec3 col = uColor * core * 2.5;
-    gl_FragColor = vec4(col, core);
+    gl_FragColor = vec4(col, core * vFade);
 }`;
 
 /* ── floor grid shader ─────────────────────────────────── */
@@ -582,7 +588,9 @@ function buildArena(arena) {
 function createTrailMesh(color) {
     const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(MAX_TRAIL_PTS * 2 * 3);
+    const fade = new Float32Array(MAX_TRAIL_PTS * 2);
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aFade', new THREE.BufferAttribute(fade, 1).setUsage(THREE.DynamicDrawUsage));
     const idx = [];
     for (let i = 0; i < MAX_TRAIL_PTS - 1; i++) {
         const b = i * 2;
@@ -625,11 +633,16 @@ function updateTrailMesh(p) {
     if (pts.length < 2) return;
     // Wall ribbon
     const pos = p.trailMesh.geometry.attributes.position.array;
+    const fadeAttr = p.trailMesh.geometry.attributes.aFade.array;
     const gpos = p.glowMesh.geometry.attributes.position.array;
     const n = Math.min(pts.length, MAX_TRAIL_PTS);
     for (let i = 0; i < n; i++) {
         const pt = pts[i];
         const vi = i * 6; // 2 verts * 3 components
+        // Fade: oldest points fade out over TRAIL_FADE_LEN
+        const fadeVal = Math.min(1, i / TRAIL_FADE_LEN);
+        fadeAttr[i * 2] = fadeVal;
+        fadeAttr[i * 2 + 1] = fadeVal;
         // bottom
         pos[vi] = pt.x; pos[vi + 1] = 0; pos[vi + 2] = pt.z;
         // top
@@ -650,6 +663,7 @@ function updateTrailMesh(p) {
         gpos[vi + 3] = pt.x + nx; gpos[vi + 4] = 0.01; gpos[vi + 5] = pt.z + nz;
     }
     p.trailMesh.geometry.attributes.position.needsUpdate = true;
+    p.trailMesh.geometry.attributes.aFade.needsUpdate = true;
     p.trailMesh.geometry.setDrawRange(0, Math.max(0, (n - 1) * 6));
     p.glowMesh.geometry.attributes.position.needsUpdate = true;
     p.glowMesh.geometry.setDrawRange(0, Math.max(0, (n - 1) * 6));
@@ -1092,6 +1106,12 @@ function hostUpdate(dt) {
         const dist = Math.hypot(p.x - lastPt.x, p.z - lastPt.z);
         if (dist >= TRAIL_SAMPLE_DIST) {
             pts.push({ x: p.x, z: p.z });
+            // Trim old trail from the back
+            if (pts.length > TRAIL_MAX_LEN) {
+                const excess = pts.length - TRAIL_MAX_LEN;
+                pts.splice(0, excess);
+                p.trail.lastBroadcast = Math.max(0, p.trail.lastBroadcast - excess);
+            }
         }
 
         // Collision
@@ -1199,6 +1219,10 @@ function receiveStates(msg) {
             for (const [x, z] of newPts) {
                 p.trail.points.push({ x, z });
             }
+            // Trim old trail
+            if (p.trail.points.length > TRAIL_MAX_LEN) {
+                p.trail.points.splice(0, p.trail.points.length - TRAIL_MAX_LEN);
+            }
         }
     }
     updateAliveCount();
@@ -1284,6 +1308,9 @@ function updateGame(dt) {
         const last = pts[pts.length - 1];
         if (Math.hypot(me.x - last.x, me.z - last.z) >= TRAIL_SAMPLE_DIST) {
             pts.push({ x: me.x, z: me.z });
+            if (pts.length > TRAIL_MAX_LEN) {
+                pts.splice(0, pts.length - TRAIL_MAX_LEN);
+            }
         }
     }
 
