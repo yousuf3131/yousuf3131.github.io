@@ -137,7 +137,10 @@ export class ClientNet {
                 conn.on('iceStateChanged', s => { if (s === 'failed') fail('ice failed'); });
                 setTimeout(() => fail('direct too slow'), DIRECT_WAIT_MS);
             });
-            peer.on('error', err => { if (err.type === 'peer-unavailable') fail('No room found with that code.', true); else fail(err.type); });
+            // The matchmaking server can lose track of a host whose tab briefly slept, while the host is still
+            // listening on the relay, so don't give up here: fall through to the relay and let the game's
+            // join timeout decide whether the room really exists.
+            peer.on('error', err => fail(err.type)); // includes peer-unavailable: try the relay first
         });
     }
     async connectRelay() {

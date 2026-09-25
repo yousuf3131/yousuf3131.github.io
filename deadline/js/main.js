@@ -6,10 +6,10 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HostNet, ClientNet, makeCode } from './net.js';
-import { sfx, isMuted, setMuted, unlockAudio, startEngine, updateEngine, stopEngine } from './audio.js';
-import { startMusic, stopMusic, setMusicVolume } from './music.js';
-import { tiltAmount, tiltToSteer } from './tilt.js';
+import { HostNet, ClientNet, makeCode } from './net.js?v=6';
+import { sfx, isMuted, setMuted, unlockAudio, startEngine, updateEngine, stopEngine } from './audio.js?v=5';
+import { startMusic, stopMusic, setMusicVolume } from './music.js?v=5';
+import { tiltAmount, tiltToSteer } from './tilt.js?v=5';
 
 /* ── constants ─────────────────────────────────────────── */
 const MAX_PLAYERS = 8;
@@ -200,8 +200,11 @@ function hostHandle(from, msg) {
     if (!msg || !msg.t) return;
     switch (msg.t) {
         case 'hello': {
-            if (H.phase !== 'lobby') return emit({ t: 'reject', reason: 'Game in progress.' });
-            if (H.players.length >= MAX_PLAYERS) return;
+            // The relay can deliver a message twice; never add the same person twice
+            if (H.players.some(p => p.id === from)) return;
+            // Turn away only the person joining (emit would send this to everyone, host included)
+            if (H.phase !== 'lobby') { if (net) net.send(from, { t: 'reject', reason: 'A game is in progress in that room. Try again when it ends.' }); return; }
+            if (H.players.length >= MAX_PLAYERS) { if (net) net.send(from, { t: 'reject', reason: `That room is full (${MAX_PLAYERS} players max).` }); return; }
             const idx = H.players.length;
             H.players.push({ id: from, name: msg.name || 'Player', color: COLORS[idx % COLORS.length], ready: from === myId, bot: false, wins: 0 });
             if (net) net.send(from, { t: 'welcome', you: from, code: roomCode });
@@ -230,7 +233,10 @@ function hostHandle(from, msg) {
         case 'kick': {
             if (from !== myId) return;
             const target = msg.id;
-            if (net) net.kick(target);
+            if (net) {
+                net.send(target, { t: 'reject', reason: 'The host removed you from the room.' });
+                setTimeout(() => net && net.kick(target), 600);
+            }
             H.players = H.players.filter(p => p.id !== target);
             emit({ t: 'lobby', players: H.players.map(p => ({ id: p.id, name: p.name, color: p.color, ready: p.ready, bot: p.bot, wins: p.wins })) });
             break;
@@ -245,12 +251,14 @@ function clientHandle(msg) {
         case 'welcome':
             myId = msg.you;
             roomCode = msg.code;
+            enterJoinedLobby();
             break;
         case 'reject':
-            alert(msg.reason);
             backToMenu();
+            setMenuStatus(msg.reason, true);
             break;
         case 'lobby':
+            if (role === 'client') enterJoinedLobby();
             renderLobby(msg.players);
             break;
         case 'gameStart':
@@ -1532,9 +1540,27 @@ $('btn-create').onclick = async () => {
     act({ t: 'hello', name: myName });
 };
 
+// Status line on the main menu
+function setMenuStatus(text, isError) {
+    $('menu-status').textContent = text || '';
+    $('menu-status').className = isError ? 'status error' : 'status';
+}
+
+// A joining player waits on the menu until the host answers (welcome or lobby), then enters the lobby
+let joinTimer = null;
+const NO_ANSWER = 'No answer from that room. Check the code, and ask the host to keep the game open (or reload and create a new room).';
+function enterJoinedLobby() {
+    if (view !== 'menu' || role !== 'client') return;
+    clearTimeout(joinTimer);
+    show('lobby');
+    $('room-code').textContent = roomCode;
+    setMenuStatus('');
+    startMusic('menu');
+}
+
 $('btn-join').onclick = async () => {
-    const code = $('code').value.trim().toUpperCase();
-    if (code.length < 3) return;
+    const code = $('code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length !== 5) return setMenuStatus('Room codes are 5 letters or numbers.', true);
     myName = $('name').value.trim() || 'Player';
     localStorage.setItem('deadlineName', myName);
     unlockAudio();
@@ -1542,25 +1568,38 @@ $('btn-join').onclick = async () => {
     $('menu-status').textContent = 'Connecting...';
     role = 'client';
     document.body.classList.remove('is-host');
-    const forceRelay = new URLSearchParams(location.search).has('relay');
-    net = new ClientNet({
+    // ?net=relay (or ?relay) skips the direct attempt; handy when a network is known to block it
+    const q = new URLSearchParams(location.search);
+    const forceRelay = q.get('net') === 'relay' || q.has('relay');
+    const cn = new ClientNet({
         onMessage: msg => clientHandle(msg),
-        onClose: () => { toast('Connection lost'); backToMenu(); },
+        onClose: () => {
+            if (net !== cn) return;
+            const neverAnswered = view === 'menu'; // still waiting for the host's first reply
+            clearTimeout(joinTimer);
+            backToMenu();
+            setMenuStatus(neverAnswered ? NO_ANSWER : 'Lost connection to the host. The room may have closed.', true);
+        },
         onStatus: s => { $('menu-status').textContent = s; },
         forceRelay,
     });
     try {
-        myId = await net.connect(code);
+        myId = await cn.connect(code);
     } catch (e) {
-        $('menu-status').textContent = e.message;
-        $('menu-status').className = 'status error';
-        return;
+        role = '';
+        return setMenuStatus(e.message, true);
     }
+    net = cn;
     roomCode = code;
-    show('lobby');
-    $('room-code').textContent = roomCode;
-    startMusic('menu');
+    setMenuStatus('Connected. Waiting for the host to answer...');
     net.send({ t: 'hello', name: myName });
+    // If the host never answers (wrong code, closed room, host's tab asleep), say so instead of an empty lobby
+    clearTimeout(joinTimer);
+    joinTimer = setTimeout(() => {
+        if (net !== cn || view !== 'menu') return;
+        backToMenu();
+        setMenuStatus(NO_ANSWER, true);
+    }, 15000);
 };
 
 $('btn-solo').onclick = () => {
@@ -1643,7 +1682,7 @@ $('btn-mute').onclick = () => {
 // Handle invite links
 const params = new URLSearchParams(location.search);
 if (params.has('room')) {
-    $('code').value = params.get('room');
+    $('code').value = params.get('room').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
     const inviteBox = $('invite');
     inviteBox.textContent = `You've been invited to room ${params.get('room')}. Enter your name and click Join!`;
     inviteBox.classList.remove('hidden');
