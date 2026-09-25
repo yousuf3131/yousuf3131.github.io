@@ -105,8 +105,6 @@ let net = null, gameActive = false, paused = false;
 const players = new Map();
 let me = null;
 let shake = 0;
-let camAngle = 0;
-let camSide = 0;
 
 /* host-only state */
 const H = {
@@ -1328,36 +1326,29 @@ function render(dt) {
         m.position.y = 0.8 + Math.sin(performance.now() / 400) * 0.2;
     }
 
-    // Chase camera (Bonk Racers style)
+    // Chase camera — locked behind bike
     if (me && me.alive) {
-        // Smooth camera heading — lags behind the cycle for speed feel
-        camAngle += (((-me.h + Math.PI / 2) - camAngle + Math.PI * 3) % (Math.PI * 2) - Math.PI) * (1 - Math.exp(-3.6 * dt));
-
         const spd01 = Math.min(me.speed / BOOST_SPEED, 1.4);
         const boostKick = me.boosting ? 1 : 0;
 
-        // Distance behind: pulls back at higher speed
+        // Distance behind and height
         const back = 10 + spd01 * 2 - boostKick * 2;
-        // Height above ground
         const height = 4.5 - boostKick * 0.4;
-        // Side sway from turning
-        camSide += (-me.turnInput * spd01 * 1.2 - camSide) * (1 - Math.exp(-3 * dt));
 
-        const rx = Math.cos(camAngle + Math.PI);
-        const rz = Math.sin(camAngle + Math.PI);
-        const perpX = -rz, perpZ = rx;
-
-        const tx = me.x + rx * back + perpX * camSide;
-        const tz = me.z + rz * back + perpZ * camSide;
+        // Place camera directly behind the bike using me.h
+        const tx = me.x - Math.cos(me.h) * back;
+        const tz = me.z - Math.sin(me.h) * back;
         const ty = height;
 
-        camera.position.x += (tx - camera.position.x) * (1 - Math.exp(-8 * dt));
-        camera.position.y += (ty - camera.position.y) * (1 - Math.exp(-8 * dt));
-        camera.position.z += (tz - camera.position.z) * (1 - Math.exp(-8 * dt));
+        // Smooth position follow
+        const posSmooth = 1 - Math.exp(-10 * dt);
+        camera.position.x += (tx - camera.position.x) * posSmooth;
+        camera.position.y += (ty - camera.position.y) * posSmooth;
+        camera.position.z += (tz - camera.position.z) * posSmooth;
 
         // Look ahead of the cycle
-        const lookX = me.x + Math.cos(-camAngle + Math.PI / 2) * 8;
-        const lookZ = me.z + Math.sin(-camAngle + Math.PI / 2) * 8;
+        const lookX = me.x + Math.cos(me.h) * 8;
+        const lookZ = me.z + Math.sin(me.h) * 8;
         camera.lookAt(lookX, 1.5, lookZ);
 
         // Dynamic FOV
