@@ -444,6 +444,33 @@ body:not(.is-host) .host-only { display: none !important; }
     color: var(--muted); font-weight: 600;
 }
 
+/* Tank color picker */
+.color-pick { margin: 0 0 18px; display: grid; gap: 8px; }
+.color-pick-row { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.color-pick-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    padding: 0;
+    flex-shrink: 0;
+}
+.swatch:hover { transform: scale(1.18); box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
+.swatch.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.5);
+    transform: scale(1.12);
+}
+#coop-color-row { display: none; }
+body.scr-campaign #coop-color-row.show { display: flex; }
+
+/* Co-op button highlight */
+.btn-coop { border-color: rgba(167, 139, 250, 0.5); color: #a78bfa; }
+.btn-coop:hover { border-color: #a78bfa; color: #a78bfa; filter: brightness(1.15); }
+
 /* Short landscape phones */
 @media (max-height: 500px) {
     #hud { padding: 8px 12px; }

@@ -8,11 +8,11 @@
 //  - A tank's own browser decides when it has been hit and broadcasts its death.
 //  - Crates and mine explosions are decided by the host and relayed to everyone.
 //  - The host tallies kills and round wins.
-import { HostNet, ClientNet, makeCode } from './net.js?v=3';
-import * as G from './game.js?v=3';
-import { ARENAS } from './maps.js?v=3';
-import { sfx, audio, store } from './audio.js?v=3';
-import { updateBot, BOT_CFG } from './bots.js?v=3';
+import { HostNet, ClientNet, makeCode } from './net.js?v=4';
+import * as G from './game.js?v=4';
+import { ARENAS } from './maps.js?v=4';
+import { sfx, audio, store } from './audio.js?v=4';
+import { updateBot, BOT_CFG } from './bots.js?v=4';
 
 // Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
 const track = (name, params) => { if (window.track) window.track(name, params); };
@@ -203,6 +203,29 @@ function startSolo() {
     enterLobby();
 }
 
+// ============================================================
+// Color picker
+// ============================================================
+function renderSwatch(elId, getCurrent, setFn) {
+    const el = $(elId);
+    if (!el) return;
+    el.innerHTML = '';
+    G.CAMPAIGN_COLORS_CSS.forEach((css, i) => {
+        const num = G.CAMPAIGN_COLORS[i];
+        const btn = document.createElement('button');
+        btn.className = 'swatch' + (getCurrent() === num ? ' active' : '');
+        btn.style.background = css;
+        btn.title = css;
+        btn.type = 'button';
+        btn.addEventListener('click', () => { setFn(num); renderSwatch(elId, getCurrent, setFn); });
+        el.append(btn);
+    });
+}
+function setupColorPickers() {
+    renderSwatch('swatches-p1', G.getCampaignColor,  G.setCampaignColor);
+    renderSwatch('swatches-p2', G.getCampaignColor2, G.setCampaignColor2);
+}
+
 function openCampaign() {
     track('play_campaign');
     if (busy) return;
@@ -210,6 +233,10 @@ function openCampaign() {
     view = 'campaign';
     show('campaign');
     G.openCampaignMenu();
+    setupColorPickers();
+    // Hide P2 color row until Co-op is chosen
+    const coopRow = $('coop-color-row');
+    if (coopRow) coopRow.classList.remove('show');
 }
 G.hooks.toMain = () => {
     G.showBackdrop();
@@ -240,6 +267,15 @@ $('btn-create').addEventListener('click', createRoom);
 $('btn-join').addEventListener('click', joinRoom);
 $('btn-solo').addEventListener('click', startSolo);
 $('btn-campaign').addEventListener('click', openCampaign);
+$('btn-coop').addEventListener('click', () => {
+    if (busy) return;
+    sfx.click();
+    // Show P2 color picker row
+    const coopRow = $('coop-color-row');
+    if (coopRow) coopRow.classList.add('show');
+    track('play_coop');
+    G.startCoopCampaign(0);
+});
 $('code').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
 $('name').addEventListener('keydown', e => { if (e.key === 'Enter') ($('code').value ? joinRoom() : createRoom()); });
 $('exit').addEventListener('click', e => {

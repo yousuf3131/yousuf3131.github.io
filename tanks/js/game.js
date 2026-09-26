@@ -2,8 +2,8 @@
 // single-player campaign. Battle mode (js/main.js) plugs in through `hooks`.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { COLS, ROWS, LEVELS } from './maps.js?v=3';
-import { sfx, audio, store, isMuted, setMuted } from './audio.js?v=3';
+import { COLS, ROWS, LEVELS, CO_OP_LEVELS } from './maps.js?v=4';
+import { sfx, audio, store, isMuted, setMuted } from './audio.js?v=4';
 
 export { COLS, ROWS };
 
@@ -62,6 +62,20 @@ export const hooks = {
     detonated: null,  // (mine) a mine exploded here
     killed: null,     // (tank) a tank was destroyed here
 };
+
+// ============================================================
+// Campaign color customization
+// ============================================================
+export const CAMPAIGN_COLORS     = [0x3b82f6, 0x22c55e, 0xf97316, 0xa78bfa, 0xec4899, 0x22d3ee, 0xf2c14e, 0xe2e8f0];
+export const CAMPAIGN_COLORS_CSS = ['#3b82f6', '#22c55e', '#f97316', '#a78bfa', '#ec4899', '#22d3ee', '#f2c14e', '#e2e8f0'];
+
+let campaignColor  = +(store.get('tanksCampaignColor')  || CAMPAIGN_COLORS[0]);
+let campaignColor2 = +(store.get('tanksCampaignColor2') || 0xe0584f);
+
+export function getCampaignColor()    { return campaignColor; }
+export function getCampaignColor2()   { return campaignColor2; }
+export function setCampaignColor(n)   { campaignColor  = n; store.set('tanksCampaignColor',  String(n)); }
+export function setCampaignColor2(n)  { campaignColor2 = n; store.set('tanksCampaignColor2', String(n)); }
 
 // ============================================================
 // Renderer, scene, lights
@@ -472,9 +486,11 @@ function buildTankMesh(color) {
     return { group, hull, turret, barrelG };
 }
 
-function makeTank(type, x, z, id) {
-    const cfg = TYPES[type];
-    const mesh = buildTankMesh(cfg.color);
+function makeTank(type, x, z, id, overrideColor) {
+    const baseCfg = TYPES[type];
+    const color = overrideColor !== undefined ? overrideColor : baseCfg.color;
+    const cfg = (overrideColor !== undefined) ? { ...baseCfg, color } : baseCfg;
+    const mesh = buildTankMesh(color);
     levelGroup.add(mesh.group);
     const facing = type === 'player' ? -Math.PI / 2 : Math.PI / 2;
     const t = {
@@ -554,12 +570,25 @@ export function moveTank(t, dx, dz) {
 // These arrays are shared with battle mode, so they are only ever mutated in place
 export const tanks = [], bullets = [], mines = [];
 export let player = null;
+export let player2 = null;   // co-op second player
 export let state = 'loading';
 export function setPlayer(t) { player = t; }
 export function setState(s) { state = s; }
 let stateT = 0, pausedFrom = null;
 let levelIndex = 0, lives = 3, killsTotal = 0;
 const killedThisLevel = new Set();
+
+// Co-op mode state
+let coopMode = false;
+let p1SpawnPos = { x: 0, z: 0 };
+let p2SpawnPos = { x: 0, z: 0 };
+let p1RespawnT = 0, p2RespawnT = 0;
+
+export function isCoopMode() { return coopMode; }
+export function setCoopMode(on) {
+    coopMode = on;
+    if (!on) { player2 = null; p1RespawnT = 0; p2RespawnT = 0; }
+}
 
 function clearLevel() {
     while (levelGroup.children.length) levelGroup.remove(levelGroup.children[0]);
@@ -593,7 +622,10 @@ function buildCell(r, c) {
 
 function loadLevel() {
     clearLevel();
-    const map = LEVELS[levelIndex];
+    player2 = null;
+    p1RespawnT = 0;
+    p2RespawnT = 0;
+    const map = coopMode ? CO_OP_LEVELS[levelIndex].map : LEVELS[levelIndex];
     grid = map.map(row => [...row]);
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
@@ -602,7 +634,12 @@ function loadLevel() {
                 buildCell(r, c);
             } else if (ch === 'P') {
                 grid[r][c] = '.';
-                player = makeTank('player', x, z, 'player');
+                p1SpawnPos = { x, z };
+                player = makeTank('player', x, z, 'player', campaignColor);
+            } else if (ch === 'Q' && coopMode) {
+                grid[r][c] = '.';
+                p2SpawnPos = { x, z };
+                player2 = makeTank('player', x, z, 'player2', campaignColor2);
             } else if (TYPES[ch]) {
                 grid[r][c] = '.';
                 const id = `${r},${c}`;
@@ -611,6 +648,7 @@ function loadLevel() {
         }
     }
     tanks.push(player);
+    if (coopMode && player2) tanks.push(player2);
     updateHud();
 }
 
@@ -635,8 +673,10 @@ const enemiesAlive = () => tanks.filter(t => !t.isPlayer && t.alive).length;
 
 function updateHud() {
     $('lives').textContent = lives;
-    $('level').textContent = `${levelIndex + 1}/${LEVELS.length}`;
+    const levelCount = coopMode ? CO_OP_LEVELS.length : LEVELS.length;
+    $('level').textContent = `${levelIndex + 1}/${levelCount}`;
     $('enemies').textContent = enemiesAlive();
+    $('mode-tag').textContent = coopMode ? 'CO-OP' : 'CAMPAIGN';
 }
 
 // ============================================================
@@ -722,13 +762,43 @@ export function killTank(t) {
     }
     if (t.isPlayer) {
         lives--;
-        state = 'dead';
-        stateT = 2.2;
+        if (coopMode && lives >= 0) {
+            // Co-op: respawn the dead player after a short delay
+            if (t === player)  p1RespawnT = 3.0;
+            if (t === player2) p2RespawnT = 3.0;
+        } else {
+            // Solo, or co-op with no lives left
+            state = 'dead';
+            stateT = 2.2;
+        }
     } else {
         killedThisLevel.add(t.id);
         killsTotal++;
     }
     updateHud();
+}
+
+// Returns the nearest alive player (considers both P1 and P2 in co-op)
+function nearestPlayer(e) {
+    const p1ok = player  && player.alive;
+    const p2ok = coopMode && player2 && player2.alive;
+    if (!p1ok && !p2ok) return null;
+    if (p1ok && !p2ok) return player;
+    if (!p1ok && p2ok) return player2;
+    const d1 = Math.hypot(player.x  - e.x, player.z  - e.z);
+    const d2 = Math.hypot(player2.x - e.x, player2.z - e.z);
+    return d1 <= d2 ? player : player2;
+}
+
+// Respawn a player at their starting position (co-op)
+function respawnPlayer(n) {
+    if (n === 1) {
+        player = makeTank('player', p1SpawnPos.x, p1SpawnPos.z, 'player', campaignColor);
+        tanks.push(player);
+    } else {
+        player2 = makeTank('player', p2SpawnPos.x, p2SpawnPos.z, 'player2', campaignColor2);
+        tanks.push(player2);
+    }
 }
 
 function sparks(x, z) {
@@ -914,8 +984,10 @@ export function updatePlayer(dt) {
     const cfg = p.cfg;
 
     // Screen-relative driving: W (or joystick up) is always "up" on screen
-    let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-    let iz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+    // In co-op, arrows belong to P2 so P1 uses only WASD; solo uses both as fallback.
+    const useArrows = !coopMode;
+    let ix = (keys.KeyD || (useArrows && keys.ArrowRight) ? 1 : 0) - (keys.KeyA || (useArrows && keys.ArrowLeft) ? 1 : 0);
+    let iz = (keys.KeyS || (useArrows && keys.ArrowDown)  ? 1 : 0) - (keys.KeyW || (useArrows && keys.ArrowUp)   ? 1 : 0);
     let throttle = 1;
     const joyMag = Math.hypot(joy.x, joy.y);
     if (joy.id !== null && joyMag > 0.18) {
@@ -959,6 +1031,45 @@ export function updatePlayer(dt) {
     }
 }
 
+// Player 2 (co-op): Arrow keys to drive, auto-aim toward nearest enemy, Enter to fire.
+function updatePlayer2(dt) {
+    const p = player2;
+    if (!p || !p.alive) return;
+    const cfg = p.cfg;
+
+    let ix = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
+    let iz = (keys.ArrowDown  ? 1 : 0) - (keys.ArrowUp   ? 1 : 0);
+
+    if (ix || iz) {
+        const want = Math.atan2(iz, ix);
+        const dF = angleDiff(p.body, want), dR = angleDiff(p.body, want + Math.PI);
+        if (p.reverse ? Math.abs(dF) < Math.abs(dR) - 0.35 : Math.abs(dR) < Math.abs(dF) - 0.35) p.reverse = !p.reverse;
+        const d = p.reverse ? dR : dF;
+        const turn = clamp(d, -cfg.turn * dt, cfg.turn * dt);
+        p.body += turn;
+        const f = Math.max(0, Math.cos(d - turn)) ** 3;
+        const dir = p.reverse ? -1 : 1;
+        moveTank(p, Math.cos(p.body) * cfg.speed * f * dir * dt, Math.sin(p.body) * cfg.speed * f * dir * dt);
+    }
+
+    // Auto-aim: rotate turret toward nearest alive enemy
+    const enemies = tanks.filter(t => t.alive && !t.isPlayer);
+    if (enemies.length > 0) {
+        const nearest = enemies.reduce((best, e) =>
+            Math.hypot(e.x - p.x, e.z - p.z) < Math.hypot(best.x - p.x, best.z - p.z) ? e : best
+        );
+        p.turret_a = Math.atan2(nearest.z - p.z, nearest.x - p.x);
+    } else {
+        p.turret_a = p.body;
+    }
+
+    // Fire: Enter held
+    if (keys.Enter) fire(p);
+
+    p.vx = (ix ? Math.cos(p.body) * cfg.speed : 0);
+    p.vz = (iz ? Math.sin(p.body) * cfg.speed : 0);
+}
+
 // Let the player aim while a mission or round card is up
 export function aimOnly() {
     if (!player || !player.alive || !mouse.has) return;
@@ -989,7 +1100,9 @@ function simulateShot(e, angle, bounces) {
             vz = -vz; b--; bounced = true;
         } else z = nz;
         len += step;
-        if (player.alive && Math.hypot(player.x - x, player.z - z) < TANK_R + 0.06) return { hit: 'player', len, bounced };
+        for (const p of [player, coopMode ? player2 : null]) {
+            if (p && p.alive && Math.hypot(p.x - x, p.z - z) < TANK_R + 0.06) return { hit: 'player', len, bounced };
+        }
         for (const o of tanks) {
             if (!o.alive || o.isPlayer) continue;
             if (o === e && !bounced) continue;
@@ -1025,12 +1138,13 @@ function tracePath(t, angle, bounces, maxLen) {
 
 function computeAim(e) {
     const cfg = e.cfg;
-    if (!player.alive) return null;
-    let tx = player.x, tz = player.z;
+    const tgt = nearestPlayer(e);
+    if (!tgt) return null;
+    let tx = tgt.x, tz = tgt.z;
     if (cfg.smart) {
         const t = Math.hypot(tx - e.x, tz - e.z) / cfg.bulletSpeed;
-        tx += player.vx * t * 0.8;
-        tz += player.vz * t * 0.8;
+        tx += tgt.vx * t * 0.8;
+        tz += tgt.vz * t * 0.8;
     }
     const direct = Math.atan2(tz - e.z, tx - e.x);
     const r = simulateShot(e, direct, cfg.bounces);
@@ -1058,7 +1172,8 @@ function pickPath(e) {
         const d = dist[i];
         if (d < 2 || d > 9) continue;
         const x = cellX(i % COLS), z = cellZ(Math.floor(i / COLS));
-        const pd = player.alive ? Math.hypot(player.x - x, player.z - z) : 6;
+        const tgt = nearestPlayer(e);
+        const pd = tgt ? Math.hypot(tgt.x - x, tgt.z - z) : 6;
         const score = -Math.abs(pd - e.cfg.pref) + rand(0, 3) - (mines.some(m => Math.hypot(m.x - x, m.z - z) < 2) ? 10 : 0);
         if (score > bestScore) { bestScore = score; best = i; }
     }
@@ -1105,7 +1220,8 @@ function updateEnemy(e, dt) {
     if (e.aim !== null) target = e.aim;
     else {
         e.sweep += dt * 0.6;
-        const toP = player.alive ? Math.atan2(player.z - e.z, player.x - e.x) : e.turret_a;
+        const tp = nearestPlayer(e);
+        const toP = tp ? Math.atan2(tp.z - e.z, tp.x - e.x) : e.turret_a;
         target = toP + Math.sin(e.sweep) * 0.9;
     }
     const d = angleDiff(e.turret_a, target);
@@ -1169,26 +1285,49 @@ function showMenu(kicker, title, text, button) {
     $('menu-title').textContent = title;
     $('menu-text').textContent = text;
     $('play').textContent = button;
-    const best = +(store.get('tanksBestMission') || 0);
-    $('best').textContent = best ? `Best: mission ${best} of ${LEVELS.length}` : '';
+    const key = coopMode ? 'tanksBestCoopMission' : 'tanksBestMission';
+    const levelCount = coopMode ? CO_OP_LEVELS.length : LEVELS.length;
+    const best = +(store.get(key) || 0);
+    $('best').textContent = best ? `Best: mission ${best} of ${levelCount}` : '';
     $('menu').classList.remove('hidden');
 }
 
 function recordBest(mission) {
-    const best = +(store.get('tanksBestMission') || 0);
-    if (mission > best) store.set('tanksBestMission', mission);
+    const key = coopMode ? 'tanksBestCoopMission' : 'tanksBestMission';
+    const best = +(store.get(key) || 0);
+    if (mission > best) store.set(key, mission);
 }
 
 function beginIntro() {
     state = 'intro';
     stateT = 2.2;
     const n = enemiesAlive();
-    showBanner('MISSION', String(levelIndex + 1), `Enemy tanks: ${n}`);
+    if (coopMode) {
+        const lvl = CO_OP_LEVELS[levelIndex];
+        showBanner('CO-OP', String(levelIndex + 1), `${lvl.name} · ${n} enemies`);
+    } else {
+        showBanner('MISSION', String(levelIndex + 1), `Enemy tanks: ${n}`);
+    }
 }
 
 function startCampaign(startAt = 0) {
     $('menu').classList.add('hidden');
     audio();
+    setCoopMode(false);
+    levelIndex = startAt;
+    lives = 3;
+    killsTotal = 0;
+    killedThisLevel.clear();
+    loadLevel();
+    beginIntro();
+}
+
+export function startCoopCampaign(startAt = 0) {
+    $('menu').classList.add('hidden');
+    audio();
+    setCoopMode(true);
+    mode = 'campaign';
+    setCursorColor(0x7fb4ff);
     levelIndex = startAt;
     lives = 3;
     killsTotal = 0;
@@ -1198,6 +1337,7 @@ function startCampaign(startAt = 0) {
 }
 
 function updateFlow(dt) {
+    const levelCount = coopMode ? CO_OP_LEVELS.length : LEVELS.length;
     if (state === 'intro') {
         stateT -= dt;
         if (stateT <= 0) { state = 'play'; hideBanner(); }
@@ -1207,9 +1347,10 @@ function updateFlow(dt) {
             stateT = 2.4;
             const n = levelIndex + 1;
             recordBest(n);
-            const bonus = n % 3 === 0 && n < LEVELS.length;
+            const bonus = !coopMode && n % 3 === 0 && n < levelCount;
             if (bonus) { lives++; updateHud(); }
-            showBanner('MISSION', 'CLEARED', bonus ? 'Bonus tank: +1 life' : `${killsTotal} tanks destroyed`);
+            const subtext = bonus ? 'Bonus tank: +1 life' : `${killsTotal} tanks destroyed`;
+            showBanner(coopMode ? 'CO-OP' : 'MISSION', 'CLEARED', subtext);
         }
     } else if (state === 'dead') {
         stateT -= dt;
@@ -1218,7 +1359,10 @@ function updateFlow(dt) {
                 state = 'over';
                 hideBanner();
                 recordBest(levelIndex);
-                showMenu('Game over', 'Destroyed', `You made it to mission ${levelIndex + 1} and destroyed ${killsTotal} tanks.`, 'Try again');
+                const msg = coopMode
+                    ? `You and your partner made it to mission ${levelIndex + 1} and destroyed ${killsTotal} tanks.`
+                    : `You made it to mission ${levelIndex + 1} and destroyed ${killsTotal} tanks.`;
+                showMenu('Game over', 'Destroyed', msg, 'Try again');
             } else {
                 loadLevel();
                 beginIntro();
@@ -1227,10 +1371,13 @@ function updateFlow(dt) {
     } else if (state === 'cleared') {
         stateT -= dt;
         if (stateT <= 0) {
-            if (levelIndex + 1 >= LEVELS.length) {
+            if (levelIndex + 1 >= levelCount) {
                 state = 'won';
                 hideBanner();
-                showMenu('Campaign complete', 'Victory', `All ${LEVELS.length} missions cleared with ${lives} ${lives === 1 ? 'life' : 'lives'} to spare and ${killsTotal} tanks destroyed.`, 'Play again');
+                const msg = coopMode
+                    ? `All ${levelCount} co-op missions cleared together! ${killsTotal} tanks destroyed.`
+                    : `All ${levelCount} missions cleared with ${lives} ${lives === 1 ? 'life' : 'lives'} to spare and ${killsTotal} tanks destroyed.`;
+                showMenu('Campaign complete', 'Victory!', msg, 'Play again');
             } else {
                 levelIndex++;
                 killedThisLevel.clear();
@@ -1254,6 +1401,7 @@ function setPaused(on) {
 
 // Campaign entry points used by the main menu
 export function openCampaignMenu() {
+    setCoopMode(false);
     mode = 'campaign';
     setCursorColor(0x7fb4ff);
     levelIndex = 0;
@@ -1261,11 +1409,12 @@ export function openCampaignMenu() {
     loadLevel();
     state = 'menu';
     hideBanner();
-    showMenu('Campaign', 'TANKS', `Fight through ${LEVELS.length} missions. Bullets ricochet off walls, crates break apart, and every enemy colour fights differently.`, 'Start campaign');
+    showMenu('Campaign', 'TANKS', `Fight through ${LEVELS.length} missions, or team up in co-op with 5 all-new levels! Bullets ricochet off walls, crates break apart, and every enemy colour fights differently.`, 'Start solo');
 }
 
 // Leave the campaign (or battle) and put the idle campaign backdrop behind the main menu
 export function showBackdrop() {
+    setCoopMode(false);
     mode = 'campaign';
     setCursorColor(0x7fb4ff);
     $('menu').classList.add('hidden');
@@ -1292,6 +1441,7 @@ addEventListener('keydown', e => {
     if (e.code === 'KeyM') { $('mute').click(); return; }
     keys[e.code] = true;
     if (state === 'play' && e.code === 'Space' && player && player.alive) layMine(player);
+    if (state === 'play' && e.code === 'ShiftRight' && coopMode && player2 && player2.alive) layMine(player2);
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -1398,7 +1548,7 @@ $('pause-btn').addEventListener('click', e => {
     e.currentTarget.blur();
 });
 
-$('play').addEventListener('click', () => startCampaign(0));
+$('play').addEventListener('click', () => { if (coopMode) startCoopCampaign(0); else startCampaign(0); });
 $('resume').addEventListener('click', () => setPaused(false));
 $('menu-back').addEventListener('click', () => { if (hooks.toMain) hooks.toMain(); });
 
@@ -1444,10 +1594,17 @@ export function toScreen(x, y, z) {
 // Main loop
 // ============================================================
 function campaignStep(dt) {
+    // Co-op respawn timers (run regardless of state so timers keep ticking)
+    if (coopMode && state === 'play') {
+        if (p1RespawnT > 0) { p1RespawnT -= dt; if (p1RespawnT <= 0) respawnPlayer(1); }
+        if (p2RespawnT > 0) { p2RespawnT -= dt; if (p2RespawnT <= 0) respawnPlayer(2); }
+    }
+
     const active = state === 'play' || state === 'dead' || state === 'cleared';
     if (state === 'play') {
         for (const t of tanks) if (t.cooldown > 0) t.cooldown -= dt;
-        updatePlayer(dt);
+        if (player && player.alive) updatePlayer(dt);
+        if (coopMode && player2 && player2.alive) updatePlayer2(dt);
         for (const t of tanks) if (!t.isPlayer && t.alive) updateEnemy(t, dt);
         // Keep tanks from overlapping
         for (let i = 0; i < tanks.length; i++) for (let j = i + 1; j < tanks.length; j++) {
