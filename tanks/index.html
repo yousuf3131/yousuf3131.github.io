@@ -7,7 +7,7 @@
     <title>Tanks - Yousuf Kazmi</title>
     <meta name="description" content="A 3D tank battle game that runs in your browser: an 8-mission campaign plus online battles for up to 8 players. Built by Yousuf Kazmi with three.js.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
     <script type="importmap">
@@ -33,9 +33,10 @@
                 <span class="stat">Enemies<b id="enemies">0</b></span>
             </div>
             <div class="hud-row" id="hud-battle">
-                <span class="tag">BATTLE</span>
-                <span class="stat">Round<b id="b-round">1</b></span>
-                <span class="stat">Alive<b id="b-alive">0</b></span>
+                <span class="tag" id="b-mode-tag">BATTLE</span>
+                <span class="stat" id="hud-b-round">Round<b id="b-round">1</b></span>
+                <span class="stat" id="hud-b-alive">Alive<b id="b-alive">0</b></span>
+                <span class="stat" id="hud-b-lives" style="display:none">Lives<b id="b-lives">3</b></span>
             </div>
         </div>
         <div class="hud-right">
@@ -151,7 +152,7 @@
                     </div>
                     <button class="btn" id="btn-copy" type="button">Copy invite link</button>
                 </div>
-                <p class="rules">Free-for-all. Last tank standing wins the round. First to <b>3</b> round wins takes the match.</p>
+                <p class="rules" id="lobby-rules">Free-for-all. Last tank standing wins the round. First to <b>3</b> round wins takes the match.</p>
                 <div class="lobby-actions">
                     <button class="primary wide client-only" id="btn-ready" type="button">Ready up</button>
                     <button class="primary wide host-only" id="btn-start" type="button">Start battle</button>
@@ -162,6 +163,7 @@
                 <div class="section-title">Tanks <small id="count">1/8</small></div>
                 <ul class="players" id="players"></ul>
                 <button class="btn host-only" id="btn-bot" type="button">Add a bot</button>
+                <button class="btn host-only" id="btn-lobby-coop" type="button">Switch to Co-op</button>
             </div>
         </div>
     </div>
@@ -202,6 +204,6 @@
 
     <div id="toasts"></div>
 
-    <script type="module" src="js/main.js?v=4"></script>
+    <script type="module" src="js/main.js?v=5"></script>
 </body>
 </html>

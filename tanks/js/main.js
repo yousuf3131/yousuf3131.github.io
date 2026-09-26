@@ -8,11 +8,11 @@
 //  - A tank's own browser decides when it has been hit and broadcasts its death.
 //  - Crates and mine explosions are decided by the host and relayed to everyone.
 //  - The host tallies kills and round wins.
-import { HostNet, ClientNet, makeCode } from './net.js?v=4';
-import * as G from './game.js?v=4';
-import { ARENAS } from './maps.js?v=4';
-import { sfx, audio, store } from './audio.js?v=4';
-import { updateBot, BOT_CFG } from './bots.js?v=4';
+import { HostNet, ClientNet, makeCode } from './net.js?v=5';
+import * as G from './game.js?v=5';
+import { ARENAS, CO_OP_LEVELS } from './maps.js?v=5';
+import { sfx, audio, store } from './audio.js?v=5';
+import { updateBot, BOT_CFG } from './bots.js?v=5';
 
 // Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
 const track = (name, params) => { if (window.track) window.track(name, params); };
@@ -24,9 +24,13 @@ const COUNTDOWN_MS = 3000;
 const SEND_EVERY = 0.05;       // 20 position updates a second (the relay halves this)
 const INVULN = 1.2;            // spawn protection after GO
 const ROUND_LIMIT = 150;       // a round that drags on this long is a draw
+const COOP_LIVES = 3;          // shared lives pool for online co-op
 const COLORS = ['#3b82f6', '#e0584f', '#f2c14e', '#a78bfa', '#f97316', '#ec4899', '#e2e8f0', '#22d3ee'];
 const BOT_NAMES = ['Sarge', 'Rusty', 'Boomer', 'Clank', 'Dozer', 'Gunner', 'Tread', 'Major Mayhem'];
 const PLAYER_CFG = G.TYPES.player;
+const COOP_NAMES = { b: 'Brown', g: 'Grey', t: 'Teal', r: 'Red', k: 'Black' };
+// Convert a Three.js hex number to a CSS colour string
+const numToCSS = n => '#' + n.toString(16).padStart(6, '0');
 
 // ============================================================
 // Small helpers
@@ -75,6 +79,8 @@ const R = {
     n: 0, arena: 0, clock: 0, lastCount: null, players: [],
     byId: new Map(), tags: new Map(), seenB: new Set(), seenM: new Set(),
     wins: {}, kills: {}, sendAcc: 0, bulletN: 0, mineN: 0, aliveShown: -1,
+    // co-op
+    coopMode: false, coopMission: 0, coopLives: 0, p1Spawn: null, p2Spawn: null,
 };
 
 // Host-only state
@@ -82,6 +88,9 @@ const H = {
     players: new Map(), phase: 'lobby', round: 0, wins: {}, kills: {},
     dead: new Set(), roster: [], ending: false, live: false, roundT: 0,
     states: new Map(), endTimer: null, nextTimer: null,
+    // co-op
+    coopMode: false, coopMission: 0, coopLives: 0,
+    coopEnemyIds: new Set(), coopSpawnKeys: new Map(),
 };
 
 // ============================================================
@@ -251,6 +260,8 @@ function leave(reason) {
     clearTimeout(H.nextTimer);
     H.players.clear();
     H.phase = 'lobby';
+    H.coopMode = false;
+    H.coopEnemyIds.clear();
     role = null;
     myId = null;
     roomCode = '';
@@ -314,7 +325,8 @@ function nextColor() {
 }
 
 function broadcastLobby() {
-    emit({ t: 'lobby', code: roomCode, phase: H.phase, players: [...H.players.values()] });
+    const players = [...H.players.values()].filter(p => !p.coopEnemy);
+    emit({ t: 'lobby', code: roomCode, phase: H.phase, players, gameMode: H.coopMode ? 'coop' : 'battle' });
 }
 
 // Only the tank's own browser may speak for it; the host also speaks for the bots
@@ -363,17 +375,19 @@ function rejectPeer(id, reason) {
 
 function hostLeave(id, how = 'left the room') {
     const p = H.players.get(id);
-    if (!p) return;
+    if (!p || p.coopEnemy) return;  // co-op enemies don't leave
     H.players.delete(id);
     H.states.delete(id);
     emit({ t: 'toast', text: `${p.name} ${how}` });
     if (H.phase === 'match') {
         emit({ t: 'left', id });
-        if (H.players.size < 2) {
-            hostResults('Everyone else left, so the battle is over.');
+        const humans = [...H.players.values()].filter(q => !q.bot && !q.coopEnemy);
+        if (humans.length === 0) {
+            if (H.coopMode) { hostCoopResults(false, 'Everyone left.'); }
+            else hostResults('Everyone else left, so the battle is over.');
             return;
         }
-        hostCheckRound();
+        if (!H.coopMode) hostCheckRound();
     }
     broadcastLobby();
 }
@@ -403,7 +417,13 @@ function kickPlayer(id) {
 
 function hostStart() {
     if (H.phase !== 'lobby') return;
-    if (H.players.size < 2) return toast('Invite a friend or add a bot first.');
+    if (H.coopMode) {
+        const humans = [...H.players.values()].filter(p => !p.bot);
+        if (humans.length === 0) return toast('You need at least 1 player to start co-op.');
+        if (humans.length > 2) return toast('Co-op supports up to 2 players. Remove extra players.');
+    } else {
+        if (H.players.size < 2) return toast('Invite a friend or add a bot first.');
+    }
     const waiting = [...H.players.values()].filter(p => !p.bot && !p.host && !p.ready);
     if (waiting.length) return toast(`Waiting for ${waiting.map(p => p.name).join(', ')}`);
     H.phase = 'match';
@@ -412,7 +432,13 @@ function hostStart() {
     H.kills = {};
     for (const id of H.players.keys()) { H.wins[id] = 0; H.kills[id] = 0; }
     broadcastLobby();
-    hostNextRound();
+    if (H.coopMode) {
+        H.coopMission = 0;
+        H.coopLives = COOP_LIVES;
+        hostCoopRound();
+    } else {
+        hostNextRound();
+    }
 }
 
 function hostNextRound() {
@@ -438,9 +464,26 @@ function hostDeath(msg) {
     if (!H.live || H.dead.has(msg.id)) return;
     H.dead.add(msg.id);
     const by = msg.by && msg.by !== msg.id && H.players.has(msg.by) ? msg.by : null;
-    if (by) H.kills[by] = (H.kills[by] || 0) + 1;
+    // Only count kills on non-enemy players in co-op (enemies dying doesn't earn kills)
+    if (by && !(H.players.get(msg.id) || {}).coopEnemy) H.kills[by] = (H.kills[by] || 0) + 1;
     emit({ t: 'dead', r: H.round, id: msg.id, by: msg.by || null, b: msg.b || null, x: msg.x, z: msg.z, kills: H.kills });
-    hostCheckRound();
+    if (H.coopMode) {
+        // Schedule respawn for human players if lives remain
+        const p = H.players.get(msg.id);
+        const isHuman = p && !p.bot && !p.coopEnemy;
+        if (isHuman && H.coopLives > 0) {
+            H.coopLives--;
+            const sk = H.coopSpawnKeys.get(msg.id) || 'P';
+            setTimeout(() => {
+                if (!H.live) return;
+                H.dead.delete(msg.id); // allow to die again
+                emit({ t: 'coopRespawn', r: H.round, id: msg.id, spawnKey: sk, lives: H.coopLives });
+            }, 3000);
+        }
+        hostCheckCoopRound();
+    } else {
+        hostCheckRound();
+    }
 }
 
 const hostAlive = () => H.roster.filter(id => H.players.has(id) && !H.dead.has(id));
@@ -467,6 +510,121 @@ function hostEndRound() {
     H.nextTimer = setTimeout(() => (champ ? hostResults() : hostNextRound()), 3500);
 }
 
+// ============================================================
+// Co-op host logic
+// ============================================================
+function hostCoopRound() {
+    if (H.phase !== 'match') return;
+    H.round++;
+    H.dead = new Set();
+    H.ending = false;
+    H.live = true;
+    H.roundT = 0;
+    H.states.clear();
+    H.coopEnemyIds.clear();
+    H.coopSpawnKeys.clear();
+
+    // Remove old co-op enemy entries from previous mission
+    for (const [id, p] of H.players) if (p.coopEnemy) H.players.delete(id);
+
+    const lvl = CO_OP_LEVELS[H.coopMission];
+    const mapData = lvl.map;
+
+    // Parse mission map for spawn positions and enemy placements
+    let p1Spawn = null, p2Spawn = null;
+    const enemies = [];
+    for (let r = 0; r < mapData.length; r++) {
+        for (let c = 0; c < mapData[r].length; c++) {
+            const ch = mapData[r][c];
+            const x = G.cellX(c), z = G.cellZ(r);
+            if (ch === 'P') p1Spawn = { x, z };
+            else if (ch === 'Q') p2Spawn = { x, z };
+            else if (G.TYPES[ch]) enemies.push({ type: ch, x, z });
+        }
+    }
+
+    // Assign human players to P/Q spawns
+    const humans = [...H.players.values()].filter(p => !p.bot && !p.coopEnemy);
+    humans.slice(0, 2).forEach((p, i) => H.coopSpawnKeys.set(p.id, i === 0 ? 'P' : 'Q'));
+
+    // Build the full player list (humans + typed enemies)
+    const allPlayers = [];
+    if (humans[0]) allPlayers.push({ id: humans[0].id, name: humans[0].name, color: humans[0].color, bot: false, spawnKey: 'P' });
+    if (humans[1]) allPlayers.push({ id: humans[1].id, name: humans[1].name, color: humans[1].color, bot: false, spawnKey: 'Q' });
+
+    enemies.forEach((e, i) => {
+        const id = `coop-${i}`;
+        H.coopEnemyIds.add(id);
+        const tc = G.TYPES[e.type];
+        const colorCss = numToCSS(tc.color);
+        H.players.set(id, { id, name: COOP_NAMES[e.type] || 'Enemy', color: colorCss, bot: true, coopEnemy: true, ready: true });
+        H.wins[id] = 0; H.kills[id] = 0;
+        allPlayers.push({ id, name: COOP_NAMES[e.type] || 'Enemy', color: colorCss, bot: true, coopEnemy: true, enemyType: e.type, x: e.x, z: e.z });
+    });
+
+    emit({
+        t: 'round',
+        n: H.round,
+        coopMode: true,
+        mission: H.coopMission,
+        missionName: lvl.name,
+        coopLives: H.coopLives,
+        ms: COUNTDOWN_MS,
+        players: allPlayers,
+        p1Spawn, p2Spawn,
+        wins: H.wins, kills: H.kills,
+    });
+}
+
+function hostCheckCoopRound() {
+    if (!H.live || H.ending) return;
+    const allEnemiesDead = H.coopEnemyIds.size > 0 && [...H.coopEnemyIds].every(id => H.dead.has(id));
+    const humans = [...H.players.values()].filter(p => !p.bot && !p.coopEnemy);
+    const allHumansDead = humans.length > 0 && humans.every(p => H.dead.has(p.id));
+    if (allEnemiesDead) {
+        H.ending = true;
+        H.endTimer = setTimeout(() => hostCoopMissionEnd(true), 1500);
+    } else if (allHumansDead && H.coopLives <= 0) {
+        H.ending = true;
+        H.endTimer = setTimeout(() => hostCoopMissionEnd(false), 1500);
+    }
+}
+
+function hostCoopMissionEnd(won) {
+    if (!H.live) return;
+    H.live = false;
+    if (won) {
+        const missionsDone = H.coopMission + 1;
+        H.coopMission++;
+        if (H.coopMission >= CO_OP_LEVELS.length) {
+            emit({ t: 'coopMissionEnd', won: true, r: H.round, last: true, mission: missionsDone });
+            hostCoopResults(true);
+        } else {
+            emit({ t: 'coopMissionEnd', won: true, r: H.round, last: false, mission: missionsDone, nextName: CO_OP_LEVELS[H.coopMission].name });
+            clearTimeout(H.nextTimer);
+            H.nextTimer = setTimeout(hostCoopRound, 4000);
+        }
+    } else {
+        emit({ t: 'coopMissionEnd', won: false, r: H.round, mission: H.coopMission });
+        hostCoopResults(false);
+    }
+}
+
+function hostCoopResults(won, note) {
+    clearTimeout(H.endTimer);
+    clearTimeout(H.nextTimer);
+    H.live = false;
+    H.phase = 'results';
+    const humans = [...H.players.values()].filter(p => !p.bot && !p.coopEnemy);
+    const cleared = won ? CO_OP_LEVELS.length : H.coopMission;
+    const list = humans.map(p => ({ id: p.id, name: p.name, color: p.color, bot: false, wins: cleared, kills: H.kills[p.id] || 0 }));
+    const resultNote = note || (won
+        ? `All ${CO_OP_LEVELS.length} missions cleared together!`
+        : `Made it to mission ${cleared + 1} of ${CO_OP_LEVELS.length}.`);
+    emit({ t: 'results', list, note: resultNote });
+    broadcastLobby();
+}
+
 function hostResults(note) {
     clearTimeout(H.endTimer);
     clearTimeout(H.nextTimer);
@@ -482,6 +640,9 @@ function hostResults(note) {
 function hostBackToLobby() {
     if (H.phase !== 'results') return;
     H.phase = 'lobby';
+    // Remove co-op enemy entries added during the match
+    for (const [id, p] of H.players) if (p.coopEnemy) H.players.delete(id);
+    H.coopEnemyIds.clear();
     for (const p of H.players.values()) p.ready = p.bot || !!p.host;
     emit({ t: 'toLobby' });
     broadcastLobby();
@@ -490,9 +651,9 @@ function hostBackToLobby() {
 function hostTick(dt) {
     if (!H.live) return;
     H.roundT += dt;
-    if (H.roundT > ROUND_LIMIT && !H.ending) {
+    // Co-op has no time limit; battle rounds have a cap
+    if (!H.coopMode && H.roundT > ROUND_LIMIT && !H.ending) {
         H.ending = true;
-        // Time is up: nobody takes the round
         H.dead = new Set(H.roster);
         hostEndRound();
     }
@@ -520,6 +681,8 @@ function clientHandle(msg) {
             lobby = msg;
             if (view === 'main' && role === 'client' && msg.phase === 'lobby') enterLobby();
             else if (view === 'lobby') renderLobby();
+            // Sync co-op mode flag on host from broadcast (clients read it here)
+            if (role === 'client') H.coopMode = msg.gameMode === 'coop';
             break;
         case 'round':
             startRound(msg);
@@ -547,6 +710,12 @@ function clientHandle(msg) {
             break;
         case 'roundEnd':
             if (thisRound) onRoundEnd(msg);
+            break;
+        case 'coopMissionEnd':
+            if (thisRound) onCoopMissionEnd(msg);
+            break;
+        case 'coopRespawn':
+            if (thisRound) onCoopRespawn(msg);
             break;
         case 'results':
             showResults(msg);
@@ -593,8 +762,19 @@ function buildLobbyScene() {
 
 function renderLobby() {
     const isHost = role !== 'client';
+    const coopOn = lobby.gameMode === 'coop';
     $('room-code').textContent = role === 'solo' ? 'SOLO' : roomCode;
     $('btn-copy').classList.toggle('hidden', role === 'solo');
+    // Update mode-dependent UI
+    if ($('lobby-rules')) {
+        $('lobby-rules').innerHTML = coopOn
+            ? 'Co-op campaign. Work together to clear all 5 missions. You share <b>3</b> lives.'
+            : 'Free-for-all. Last tank standing wins the round. First to <b>3</b> round wins takes the match.';
+    }
+    if ($('btn-lobby-coop')) {
+        $('btn-lobby-coop').textContent = coopOn ? 'Switch to Battle' : 'Switch to Co-op';
+        $('btn-lobby-coop').classList.toggle('coop-active', coopOn);
+    }
     const list = $('players');
     list.innerHTML = '';
     for (const p of lobby.players) {
@@ -625,10 +805,16 @@ function renderLobby() {
     const mine = lobby.players.find(p => p.id === myId);
     if (isHost) {
         const waiting = lobby.players.filter(p => !p.bot && !p.host && !p.ready).map(p => p.name);
-        $('btn-start').disabled = waiting.length > 0 || lobby.players.length < 2;
-        setStatus('lobby-status', waiting.length
-            ? `Waiting for ${waiting.join(', ')} to ready up`
-            : lobby.players.length < 2 ? (role === 'solo' ? 'Add a bot to battle.' : 'Invite friends or add bots, then start.') : 'Everyone is ready. Start when you like!');
+        const humanCount = lobby.players.filter(p => !p.bot).length;
+        const tooManyForCoop = coopOn && humanCount > 2;
+        const tooFew = coopOn ? humanCount === 0 : lobby.players.length < 2;
+        $('btn-start').disabled = waiting.length > 0 || tooFew || tooManyForCoop;
+        let statusMsg;
+        if (tooManyForCoop) statusMsg = 'Co-op supports up to 2 players. Remove extra players.';
+        else if (waiting.length) statusMsg = `Waiting for ${waiting.join(', ')} to ready up`;
+        else if (tooFew) statusMsg = coopOn ? 'Invite a friend to play co-op, or start solo.' : (role === 'solo' ? 'Add a bot to battle.' : 'Invite a friend or add a bot, then start.');
+        else statusMsg = coopOn ? 'Ready! Start the co-op campaign.' : 'Everyone is ready. Start when you like!';
+        setStatus('lobby-status', statusMsg);
     } else {
         $('btn-ready').textContent = mine && mine.ready ? 'Not ready' : 'Ready up';
         setStatus('lobby-status', mine && mine.ready ? 'Waiting for the host to start...' : 'Ready up when you are set.');
@@ -652,6 +838,12 @@ $('btn-ready').addEventListener('click', () => {
 });
 $('btn-start').addEventListener('click', () => { sfx.click(); hostStart(); });
 $('btn-bot').addEventListener('click', () => { sfx.click(); addBot(); });
+$('btn-lobby-coop').addEventListener('click', () => {
+    if (H.phase !== 'lobby') return;
+    sfx.click();
+    H.coopMode = !H.coopMode;
+    broadcastLobby();
+});
 $('btn-again').addEventListener('click', () => { sfx.click(); hostBackToLobby(); });
 
 // ============================================================
@@ -678,31 +870,80 @@ function startRound(msg) {
     R.seenB.clear();
     R.seenM.clear();
     Object.assign(R, {
-        n: msg.n, arena: msg.arena, clock: -msg.ms / 1000, lastCount: null,
-        players: msg.players, wins: msg.wins, kills: msg.kills, sendAcc: 0, aliveShown: -1,
+        n: msg.n, clock: -msg.ms / 1000, lastCount: null,
+        // For co-op, only human players go in R.players (shown in scoreboard)
+        players: msg.coopMode ? msg.players.filter(p => !p.coopEnemy) : msg.players,
+        wins: msg.wins, kills: msg.kills, sendAcc: 0, aliveShown: -1,
+        coopMode: !!msg.coopMode, coopMission: msg.mission || 0, coopLives: msg.coopLives || 0,
+        p1Spawn: msg.p1Spawn || null, p2Spawn: msg.p2Spawn || null,
+        arena: msg.coopMode ? (msg.mission || 0) : (msg.arena || 0),
     });
-    const arena = ARENAS[msg.arena] || ARENAS[0];
-    const spawns = G.loadArena(arena.map);
-    for (const p of msg.players) {
-        const sp = spawns[msg.slots[p.id]];
-        if (!sp) continue;
-        const t = G.makeBattleTank({
-            id: p.id, color: p.color, cfg: p.bot ? BOT_CFG : PLAYER_CFG,
-            x: sp.x, z: sp.z, facing: Math.atan2(-sp.z, -sp.x), isPlayer: p.id === myId,
-        });
-        Object.assign(t, { pid: p.id, name: p.name, bot: p.bot, owned: p.id === myId || (role !== 'client' && p.bot), net: null, invulnT: 0, target: null });
-        R.byId.set(p.id, t);
-        makeTag(t);
+
+    // Load the map
+    let spawns;
+    if (msg.coopMode) {
+        const lvl = CO_OP_LEVELS[msg.mission] || CO_OP_LEVELS[0];
+        spawns = G.loadArena(lvl.map); // modified loadArena handles P/Q/enemy tiles
+    } else {
+        const arena = ARENAS[msg.arena] || ARENAS[0];
+        spawns = G.loadArena(arena.map);
     }
+
+    for (const p of msg.players) {
+        let sp;
+        if (msg.coopMode && p.coopEnemy) {
+            sp = { x: p.x, z: p.z }; // enemies placed at their map position
+        } else if (msg.coopMode) {
+            sp = spawns[p.spawnKey] || spawns['P'];
+        } else {
+            sp = spawns[msg.slots[p.id]];
+        }
+        if (!sp) continue;
+
+        let cfg;
+        if (p.coopEnemy) cfg = G.TYPES[p.enemyType] || BOT_CFG;
+        else if (p.bot) cfg = BOT_CFG;
+        else cfg = PLAYER_CFG;
+
+        // Enemies face toward the centre; players face toward the centre too
+        const facing = Math.atan2(-sp.z, -sp.x);
+        const t = G.makeBattleTank({
+            id: p.id, color: p.color, cfg,
+            x: sp.x, z: sp.z, facing, isPlayer: p.id === myId,
+        });
+        Object.assign(t, {
+            pid: p.id, name: p.name, bot: p.bot, coopEnemy: !!p.coopEnemy,
+            owned: p.id === myId || (role !== 'client' && p.bot),
+            net: null, invulnT: 0, target: null,
+        });
+        R.byId.set(p.id, t);
+        if (!p.coopEnemy) makeTag(t); // no name tags above enemy tanks
+    }
+
     const me = R.byId.get(myId) || null;
     G.setPlayer(me);
     if (me) G.setCursorColor(me.cfg.color);
     G.setState('intro');
     $('banner').classList.remove('long');
-    G.showBanner(`ROUND ${msg.n}`, '3', arena.name);
-    $('b-round').textContent = msg.n;
+
+    // HUD
+    $('b-mode-tag').textContent = msg.coopMode ? 'CO-OP' : 'BATTLE';
+    $('hud-b-round').firstChild.textContent = msg.coopMode ? 'Mission' : 'Round';
+    $('b-round').textContent = msg.coopMode ? msg.mission + 1 : msg.n;
+    $('hud-b-alive').firstChild.textContent = msg.coopMode ? 'Enemies' : 'Alive';
+    $('hud-b-lives').style.display = msg.coopMode ? '' : 'none';
+    if (msg.coopMode) $('b-lives').textContent = msg.coopLives;
+
+    if (msg.coopMode) {
+        const lvlName = (CO_OP_LEVELS[msg.mission] || {}).name || '';
+        G.showBanner('CO-OP', `MISSION ${msg.mission + 1}`, lvlName);
+    } else {
+        const arenaName = (ARENAS[msg.arena] || ARENAS[0]).name;
+        G.showBanner(`ROUND ${msg.n}`, '3', arenaName);
+    }
     R.aliveShown = R.byId.size;
-    $('b-alive').textContent = R.byId.size;
+    const enemyCt = msg.coopMode ? msg.players.filter(p => p.coopEnemy).length : R.byId.size;
+    $('b-alive').textContent = enemyCt;
     renderScoreboard();
 }
 
@@ -721,10 +962,13 @@ G.hooks.bulletHit = (t, b) => {
     G.removeBullet(b);
     // Remote tanks: wait for their own browser to say whether they died
     if (!t.owned || G.state !== 'play' || t.invulnT > 0) return;
+    // No friendly fire in co-op: human players can't hurt each other
+    if (R.coopMode && !t.coopEnemy && b.owner && !b.owner.coopEnemy) return;
     killOwned(t, b.owner ? b.owner.pid : null, b.id || null);
 };
 G.hooks.blast = (t, m) => {
     if (!t.owned || G.state !== 'play' || t.invulnT > 0) return;
+    if (R.coopMode && !t.coopEnemy && m.owner && !m.owner.coopEnemy) return;
     killOwned(t, m.owner ? m.owner.pid : null, null);
 };
 G.hooks.crate = (r, c) => {
@@ -786,7 +1030,10 @@ function onDead(msg) {
         G.killTank(t);
     }
     const victim = nameOf(msg.id), killer = msg.by && msg.by !== msg.id ? nameOf(msg.by) : null;
-    if (msg.id === myId) toast(killer ? `${killer} destroyed you` : 'You destroyed yourself');
+    const t2 = R.byId.get(msg.id);
+    if (t2 && t2.coopEnemy) {
+        // Don't show toast for each enemy death, too noisy in co-op
+    } else if (msg.id === myId) toast(killer ? `${killer} destroyed you` : 'You destroyed yourself');
     else if (msg.by === myId && killer) toast(`You destroyed ${victim}`);
     else toast(killer ? `${killer} destroyed ${victim}` : `${victim} was destroyed`);
     renderScoreboard();
@@ -815,6 +1062,50 @@ function onRoundEnd(msg) {
     else if (msg.winner === myId) G.showBanner(`ROUND ${R.n}`, 'YOU WIN', champ ? 'That takes the match' : `First to ${WIN_ROUNDS} takes the match`);
     else G.showBanner(`ROUND ${R.n}`, `${msg.name} WINS`, champ ? 'That takes the match' : `First to ${WIN_ROUNDS} takes the match`);
     sfx.go();
+    renderScoreboard();
+}
+
+function onCoopMissionEnd(msg) {
+    G.setState('roundover');
+    $('banner').classList.add('long');
+    R.coopLives = 0; // stop further respawns locally
+    if (msg.won) {
+        if (msg.last) {
+            G.showBanner('CO-OP', 'VICTORY!', `All ${CO_OP_LEVELS.length} missions cleared!`);
+        } else {
+            G.showBanner('CO-OP', 'CLEARED!', `Next: ${msg.nextName || 'Mission ' + (msg.mission + 1)}`);
+        }
+    } else {
+        G.showBanner('CO-OP', 'MISSION FAILED', `Made it to mission ${(msg.mission || 0) + 1}`);
+    }
+    sfx.go();
+    renderScoreboard();
+}
+
+function onCoopRespawn(msg) {
+    R.coopLives = msg.lives;
+    if ($('b-lives')) $('b-lives').textContent = msg.lives;
+    const pEntry = R.players.find(p => p.id === msg.id);
+    if (!pEntry) return;
+    const spawnPos = msg.spawnKey === 'Q' ? R.p2Spawn : R.p1Spawn;
+    if (!spawnPos) return;
+    // Create a fresh tank at the spawn position
+    const t = G.makeBattleTank({
+        id: msg.id, color: pEntry.color, cfg: PLAYER_CFG,
+        x: spawnPos.x, z: spawnPos.z,
+        facing: Math.atan2(-spawnPos.z, -spawnPos.x),
+        isPlayer: msg.id === myId,
+    });
+    Object.assign(t, {
+        pid: msg.id, name: pEntry.name, bot: false, coopEnemy: false,
+        owned: msg.id === myId || (role !== 'client' && false),
+        net: null, invulnT: INVULN, target: null,
+    });
+    R.byId.set(msg.id, t);
+    const tag = R.tags.get(msg.id);
+    if (tag) tag.style.display = '';
+    if (msg.id === myId) G.setPlayer(t);
+    toast(`${pEntry.name} respawned`);
     renderScoreboard();
 }
 
@@ -935,12 +1226,17 @@ function battleFrame(dt) {
         const n = Math.ceil(-R.clock);
         if (R.clock < 0 && n !== R.lastCount && n <= 3) {
             R.lastCount = n;
-            G.showBanner(`ROUND ${R.n}`, String(n), (ARENAS[R.arena] || ARENAS[0]).name);
+            if (R.coopMode) {
+                const lvlName = (CO_OP_LEVELS[R.coopMission] || {}).name || '';
+                G.showBanner('CO-OP', String(n), lvlName);
+            } else {
+                G.showBanner(`ROUND ${R.n}`, String(n), (ARENAS[R.arena] || ARENAS[0]).name);
+            }
             sfx.count();
         }
         if (R.clock >= 0) {
             G.setState('play');
-            G.showBanner(`ROUND ${R.n}`, 'GO', '');
+            G.showBanner(R.coopMode ? 'CO-OP' : `ROUND ${R.n}`, 'GO', '');
             setTimeout(() => { if (G.state === 'play') G.hideBanner(); }, 700);
             sfx.go();
             for (const t of R.byId.values()) t.invulnT = INVULN;
@@ -977,7 +1273,12 @@ function battleFrame(dt) {
     const alive = tanks.filter(t => t.alive).length;
     if (alive !== R.aliveShown) {
         R.aliveShown = alive;
-        $('b-alive').textContent = alive;
+        if (R.coopMode) {
+            const enemiesLeft = [...R.byId.values()].filter(t => t.coopEnemy && t.alive).length;
+            $('b-alive').textContent = enemiesLeft;
+        } else {
+            $('b-alive').textContent = alive;
+        }
         renderScoreboard();
     }
 }

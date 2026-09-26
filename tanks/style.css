@@ -471,6 +471,9 @@ body.scr-campaign #coop-color-row.show { display: flex; }
 .btn-coop { border-color: rgba(167, 139, 250, 0.5); color: #a78bfa; }
 .btn-coop:hover { border-color: #a78bfa; color: #a78bfa; filter: brightness(1.15); }
 
+/* Lobby co-op toggle active state */
+#btn-lobby-coop.coop-active { border-color: var(--accent); color: var(--accent); }
+
 /* Short landscape phones */
 @media (max-height: 500px) {
     #hud { padding: 8px 12px; }

@@ -2,8 +2,8 @@
 // single-player campaign. Battle mode (js/main.js) plugs in through `hooks`.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { COLS, ROWS, LEVELS, CO_OP_LEVELS } from './maps.js?v=4';
-import { sfx, audio, store, isMuted, setMuted } from './audio.js?v=4';
+import { COLS, ROWS, LEVELS, CO_OP_LEVELS } from './maps.js?v=5';
+import { sfx, audio, store, isMuted, setMuted } from './audio.js?v=5';
 
 export { COLS, ROWS };
 
@@ -652,7 +652,9 @@ function loadLevel() {
     updateHud();
 }
 
-// Battle arena: walls and crates only. Returns the spawn points keyed '1'..'8'.
+// Battle arena: walls and crates only.
+// Returns spawn points keyed '1'..'8' (arenas) or 'P'/'Q' (co-op missions).
+// Enemy type tiles (b g t r k) in co-op maps become floor and are ignored here.
 export function loadArena(map) {
     clearLevel();
     grid = map.map(row => [...row]);
@@ -660,10 +662,14 @@ export function loadArena(map) {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const ch = grid[r][c];
-            if (ch >= '1' && ch <= '8') {
+            if ((ch >= '1' && ch <= '8') || ch === 'P' || ch === 'Q') {
                 spawns[ch] = { x: cellX(c), z: cellZ(r) };
                 grid[r][c] = '.';
-            } else buildCell(r, c);
+            } else if (TYPES[ch]) {
+                grid[r][c] = '.'; // co-op enemy tile → floor
+            } else {
+                buildCell(r, c);
+            }
         }
     }
     return spawns;
