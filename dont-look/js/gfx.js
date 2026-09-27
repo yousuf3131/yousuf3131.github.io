@@ -45,7 +45,7 @@ export function init(canvas) {
     camera.position.set(0, 1.7, 0);
 
     // Flashlight
-    flashlight = new THREE.SpotLight(0xfff5e0, 3.5, 22, 0.38, 0.5, 1.2);
+    flashlight = new THREE.SpotLight(0xfff5e0, 180, 22, 0.38, 0.5, 1.2);
     flashlight.castShadow = true;
     flashlight.shadow.mapSize.set(512, 512);
     flashlight.shadow.camera.near = 0.1;
@@ -155,12 +155,12 @@ function addBox(x, y, z, w, h, d, mat, castShadow = true) {
     return mesh;
 }
 
-function addFlickerLight(x, z, color = 0xff8833, intensity = 0.8) {
+function addFlickerLight(x, z, color = 0xff8833, intensity = 40) {
     const light = new THREE.PointLight(color, intensity, 9, 2);
     light.position.set(x, CEIL_H - 0.5, z);
     light.castShadow = false; // too many shadow-casting lights = slow
     scene.add(light);
-    lightList.push({ light, base: intensity, phase: Math.random() * Math.PI * 2, amp: 0.25 + Math.random() * 0.3 });
+    lightList.push({ light, base: intensity, phase: Math.random() * Math.PI * 2, amp: intensity * (0.3 + Math.random() * 0.35) });
 }
 
 function buildRoom(room) {
@@ -181,8 +181,8 @@ function buildRoom(room) {
     // Light inside room
     addFlickerLight(cx, cz);
     if (w > 10) {
-        addFlickerLight(cx - 3, cz - 3, 0xff7722, 0.5);
-        addFlickerLight(cx + 3, cz + 3, 0xff9944, 0.4);
+        addFlickerLight(cx - 3, cz - 3, 0xff7722, 28);
+        addFlickerLight(cx + 3, cz + 3, 0xff9944, 22);
     }
 }
 
@@ -218,7 +218,7 @@ function buildCorridor(rA, rB) {
         addBox(cx + CW / 2, CEIL_H / 2, cz2, WALL_T, CEIL_H, len, matWall);
         walls.push({ minX: cx - CW/2 - WALL_T, maxX: cx - CW/2, minZ: Math.min(z0,z1), maxZ: Math.max(z0,z1) });
         walls.push({ minX: cx + CW/2, maxX: cx + CW/2 + WALL_T, minZ: Math.min(z0,z1), maxZ: Math.max(z0,z1) });
-        addFlickerLight(cx, cz2, 0xff6622, 0.4);
+        addFlickerLight(cx, cz2, 0xff6622, 20);
     }
 }
 
@@ -305,7 +305,7 @@ export function buildLevel() {
     ritualMeshes = [];
 
     // Dim ambient — re-added each time (clearLevel removes it)
-    scene.add(new THREE.AmbientLight(0x0a0a14, 0.15));
+    scene.add(new THREE.AmbientLight(0x151520, 0.8));
 
     for (let i = 0; i < ROOMS.length; i++) {
         buildRoom(ROOMS[i]);
@@ -328,20 +328,20 @@ export function buildLevel() {
         ritualMeshes.push(mesh);
 
         // Candle-like light above
-        const rLight = new THREE.PointLight(0xc8a840, 0.6, 4, 2);
+        const rLight = new THREE.PointLight(0xc8a840, 25, 5, 2);
         rLight.position.set(rp.x, 1.5, rp.z);
         scene.add(rLight);
-        lightList.push({ light: rLight, base: 0.6, phase: Math.random() * Math.PI * 2, amp: 0.4 });
+        lightList.push({ light: rLight, base: 25, phase: Math.random() * Math.PI * 2, amp: 12 });
     }
 
     // Exit door
     const exitR = ROOMS[5];
     const exitMat = new THREE.MeshStandardMaterial({ color: 0x001a00, emissive: 0x003300, emissiveIntensity: 0.4, roughness: 0.3 });
     exitMesh = addBox(exitR.cx, CEIL_H / 2 - 0.5, exitR.cz, 2, CEIL_H - 0.5, 0.3, exitMat);
-    const exitLight = new THREE.PointLight(0x00ff44, 0.5, 5, 2);
+    const exitLight = new THREE.PointLight(0x00ff44, 20, 6, 2);
     exitLight.position.set(exitR.cx, 2, exitR.cz);
     scene.add(exitLight);
-    lightList.push({ light: exitLight, base: 0.5, phase: 0, amp: 0.2 });
+    lightList.push({ light: exitLight, base: 20, phase: 0, amp: 5 });
 
     // Build monster
     buildMonster();
@@ -390,7 +390,7 @@ function buildMonster() {
         root.add(eye);
         monsterEyeMeshes.push(eye);
 
-        const light = new THREE.PointLight(0xffffff, 0.8, 3, 2);
+        const light = new THREE.PointLight(0xffffff, 8, 3, 2);
         light.position.copy(eye.position);
         root.add(light);
         monsterEyes.push(light);
@@ -454,7 +454,7 @@ export function unlockExit() {
     exitMesh.material.color.setHex(0x002200);
     // Bright exit light
     const exitR = ROOMS[5];
-    const bigLight = new THREE.PointLight(0x00ff88, 3, 12, 1.5);
+    const bigLight = new THREE.PointLight(0x00ff88, 200, 14, 1.5);
     bigLight.position.set(exitR.cx, 2.5, exitR.cz);
     scene.add(bigLight);
 }
@@ -537,7 +537,7 @@ let flashBattery = 1.0; // 0–1
 export function setBatteryLevel(v) {
     flashBattery = Math.max(0, Math.min(1, v));
     if (flashlight) {
-        flashlight.intensity = flashBattery > 0.08 ? 3.5 * flashBattery : 0;
+        flashlight.intensity = flashBattery > 0.08 ? 180 * flashBattery : 0;
         const temp = 3200 + flashBattery * 1800;
         flashlight.color.setHSL(0.08, 0.4 + flashBattery * 0.3, 0.85 + flashBattery * 0.1);
     }
@@ -561,7 +561,7 @@ export function update(dt, gameActive) {
         if (M.frozen) {
             // Eyes pulse
             const pulse = 0.5 + 0.5 * Math.sin(M.eyeT * 3.5);
-            for (const el of monsterEyes) el.intensity = 0.5 + pulse * 1.2;
+            for (const el of monsterEyes) el.intensity = 3 + pulse * 8;
             for (const em of monsterEyeMeshes) {
                 em.material.emissiveIntensity = 1.5 + pulse * 2.0;
             }
@@ -569,7 +569,7 @@ export function update(dt, gameActive) {
             monsterMesh.rotation.z = Math.sin(M.t * 18) * 0.012;
         } else {
             // Moving: eyes flare, subtle hover
-            for (const el of monsterEyes) el.intensity = 2.0 + Math.sin(M.eyeT * 12) * 0.5;
+            for (const el of monsterEyes) el.intensity = 15 + Math.sin(M.eyeT * 12) * 5;
             for (const em of monsterEyeMeshes) em.material.emissiveIntensity = 3.5;
             monsterMesh.position.y = Math.sin(M.t * 2.5) * 0.04;
             monsterMesh.rotation.z = 0;

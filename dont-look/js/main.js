@@ -5,7 +5,7 @@ import { sfx, unlockAudio, setMuted, isMuted, tickAudio,
          startHeartbeat, stopHeartbeat, setHeartbeatRate,
          startMonsterRumble, stopMonsterRumble } from './audio.js?v=2';
 import { play as playMusic, stop as stopMusic, setTension } from './music.js?v=2';
-import * as gfx from './gfx.js?v=2';
+import * as gfx from './gfx.js?v=3';
 
 const track = (name, p) => { if (window.track) window.track(name, p); };
 const $ = id => document.getElementById(id);
