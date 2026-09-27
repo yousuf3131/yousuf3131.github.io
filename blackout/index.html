@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../js/analytics.js?v=2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Blackout - Yousuf Kazmi</title>
+    <meta name="description" content="A multiplayer horror game for up to 8 players. One hunter with a shotgun, everyone else with a flashlight. Survive until dawn.">
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --red: #d0182e;
+            --red-2: #ff3b4e;
+            --warm: #ffcf8a;
+            --panel: rgba(12, 10, 10, 0.86);
+            --panel-2: rgba(255, 255, 255, 0.04);
+            --line: rgba(255, 255, 255, 0.1);
+            --text: #ece6dc;
+            --muted: #968d82;
+            --ok: #8fd18a;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #040405; color: var(--text); font-family: 'Inter', system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+        #c { display: block; width: 100vw; height: 100vh; touch-action: none; }
+        .hidden { display: none !important; }
+        h1, h2, h3, p { margin: 0; }
+        button { font-family: inherit; cursor: pointer; }
+        .display { font-family: 'Special Elite', 'Courier New', monospace; }
+        .screen { position: fixed; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding: 16px; overflow: auto; z-index: 5; }
+        .screen > .panel { margin-block: auto; }
+        @media (max-height: 560px) { .screen { padding-top: 58px; } }
+        .screen.dim { background: radial-gradient(ellipse at center, rgba(0,0,0,0.3), rgba(0,0,0,0.8)); }
+        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; backdrop-filter: blur(8px); box-shadow: 0 30px 80px rgba(0,0,0,0.7); }
+        .btn { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-weight: 700; font-size: 0.95rem; padding: 11px 18px; border-radius: 12px; transition: transform 0.12s, background-color 0.2s, border-color 0.2s; }
+        .btn:hover { border-color: rgba(255,255,255,0.35); }
+        .btn:active { transform: translateY(1px); }
+        .btn.primary { background: var(--red); color: #fff; border-color: transparent; font-weight: 800; }
+        .btn.primary:hover { background: #e32238; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn.big { width: 100%; font-size: 1.02rem; padding: 14px 20px; }
+        .btn.small { padding: 7px 12px; font-size: 0.8rem; }
+        .field, select.field { width: 100%; font: 600 1rem 'Inter', sans-serif; color: var(--text); background: rgba(0,0,0,0.55); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; outline: none; -webkit-user-select: text; user-select: text; }
+        select.field { padding: 10px 12px; font-size: 0.92rem; cursor: pointer; }
+        select.field option { background: #141212; }
+        .field:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(208,24,46,0.2); }
+        .kicker { color: var(--red-2); font-weight: 800; font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; }
+        .status { min-height: 1.3em; color: var(--muted); font-size: 0.88rem; }
+        .status.error { color: #ff8a80; }
+        body.is-host .client-only { display: none !important; }
+        body:not(.is-host) .host-only { display: none !important; }
+        body.solo .online-only { display: none !important; }
+
+        /* Menu */
+        .menu-panel { width: 100%; max-width: 430px; padding: 30px 26px 24px; text-align: center; }
+        .logo { font-family: 'Special Elite', monospace; font-size: clamp(2.8rem, 13vw, 4.2rem); line-height: 0.9; color: #f4ede2; letter-spacing: 0.06em; text-shadow: 0 0 24px rgba(255,190,120,0.25); animation: flicker 6s infinite; }
+        .logo small { display: block; font-size: 0.24em; letter-spacing: 0.5em; color: var(--red-2); margin-top: 10px; text-shadow: none; }
+        @keyframes flicker { 0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; } 20%, 63% { opacity: 0.35; } }
+        .tagline { color: var(--muted); margin: 16px auto 20px; max-width: 340px; line-height: 1.55; font-size: 0.95rem; }
+        .menu-form { display: grid; gap: 10px; text-align: left; margin-bottom: 10px; }
+        .menu-form label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+        .join-row { display: flex; gap: 8px; }
+        .join-row .field { text-transform: uppercase; letter-spacing: 0.3em; font-weight: 800; text-align: center; }
+        .divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.15em; margin: 6px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+        .invite { background: rgba(208,24,46,0.1); border: 1px solid rgba(208,24,46,0.4); color: #ffc2c8; border-radius: 12px; padding: 10px 12px; font-weight: 600; font-size: 0.9rem; margin-bottom: 14px; }
+        .menu-links { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+        .howto { text-align: left; font-size: 0.88rem; line-height: 1.55; color: #cfc7bb; display: grid; gap: 12px; margin-top: 14px; }
+        .howto h3 { font-family: 'Special Elite', monospace; font-weight: 400; font-size: 1.05rem; margin-bottom: 4px; }
+        .howto .s h3 { color: var(--warm); }
+        .howto .h h3 { color: var(--red-2); }
+        .howto ul { margin: 0; padding-left: 18px; }
+        kbd { background: rgba(255,255,255,0.08); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font: 700 0.75rem 'Inter', sans-serif; color: #fff; }
+
+        /* Lobby */
+        .lobby-panel { width: 100%; max-width: 560px; padding: 22px; display: grid; gap: 14px; }
+        .room-box { background: rgba(0,0,0,0.45); border: 1px dashed rgba(255,255,255,0.18); border-radius: 14px; padding: 12px; text-align: center; }
+        .room-box small { color: var(--muted); font-weight: 800; font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; }
+        .room-code { font-family: 'Special Elite', monospace; font-size: 2.2rem; letter-spacing: 0.2em; color: #fff; margin: 2px 0 8px; }
+        .section-title { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; margin-bottom: 8px; }
+        .section-title small { color: var(--muted); font-weight: 700; }
+        .players { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+        .player { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--panel-2); border: 1px solid transparent; font-size: 0.9rem; }
+        .player.me { border-color: rgba(255,207,138,0.35); }
+        .player .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .player .who { flex: 1; min-width: 0; }
+        .player .who b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .badge { font-size: 0.64rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--muted); text-transform: uppercase; }
+        .badge.ok { background: rgba(143,209,138,0.15); color: var(--ok); }
+        .kick { background: none; border: 1px solid var(--line); color: var(--muted); font-size: 0.72rem; font-weight: 700; padding: 4px 9px; border-radius: 8px; }
+        .kick:hover { border-color: var(--red); color: #ff8a80; }
+        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .settings label { display: grid; gap: 6px; font-size: 0.75rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .map-card { background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+        .map-card b { font-family: 'Special Elite', monospace; font-weight: 400; font-size: 1.1rem; }
+        .map-card p { color: var(--muted); font-size: 0.86rem; margin-top: 4px; line-height: 1.45; }
+        .lobby-actions { display: grid; gap: 8px; }
+        .row2 { display: flex; gap: 8px; }
+        .row2 .btn { flex: 1; }
+
+        /* HUD */
+        #hud { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+        .hud-top { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); text-align: center; }
+        #timer { font-family: 'Special Elite', monospace; font-size: 2rem; color: #f4ede2; text-shadow: 0 2px 10px #000; letter-spacing: 0.08em; }
+        #timer.low { color: var(--warm); }
+        #phase { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); text-shadow: 0 1px 6px #000; }
+        #phase.alert { color: var(--red-2); }
+        .roster { position: absolute; top: 14px; left: 14px; display: grid; gap: 4px; }
+        .roster div { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; font-weight: 700; background: rgba(0,0,0,0.5); padding: 4px 9px 4px 7px; border-radius: 8px; max-width: 170px; }
+        .roster div span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .roster i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--warm); }
+        .roster .dead { opacity: 0.4; text-decoration: line-through; }
+        .roster .dead i { background: #555; }
+        .roster .hunter i { background: var(--red); box-shadow: 0 0 8px var(--red); }
+        .roster .me span { color: #fff; }
+        .bottom-bar { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; align-items: flex-end; background: rgba(0,0,0,0.55); border: 1px solid var(--line); border-radius: 16px; padding: 10px 16px; white-space: nowrap; }
+        .meter { display: grid; gap: 4px; min-width: 120px; }
+        .meter small { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.12em; color: var(--muted); display: flex; justify-content: space-between; }
+        .meter .bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+        .meter .bar b { display: block; height: 100%; width: 100%; background: var(--warm); border-radius: 4px; transition: width 0.1s linear; }
+        .meter.batt .bar b { background: linear-gradient(90deg, #ffcf8a, #fff1d0); }
+        .meter.batt.low .bar b { background: #ff6a4a; }
+        .meter.stam .bar b { background: #9ec8ff; }
+        .slot { display: grid; justify-items: center; gap: 3px; font-size: 0.66rem; font-weight: 800; color: var(--muted); letter-spacing: 0.08em; }
+        .slot .ico { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); display: grid; place-items: center; font-size: 1rem; color: #fff; background: rgba(255,255,255,0.05); position: relative; overflow: hidden; }
+        .slot .ico .cd { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); }
+        .slot.off .ico { opacity: 0.35; }
+        .shells { display: flex; gap: 5px; }
+        .shell { width: 12px; height: 30px; border-radius: 3px 3px 2px 2px; background: linear-gradient(#c8182e 0 72%, #c9a646 72%); box-shadow: 0 0 6px rgba(200,24,46,0.5); }
+        .shell.spent { background: rgba(255,255,255,0.12); box-shadow: none; }
+        .keys { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+        #center-msg { position: absolute; top: 30%; left: 0; right: 0; text-align: center; font-family: 'Special Elite', monospace; font-size: clamp(2rem, 8vw, 4.4rem); color: #f4ede2; text-shadow: 0 0 30px rgba(0,0,0,0.9), 0 0 12px rgba(208,24,46,0.5); padding: 0 16px; }
+        #center-msg.pop { animation: pop 0.6s cubic-bezier(0.2,1.4,0.4,1); }
+        #center-sub { position: absolute; top: calc(30% + clamp(2.6rem, 9vw, 5rem)); left: 0; right: 0; text-align: center; font-weight: 700; color: #cfc7bb; text-shadow: 0 1px 8px #000; padding: 0 16px; }
+        @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #glare { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 45%, rgba(255,250,235,1), rgba(255,240,210,0.85) 40%, rgba(255,230,200,0.5)); opacity: 0; z-index: 2; }
+        #hurt { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 180px rgba(160,0,10,0.9); opacity: 0; z-index: 2; transition: opacity 0.3s; }
+        #labels { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+        .label { position: absolute; transform: translate(-50%, -100%); font-size: 0.72rem; font-weight: 800; color: #fff; text-shadow: 0 1px 4px #000, 0 0 2px #000; white-space: nowrap; }
+        .label.dead { color: #ff8a80; }
+        #spectate { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); border: 1px solid var(--line); border-radius: 12px; padding: 8px 16px; font-size: 0.85rem; font-weight: 700; pointer-events: auto; cursor: pointer; }
+        #spectate b { color: var(--warm); }
+        #toasts { position: fixed; top: 70px; right: 14px; display: grid; gap: 6px; z-index: 30; pointer-events: none; justify-items: end; }
+        .toast { background: rgba(10,8,8,0.85); border: 1px solid var(--line); padding: 7px 12px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; animation: toast 4s forwards; }
+        .toast.kill { border-color: rgba(208,24,46,0.6); }
+        @keyframes toast { 0% { opacity: 0; transform: translateX(10px); } 8%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+        /* Intro and round end */
+        #intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 6; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0.35), rgba(0,0,0,0.85)); }
+        .intro-box { text-align: center; max-width: 560px; padding: 20px; }
+        .intro-box .kicker { font-size: 0.8rem; }
+        #intro-role { font-family: 'Special Elite', monospace; font-size: clamp(2.6rem, 11vw, 5.2rem); line-height: 1; margin: 12px 0; }
+        #intro-role.hunter { color: var(--red-2); text-shadow: 0 0 30px rgba(208,24,46,0.6); }
+        #intro-role.survivor { color: #f4ede2; text-shadow: 0 0 30px rgba(255,207,138,0.35); }
+        #intro-text { color: #cfc7bb; line-height: 1.55; font-size: 1rem; }
+        #intro-keys { margin-top: 16px; color: var(--muted); font-size: 0.85rem; line-height: 1.9; }
+        #intro-map { margin-top: 18px; font-family: 'Special Elite', monospace; color: var(--muted); }
+        .end-panel, .results-panel { width: 100%; max-width: 480px; padding: 26px; text-align: center; }
+        .end-panel h2, .results-panel h2 { font-family: 'Special Elite', monospace; font-weight: 400; font-size: clamp(1.8rem, 6vw, 2.5rem); margin: 8px 0 6px; }
+        .end-panel h2.hunter { color: var(--red-2); }
+        .end-panel h2.survivors { color: var(--warm); }
+        .end-panel p.sub { color: var(--muted); margin-bottom: 14px; }
+        .score-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; text-align: left; }
+        .score-list li { display: grid; grid-template-columns: 34px 12px 1fr auto auto; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; background: var(--panel-2); font-size: 0.9rem; }
+        .score-list li.me { background: rgba(255,207,138,0.08); outline: 1px solid rgba(255,207,138,0.3); }
+        .score-list .place { font-family: 'Special Elite', monospace; font-size: 1.2rem; text-align: center; color: var(--muted); }
+        .score-list li:nth-child(1) .place { color: #ffd166; }
+        .score-list .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .score-list .gain { color: var(--ok); font-weight: 800; font-size: 0.8rem; }
+        .score-list .pts { font-weight: 800; }
+        .score-list .what { display: block; font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+        .results-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; align-items: center; }
+
+        /* Corner and pause */
+        .corner { position: fixed; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 20; }
+        .corner .btn { padding: 7px 11px; font-size: 0.8rem; background: rgba(0,0,0,0.55); display: inline-flex; align-items: center; gap: 6px; }
+        .corner svg { width: 16px; height: 16px; }
+        #pause { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 40; padding: 16px; }
+        #pause .panel { max-width: 400px; width: 100%; padding: 24px; text-align: center; display: grid; gap: 12px; }
+        #pause h2 { font-family: 'Special Elite', monospace; font-weight: 400; font-size: 2rem; }
+        .controls-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; text-align: left; font-size: 0.86rem; }
+        .controls-grid .head { grid-column: 1 / -1; font-weight: 800; margin-top: 6px; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; }
+        .controls-grid .head.s { color: var(--warm); }
+        .controls-grid .head.h { color: var(--red-2); }
+        .toggle-row { display: flex; gap: 8px; justify-content: center; }
+        #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #040405; z-index: 50; font-family: 'Special Elite', monospace; font-size: 1.3rem; color: var(--muted); letter-spacing: 0.1em; }
+
+        /* Touch */
+        #touch { position: fixed; inset: 0; z-index: 4; display: none; pointer-events: none; }
+        body.touch.playing #touch { display: block; }
+        .stick-zone { position: absolute; top: 0; bottom: 0; width: 50%; pointer-events: auto; touch-action: none; }
+        #zone-move { left: 0; }
+        #zone-aim { right: 0; }
+        .stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); display: none; }
+        .stick i { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; background: rgba(255,255,255,0.22); }
+        .tbtns { position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: 110px; display: grid; gap: 12px; pointer-events: auto; }
+        .tbtn { width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.45); color: #fff; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.06em; touch-action: none; }
+        .tbtn.main { width: 84px; height: 84px; border-color: var(--red); color: #ffd0d4; }
+        .tbtn.on { background: rgba(255,207,138,0.3); border-color: var(--warm); }
+        @media (max-height: 520px) {
+            .tbtns { bottom: max(12px, env(safe-area-inset-bottom)); gap: 8px; grid-template-columns: auto auto; align-items: center; }
+            .tbtn { width: 58px; height: 58px; font-size: 0.62rem; grid-column: 1; }
+            #t-b3 { grid-row: 1; }
+            #t-b2 { grid-row: 2; }
+            .tbtn.main { width: 76px; height: 76px; grid-column: 2; grid-row: 1 / span 2; }
+        }
+        body.touch .keys { display: none; }
+        body.touch .bottom-bar { bottom: auto; top: 64px; transform: translateX(-50%) scale(0.85); }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    <div id="loading">Loading...</div>
+    <div id="glare"></div>
+    <div id="hurt"></div>
+    <div id="labels"></div>
+
+    <div class="corner">
+        <button class="btn" id="btn-mute" type="button" aria-label="Toggle sound">
+            <svg id="icon-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+            <svg id="icon-muted" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+        </button>
+        <button class="btn" id="btn-menu" type="button">Exit</button>
+    </div>
+
+    <!-- Menu -->
+    <div id="menu" class="screen">
+        <div class="panel menu-panel">
+            <div class="logo">BLACKOUT<small>SURVIVE UNTIL DAWN</small></div>
+            <p class="tagline">One hunter with a shotgun. Everyone else has a flashlight and a dying battery. Hide in the dark, blind the hunter, and live until sunrise.</p>
+            <div id="invite" class="invite hidden"></div>
+            <div class="menu-form">
+                <label for="name">Your name</label>
+                <input class="field" id="name" maxlength="14" autocomplete="nickname" placeholder="e.g. Laurie">
+                <button class="btn primary big" id="btn-create" type="button">Create a room</button>
+                <div class="divider">OR JOIN A FRIEND</div>
+                <div class="join-row">
+                    <input class="field" id="code" maxlength="5" placeholder="CODE" autocomplete="off" spellcheck="false">
+                    <button class="btn" id="btn-join" type="button">Join</button>
+                </div>
+                <button class="btn big" id="btn-solo" type="button">Play with bots</button>
+            </div>
+            <div id="menu-status" class="status"></div>
+            <div class="menu-links">
+                <button class="btn small" id="btn-howto" type="button">How to play</button>
+                <button class="btn small" id="btn-quality" type="button">Graphics: High</button>
+            </div>
+            <div id="howto" class="howto hidden">
+                <div class="s">
+                    <h3>Survivors</h3>
+                    <ul>
+                        <li>Stay alive until the clock hits zero. Dawn saves everyone still standing.</li>
+                        <li>Your flashlight lets you see, but the hunter can see its beam from far away. Batteries run out, so grab the spares lying around.</li>
+                        <li>Shine your light into the hunter's face to blind them for a few seconds. It works faster when friends shine too.</li>
+                        <li>Throw your one flare to slow the hunter down. Sprinting is loud: the hunter sees where you ran.</li>
+                    </ul>
+                </div>
+                <div class="h">
+                    <h3>The hunter</h3>
+                    <ul>
+                        <li>Kill every survivor before dawn. Your shotgun kills in one hit up close, but holds two shells.</li>
+                        <li>Look for flashlight beams, and for the red ripples of anyone sprinting. Scream to see everyone for a moment.</li>
+                        <li>Don't look into the lights.</li>
+                    </ul>
+                </div>
+                <div>Everyone gets a turn as the hunter. Points for surviving, stuns and kills decide the winner.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lobby -->
+    <div id="lobby" class="screen hidden">
+        <div class="panel lobby-panel">
+            <div class="room-box online-only">
+                <small>Room code</small>
+                <div class="room-code" id="room-code">-----</div>
+                <button class="btn small" id="btn-copy" type="button">Copy invite link</button>
+            </div>
+            <div>
+                <div class="section-title">Players <small id="count">1/8</small></div>
+                <ul class="players" id="players"></ul>
+            </div>
+            <div class="settings">
+                <label>Map
+                    <select class="field" id="set-map"></select>
+                </label>
+                <label>Rounds
+                    <select class="field" id="set-rounds">
+                        <option value="3">3 rounds</option>
+                        <option value="5">5 rounds</option>
+                        <option value="all">Everyone hunts once</option>
+                    </select>
+                </label>
+            </div>
+            <div class="map-card" id="map-card"><b>Random map</b><p>A different place every round.</p></div>
+            <div class="lobby-actions">
+                <div class="row2 host-only">
+                    <button class="btn" id="btn-bot" type="button">Add a bot</button>
+                    <button class="btn" id="btn-unbot" type="button">Remove a bot</button>
+                </div>
+                <button class="btn primary big client-only" id="btn-ready" type="button">Ready up</button>
+                <button class="btn primary big host-only" id="btn-start" type="button">Start game</button>
+                <button class="btn big" id="btn-leave" type="button">Leave</button>
+                <div id="lobby-status" class="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div class="hud-top">
+            <div id="timer">3:00</div>
+            <div id="phase"></div>
+        </div>
+        <div class="roster" id="roster"></div>
+        <div id="center-msg"></div>
+        <div id="center-sub"></div>
+        <div class="bottom-bar" id="bar-survivor">
+            <div class="meter batt" id="m-batt"><small><span>BATTERY</span><span id="batt-pct">100%</span></small><div class="bar"><b id="batt-bar"></b></div></div>
+            <div class="meter stam"><small><span>STAMINA</span></small><div class="bar"><b id="stam-bar"></b></div></div>
+            <div class="slot" id="slot-flare"><div class="ico">🔥</div><span>FLARE</span></div>
+            <div class="keys">Click / F light<br>Right-click / Q flare<br>Shift sprint</div>
+        </div>
+        <div class="bottom-bar hidden" id="bar-hunter">
+            <div class="slot"><div class="shells" id="shells"><i class="shell"></i><i class="shell"></i></div><span id="shell-txt">SHELLS</span></div>
+            <div class="slot" id="slot-dash"><div class="ico">⚡<div class="cd" id="cd-dash"></div></div><span>DASH</span></div>
+            <div class="slot" id="slot-scream"><div class="ico">👁<div class="cd" id="cd-scream"></div></div><span>SCREAM</span></div>
+            <div class="keys">Click shoot · R reload<br>Space / Shift dash<br>Right-click / Q scream</div>
+        </div>
+        <div id="spectate" class="hidden">Spectating <b id="spec-name">-</b> &middot; click to switch</div>
+    </div>
+
+    <!-- Touch controls -->
+    <div id="touch">
+        <div class="stick-zone" id="zone-move"></div>
+        <div class="stick-zone" id="zone-aim"></div>
+        <div class="stick" id="stick-move"><i></i></div>
+        <div class="stick" id="stick-aim"><i></i></div>
+        <div class="tbtns">
+            <button class="tbtn" id="t-b3" type="button">LIGHT</button>
+            <button class="tbtn" id="t-b2" type="button">SPRINT</button>
+            <button class="tbtn main" id="t-b1" type="button">FLARE</button>
+        </div>
+    </div>
+
+    <!-- Role intro -->
+    <div id="intro" class="hidden">
+        <div class="intro-box">
+            <div class="kicker" id="intro-round">Round 1 of 3</div>
+            <div id="intro-role" class="survivor">SURVIVE</div>
+            <p id="intro-text"></p>
+            <div id="intro-keys"></div>
+            <div id="intro-map"></div>
+        </div>
+    </div>
+
+    <!-- Round end -->
+    <div id="round-end" class="screen dim hidden">
+        <div class="panel end-panel">
+            <div class="kicker" id="end-kicker">Round 1</div>
+            <h2 id="end-title">Dawn breaks</h2>
+            <p class="sub" id="end-sub"></p>
+            <ol class="score-list" id="end-list"></ol>
+            <div class="status" id="end-next">Next round soon...</div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="screen dim hidden">
+        <div class="panel results-panel">
+            <div class="kicker">Final scores</div>
+            <h2 id="results-title">Results</h2>
+            <ol class="score-list" id="results-list"></ol>
+            <div class="results-actions">
+                <button class="btn primary host-only" id="btn-again" type="button">Back to the lobby</button>
+                <span class="status client-only">Waiting for the host...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause / menu -->
+    <div id="pause" class="hidden">
+        <div class="panel">
+            <h2>Menu</h2>
+            <div class="controls-grid">
+                <span class="head s">Survivor</span>
+                <kbd>WASD</kbd><span>Move (mouse aims)</span>
+                <kbd>Shift</kbd><span>Sprint</span>
+                <kbd>Click / F</kbd><span>Flashlight on or off</span>
+                <kbd>Right-click / Q</kbd><span>Throw your flare</span>
+                <span class="head h">Hunter</span>
+                <kbd>Click</kbd><span>Shoot (2 shells)</span>
+                <kbd>Space / Shift</kbd><span>Dash</span>
+                <kbd>Right-click / Q</kbd><span>Scream: reveal everyone</span>
+            </div>
+            <div class="toggle-row">
+                <button class="btn small" id="btn-quality2" type="button">Graphics: High</button>
+            </div>
+            <button class="btn primary" id="btn-resume" type="button">Back to the game</button>
+            <button class="btn" id="btn-quit" type="button">Leave the game</button>
+        </div>
+    </div>
+
+    <div id="toasts"></div>
+    <script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>

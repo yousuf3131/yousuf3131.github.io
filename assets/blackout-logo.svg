@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#050507"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="0.82" cy="0.12" r="0.35">
+      <stop offset="0" stop-color="#9fb4ff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#9fb4ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff3dc" stop-opacity="0.85"/>
+      <stop offset="0.6" stop-color="#ffe8c0" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffe8c0" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="pool" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe6b8" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ffe6b8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="eye" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff3a2a"/>
+      <stop offset="1" stop-color="#ff3a2a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="660" height="300" fill="url(#sky)"/>
+  <rect width="660" height="300" fill="url(#moon)"/>
+
+  <!-- Pine line -->
+  <g fill="#070a0f">
+    <path d="M0 210 L18 130 L36 210 Z M28 210 L52 110 L76 210 Z M70 210 L90 140 L110 210 Z"/>
+    <path d="M520 210 L546 104 L572 210 Z M560 210 L582 128 L604 210 Z M596 210 L624 96 L652 210 Z M640 210 L660 140 L660 210 Z"/>
+  </g>
+  <rect y="206" width="660" height="94" fill="#08090c"/>
+
+  <!-- Flashlight beam and the pool it throws on the ground -->
+  <ellipse cx="392" cy="232" rx="120" ry="26" fill="url(#pool)"/>
+  <path d="M142 176 L470 118 L480 246 Z" fill="url(#beam)"/>
+
+  <!-- Survivor holding the flashlight -->
+  <g fill="#1a1512">
+    <circle cx="118" cy="146" r="11"/>
+    <path d="M104 160 h28 l4 44 h-36 Z"/>
+    <path d="M106 204 h10 l-2 34 h-9 Z M122 204 h10 l1 34 h-9 Z"/>
+    <path d="M130 166 L148 172 L146 180 L128 176 Z"/>
+  </g>
+  <rect x="140" y="171" width="10" height="8" rx="2" fill="#fff3dc"/>
+
+  <!-- The hunter, caught in the light -->
+  <g>
+    <path d="M404 128 q-14 0 -18 16 l-8 44 q-6 26 -14 52 h72 q-8 -26 -14 -52 l-8 -44 q-4 -16 -18 -16 Z" fill="#141210"/>
+    <ellipse cx="404" cy="112" rx="17" ry="20" fill="#161311"/>
+    <ellipse cx="406" cy="114" rx="11" ry="14" fill="#d9d2c2"/>
+    <ellipse cx="402" cy="111" rx="3.2" ry="2.4" fill="#0a0808"/>
+    <ellipse cx="411" cy="111" rx="3.2" ry="2.4" fill="#0a0808"/>
+    <circle cx="402" cy="111" r="7" fill="url(#eye)" opacity="0.8"/>
+    <circle cx="411" cy="111" r="7" fill="url(#eye)" opacity="0.8"/>
+    <path d="M406 104 l-2 7 l3 5" stroke="#3a302a" stroke-width="1" fill="none"/>
+    <!-- Shotgun -->
+    <rect x="360" y="170" width="70" height="7" rx="2" fill="#2a2a2e" transform="rotate(-8 395 173)"/>
+    <rect x="410" y="168" width="26" height="10" rx="3" fill="#4a2c18" transform="rotate(-8 395 173)"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g font-family="'Courier New', 'Special Elite', monospace" font-weight="700">
+    <text x="636" y="266" text-anchor="end" font-size="76" letter-spacing="6" fill="#000" opacity="0.4">BLACKOUT</text>
+    <text x="632" y="262" text-anchor="end" font-size="76" letter-spacing="6" fill="#f2ebdf">BLACKOUT</text>
+    <text x="630" y="288" text-anchor="end" font-size="15" letter-spacing="7" fill="#ff3b4e">SURVIVE UNTIL DAWN</text>
+  </g>
+</svg>
