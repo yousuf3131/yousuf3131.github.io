@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Don't Look</title>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -15,22 +15,24 @@
 
 <!-- Screens -->
 <div id="menu" class="screen">
-  <div class="title-wrap">
-    <h1 class="game-title">DON'T<br>LOOK</h1>
-    <p class="tagline">It only moves when you look away.</p>
-  </div>
-  <div class="menu-form">
-    <input id="name" type="text" maxlength="20" placeholder="Your name" autocomplete="off" spellcheck="false">
-    <div class="menu-row">
-      <button id="btn-create" class="btn btn-primary">Create Room</button>
-      <button id="btn-solo" class="btn btn-primary">Play Solo</button>
+  <div class="panel">
+    <div class="title-wrap">
+      <h1 class="game-title">DON'T<br>LOOK</h1>
+      <p class="tagline">It only moves when you look away.</p>
     </div>
-    <div class="join-row">
-      <input id="code" type="text" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false" class="code-input">
-      <button id="btn-join" class="btn">Join</button>
+    <div class="menu-form">
+      <input id="name" type="text" maxlength="20" placeholder="Your name" autocomplete="off" spellcheck="false">
+      <div class="menu-row">
+        <button id="btn-create" class="btn btn-primary">Create Room</button>
+        <button id="btn-solo" class="btn btn-primary">Play Solo</button>
+      </div>
+      <div class="join-row">
+        <input id="code" type="text" maxlength="5" placeholder="ROOM CODE" autocomplete="off" spellcheck="false" class="code-input">
+        <button id="btn-join" class="btn">Join</button>
+      </div>
+      <p id="invite" class="invite hidden"></p>
+      <p id="menu-status" class="status"></p>
     </div>
-    <p id="invite" class="invite hidden"></p>
-    <p id="menu-status" class="status"></p>
   </div>
   <button id="btn-mute" class="btn-icon mute-btn" type="button" title="Toggle sound">
     <svg id="icon-sound" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -39,21 +41,23 @@
 </div>
 
 <div id="lobby" class="screen hidden">
-  <div class="lobby-header">
-    <h2>Don't Look</h2>
-    <div class="room-info">
-      <span id="room-code" class="room-code">-----</span>
-      <button id="btn-copy" class="btn btn-sm" type="button">Copy Link</button>
-      <span id="count" class="player-count">1/8</span>
+  <div class="panel">
+    <div class="lobby-header">
+      <h2>Don't Look</h2>
+      <div class="room-info">
+        <span id="room-code" class="room-code">-----</span>
+        <button id="btn-copy" class="btn btn-sm" type="button">Copy Link</button>
+        <span id="count" class="player-count">1/8</span>
+      </div>
     </div>
+    <ul id="players" class="player-list"></ul>
+    <div class="lobby-actions">
+      <button id="btn-bot" class="btn host-only" type="button">Add Bot</button>
+      <button id="btn-ready" class="btn client-only" type="button">Ready</button>
+      <button id="btn-start" class="btn btn-primary host-only" type="button">Start Game</button>
+    </div>
+    <p id="lobby-status" class="status"></p>
   </div>
-  <ul id="players" class="player-list"></ul>
-  <div class="lobby-actions">
-    <button id="btn-bot" class="btn host-only" type="button">Add Bot</button>
-    <button id="btn-ready" class="btn client-only" type="button">Ready</button>
-    <button id="btn-start" class="btn btn-primary host-only" type="button">Start Game</button>
-  </div>
-  <p id="lobby-status" class="status"></p>
   <button id="btn-exit" class="btn btn-back" type="button">← Back</button>
   <button id="btn-mute2" class="btn-icon mute-btn" type="button">
     <svg id="icon-sound2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -131,10 +135,12 @@
 
 <!-- Results screen -->
 <div id="results" class="screen hidden">
-  <h2 id="results-title">Game Over</h2>
-  <ul id="results-list"></ul>
-  <div class="results-actions host-only">
-    <button id="btn-again" class="btn btn-primary" type="button">Play Again</button>
+  <div class="panel">
+    <h2 id="results-title">Game Over</h2>
+    <ul id="results-list"></ul>
+    <div class="results-actions host-only">
+      <button id="btn-again" class="btn btn-primary" type="button">Play Again</button>
+    </div>
   </div>
   <button id="btn-results-exit" class="btn btn-back" type="button">← Leave</button>
 </div>
