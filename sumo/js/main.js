@@ -1,9 +1,9 @@
 // Sumo Smash: online multiplayer arena brawler.
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=5';
-import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=5';
-import { play as playMusic, stop as stopMusic } from './music.js?v=5';
-import * as gfx from './gfx.js?v=5';
+import { HostNet, ClientNet, makeCode } from './net.js?v=6';
+import { sfx, unlockAudio, setMuted, isMuted } from './audio.js?v=6';
+import { play as playMusic, stop as stopMusic } from './music.js?v=6';
+import * as gfx from './gfx.js?v=6';
 
 // Analytics: no-op until ../js/analytics.js loads, and always a no-op when testing locally
 const track = (name, params) => { if (window.track) window.track(name, params); };
@@ -408,29 +408,33 @@ function hostUpdate(dt) {
                 a.z -= nz * overlap * 0.5;
                 b.x += nx * overlap * 0.5;
                 b.z += nz * overlap * 0.5;
-                // Knockback
-                const aMass = (a.powerup === 'heavy' ? 2 : 1);
-                const bMass = (b.powerup === 'heavy' ? 2 : 1);
-                const aDash = a.dashing ? 3 : 1;
-                const bDash = b.dashing ? 3 : 1;
-                const aForce = Math.hypot(a.vx, a.vz) * aMass * aDash;
-                const bForce = Math.hypot(b.vx, b.vz) * bMass * bDash;
-                if (aForce > bForce) {
-                    if (b.powerup === 'shield' && b.shieldHp > 0) { b.shieldHp = 0; b.powerup = null; b.powerupT = 0; sfx.shield(); }
-                    else {
-                        const f = (aForce - bForce) / bMass * 0.5;
-                        b.vx += nx * f; b.vz += nz * f;
+                // Knockback — elastic impulse so ALL collisions have impact,
+                // plus a one-sided smash bonus when the attacker is dashing.
+                const aMass = a.powerup === 'heavy' ? 2.5 : 1;
+                const bMass = b.powerup === 'heavy' ? 2.5 : 1;
+                // Closing speed of b relative to a along the collision normal.
+                // Negative means they are approaching, which is the only case we resolve.
+                const relVn = (b.vx - a.vx) * nx + (b.vz - a.vz) * nz;
+                if (relVn < 0) {
+                    // Elastic impulse: conserves momentum & fully reverses relative velocity.
+                    // Both players always bounce — no more "equal forces cancel" deadlock.
+                    const j = -2 * relVn / (1 / aMass + 1 / bMass);
+                    a.vx -= (j / aMass) * nx; a.vz -= (j / aMass) * nz;
+                    b.vx += (j / bMass) * nx; b.vz += (j / bMass) * nz;
+                    // Dash smash: extra one-sided kick to the target only,
+                    // so dashing into someone sends THEM flying, not you.
+                    const SMASH = 24;
+                    if (a.dashing) {
+                        if (b.powerup === 'shield' && b.shieldHp > 0) { b.shieldHp = 0; b.powerup = null; b.powerupT = 0; sfx.shield(); }
+                        else { b.vx += nx * SMASH; b.vz += nz * SMASH; }
+                        emit({ t: 'hitEvt', from: a._id, target: b._id }); sfx.hit();
+                    } else if (b.dashing) {
+                        if (a.powerup === 'shield' && a.shieldHp > 0) { a.shieldHp = 0; a.powerup = null; a.powerupT = 0; sfx.shield(); }
+                        else { a.vx -= nx * SMASH; a.vz -= nz * SMASH; }
+                        emit({ t: 'hitEvt', from: b._id, target: a._id }); sfx.hit();
+                    } else if (j > 2) {
+                        emit({ t: 'hitEvt', from: a._id, target: b._id }); sfx.hit();
                     }
-                    emit({ t: 'hitEvt', from: a._id, target: b._id });
-                    sfx.hit();
-                } else if (bForce > aForce) {
-                    if (a.powerup === 'shield' && a.shieldHp > 0) { a.shieldHp = 0; a.powerup = null; a.powerupT = 0; sfx.shield(); }
-                    else {
-                        const f = (bForce - aForce) / aMass * 0.5;
-                        a.vx -= nx * f; a.vz -= nz * f;
-                    }
-                    emit({ t: 'hitEvt', from: b._id, target: a._id });
-                    sfx.hit();
                 }
             }
         }
