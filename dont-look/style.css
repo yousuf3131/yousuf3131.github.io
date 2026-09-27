@@ -1,0 +1,268 @@
+/* Don't Look — horror dark theme */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0c;
+  --surface: #111115;
+  --surface2: #18181e;
+  --border: #2a2a35;
+  --text: #d4d4d8;
+  --text-dim: #71717a;
+  --accent: #8b0000;
+  --accent2: #c0392b;
+  --green: #16a34a;
+  --warn: #f97316;
+  --fear: #dc2626;
+  --radius: 6px;
+  --font: 'Segoe UI', system-ui, sans-serif;
+}
+
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); }
+
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* ── Overlays ── */
+#vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 5;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.92) 100%);
+  opacity: 0.55; transition: opacity 0.3s;
+}
+#static-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 6; opacity: 0; transition: opacity 0.1s; }
+
+/* ── Screens ── */
+.screen {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #0a0a0e 0%, #0d0d14 100%);
+}
+.screen.hidden { display: none !important; }
+
+/* Menu */
+.title-wrap { text-align: center; margin-bottom: 2.5rem; }
+.game-title {
+  font-size: clamp(3rem, 12vw, 6rem); font-weight: 900;
+  letter-spacing: 0.18em; line-height: 1.0;
+  color: #fff; text-shadow: 0 0 40px #8b000088, 0 0 80px #8b000044;
+  text-transform: uppercase;
+}
+.tagline { color: var(--text-dim); font-size: 0.95rem; letter-spacing: 0.15em; margin-top: 0.6rem; }
+
+.menu-form { display: flex; flex-direction: column; gap: 0.75rem; width: min(320px, 90vw); }
+.menu-row { display: flex; gap: 0.5rem; }
+.join-row { display: flex; gap: 0.5rem; }
+
+input {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); padding: 0.6rem 0.9rem; font-size: 1rem; font-family: var(--font);
+  outline: none; width: 100%; transition: border-color 0.15s;
+}
+input:focus { border-color: var(--accent2); }
+.code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; font-size: 1rem; flex: 1; }
+
+.btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); padding: 0.6rem 1.1rem; font-size: 0.92rem; font-family: var(--font);
+  cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s;
+}
+.btn:hover { border-color: var(--accent2); background: #1e1e26; }
+.btn-primary { background: var(--accent); border-color: var(--accent2); color: #fff; flex: 1; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.82rem; }
+.btn-back { position: absolute; bottom: 1.5rem; left: 1.5rem; }
+
+.btn-icon { background: none; border: none; cursor: pointer; color: var(--text-dim); padding: 0.4rem; border-radius: var(--radius); }
+.btn-icon:hover { color: var(--text); }
+.mute-btn { position: absolute; top: 1rem; right: 1rem; }
+
+.status { font-size: 0.85rem; color: var(--text-dim); min-height: 1.2em; text-align: center; }
+.status.error { color: var(--fear); }
+.invite { font-size: 0.85rem; color: var(--accent2); text-align: center; }
+.hidden { display: none !important; }
+
+/* ── Lobby ── */
+#lobby { justify-content: flex-start; padding: 2rem 1.5rem; gap: 1rem; }
+.lobby-header { width: 100%; max-width: 440px; }
+.lobby-header h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.room-info { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.room-code { font-size: 1.6rem; font-weight: 900; letter-spacing: 0.25em; color: var(--accent2); }
+.player-count { color: var(--text-dim); font-size: 0.85rem; }
+
+.player-list { list-style: none; width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 0.4rem; }
+.player-list li {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.75rem; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.player-list li.me { border-color: var(--accent2); }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.who { flex: 1; font-size: 0.92rem; }
+.badge { font-size: 0.72rem; padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: 700; letter-spacing: 0.05em; }
+.badge.host { background: var(--accent); color: #fff; }
+.badge.ok { background: var(--green); color: #fff; }
+.kick { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 0.78rem; padding: 0.2rem 0.4rem; border-radius: 3px; }
+.kick:hover { color: var(--fear); }
+
+.lobby-actions { display: flex; gap: 0.5rem; width: 100%; max-width: 440px; flex-wrap: wrap; }
+.host-only { display: none; }
+body.is-host .host-only { display: inline-flex; }
+.client-only { display: none; }
+body:not(.is-host) .client-only { display: inline-flex; }
+
+/* ── HUD ── */
+#hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+
+/* Rituals */
+#rituals-hud {
+  position: absolute; top: 1.2rem; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 0.8rem;
+}
+.ritual-icon {
+  width: 36px; height: 36px; padding: 5px;
+  border: 1px solid #333; border-radius: 50%;
+  color: #444; transition: color 0.4s, border-color 0.4s, filter 0.4s;
+}
+.ritual-icon.done {
+  color: #c8a84b; border-color: #c8a84b;
+  filter: drop-shadow(0 0 6px #c8a84b88);
+}
+.ritual-icon.active { color: #f0c060; border-color: #f0c060; animation: ritual-pulse 1s infinite; }
+@keyframes ritual-pulse { 0%,100%{filter:drop-shadow(0 0 4px #f0c06088)} 50%{filter:drop-shadow(0 0 14px #f0c060cc)} }
+
+/* Battery */
+#battery-hud { position: absolute; top: 1.2rem; right: 1.2rem; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+#battery-bar-wrap { width: 80px; height: 6px; background: #1a1a1a; border-radius: 3px; border: 1px solid #333; overflow: hidden; }
+#battery-bar { height: 100%; width: 100%; background: #c8a84b; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+
+/* Eye / Looking */
+#looking-hud {
+  position: absolute; bottom: 5rem; right: 1.2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+#eye-icon {
+  width: 36px; height: 36px; padding: 5px;
+  border: 1px solid #333; border-radius: 50%; color: #444;
+  transition: color 0.2s, border-color 0.2s, filter 0.2s;
+}
+#eye-icon.looking { color: #22c55e; border-color: #22c55e; filter: drop-shadow(0 0 6px #22c55e88); }
+#eye-label { font-size: 0.6rem; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; }
+
+/* Fear */
+#fear-hud {
+  position: absolute; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 120px;
+}
+#fear-bar-wrap { width: 120px; height: 4px; background: #1a1a1a; border-radius: 2px; border: 1px solid #333; overflow: hidden; }
+#fear-bar { height: 100%; width: 0%; background: var(--fear); border-radius: 2px; transition: width 0.2s; }
+
+/* Players HUD */
+#players-hud { position: absolute; bottom: 1.2rem; left: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.phud-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-dim); }
+.phud-item .dot { width: 8px; height: 8px; }
+.phud-item.caught { opacity: 0.35; text-decoration: line-through; }
+.phud-item.escaped { color: var(--green); }
+
+/* Ritual progress */
+#ritual-progress-wrap {
+  position: absolute; bottom: 3.5rem; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.6); border: 1px solid #333; border-radius: var(--radius);
+  padding: 0.5rem 1rem; text-align: center; min-width: 180px;
+  display: flex; flex-direction: column; gap: 5px; font-size: 0.8rem; color: var(--text-dim);
+}
+#ritual-progress-bar { height: 3px; background: #c8a84b; width: 0%; border-radius: 2px; transition: width 0.1s; }
+
+/* Interaction prompt */
+#interact-prompt {
+  position: absolute; bottom: 3.5rem; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.7); border: 1px solid #444; border-radius: var(--radius);
+  padding: 0.4rem 0.9rem; font-size: 0.85rem; color: #ccc; white-space: nowrap;
+}
+kbd { background: #333; border: 1px solid #555; border-radius: 3px; padding: 0.1em 0.35em; font-size: 0.8em; font-family: var(--font); }
+
+/* Center message */
+#center-msg {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 900; color: #fff; text-align: center;
+  text-shadow: 0 0 30px rgba(180,0,0,0.8); letter-spacing: 0.08em; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s;
+}
+#center-msg.show { opacity: 1; }
+
+/* Crosshair */
+#crosshair {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 16px; height: 16px; pointer-events: none;
+}
+#crosshair::before, #crosshair::after {
+  content: ''; position: absolute; background: rgba(255,255,255,0.5);
+}
+#crosshair::before { width: 1px; height: 100%; left: 50%; transform: translateX(-50%); }
+#crosshair::after { width: 100%; height: 1px; top: 50%; transform: translateY(-50%); }
+
+.hud-label { font-size: 0.6rem; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; }
+.hud-mute { position: absolute; top: 0.8rem; left: 1rem; pointer-events: all; }
+
+/* Touch controls */
+.joy {
+  position: absolute; width: 100px; height: 100px;
+  border: 2px solid rgba(255,255,255,0.15); border-radius: 50%;
+  background: rgba(255,255,255,0.04); pointer-events: all;
+}
+.joy > div {
+  position: absolute; top: 50%; left: 50%;
+  width: 40px; height: 40px; transform: translate(-50%,-50%);
+  background: rgba(255,255,255,0.15); border-radius: 50%;
+}
+#joy-left { bottom: 80px; left: 40px; }
+#joy-right { bottom: 80px; right: 40px; }
+.touch-btn {
+  position: absolute; bottom: 160px; right: 30px; pointer-events: all;
+  background: rgba(200, 168, 75, 0.15); border: 1px solid #c8a84b55;
+  color: #c8a84b; padding: 0.5rem 1rem; border-radius: var(--radius);
+  font-size: 0.85rem; font-family: var(--font); cursor: pointer;
+}
+body.touch .joy { display: flex !important; }
+body.touch .touch-btn { display: block !important; }
+body.touch #crosshair { display: none; }
+
+/* Lock prompt */
+#lock-prompt {
+  position: fixed; inset: 0; z-index: 15;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+.lock-box { text-align: center; }
+.lock-box p { font-size: 1.2rem; margin-bottom: 0.4rem; }
+.lock-sub { color: var(--text-dim); font-size: 0.85rem; }
+
+/* Results */
+#results { gap: 1.5rem; }
+#results-title { font-size: 2.5rem; font-weight: 900; text-shadow: 0 0 30px #8b000088; }
+#results-list { list-style: none; width: min(360px, 90vw); display: flex; flex-direction: column; gap: 0.4rem; }
+#results-list li {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.55rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+}
+#results-list li.me { border-color: var(--accent2); }
+.place { font-weight: 900; font-size: 1.1rem; min-width: 1.5rem; }
+.results-actions { display: flex; gap: 0.5rem; }
+
+/* Toasts */
+#toasts { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; display: flex; flex-direction: column; gap: 0.4rem; pointer-events: none; }
+.toast {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.5rem 0.9rem; font-size: 0.85rem; color: var(--text);
+  animation: toast-in 0.2s ease, toast-out 0.3s 3.2s ease forwards;
+}
+@keyframes toast-in { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+@keyframes toast-out { to { opacity:0; transform: translateY(-6px); } }
+
+/* Caught overlay */
+#caught-overlay {
+  position: fixed; inset: 0; z-index: 12; background: rgba(0,0,0,0);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; transition: background 1s;
+}
+#caught-overlay.show { background: rgba(100,0,0,0.6); }
+#caught-overlay p { font-size: 2rem; font-weight: 900; color: #fff; opacity: 0; transition: opacity 0.5s 0.3s; text-shadow: 0 0 20px red; }
+#caught-overlay.show p { opacity: 1; }
