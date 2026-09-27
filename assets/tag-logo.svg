@@ -1,24 +1,81 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect x="10" y="20" width="100" height="80" rx="10" fill="#0e1016" stroke="#1e293b" stroke-width="3"/>
-  <line x1="10" y1="40" x2="110" y2="40" stroke="#1e293b" stroke-width="1"/>
-  <line x1="10" y1="60" x2="110" y2="60" stroke="#1e293b" stroke-width="1"/>
-  <line x1="10" y1="80" x2="110" y2="80" stroke="#1e293b" stroke-width="1"/>
-  <line x1="30" y1="20" x2="30" y2="100" stroke="#1e293b" stroke-width="1"/>
-  <line x1="50" y1="20" x2="50" y2="100" stroke="#1e293b" stroke-width="1"/>
-  <line x1="70" y1="20" x2="70" y2="100" stroke="#1e293b" stroke-width="1"/>
-  <line x1="90" y1="20" x2="90" y2="100" stroke="#1e293b" stroke-width="1"/>
-  <g>
-    <circle cx="75" cy="52" r="8" fill="#2ec495"/>
-    <circle cx="75" cy="46" r="5" fill="#2ec495"/>
-    <circle cx="73" cy="44" r="1.5" fill="white"/><circle cx="77" cy="44" r="1.5" fill="white"/>
-  </g>
-  <g>
-    <circle cx="40" cy="65" r="9" fill="#e0584f"/>
-    <circle cx="40" cy="58" r="6" fill="#e0584f"/>
-    <circle cx="38" cy="56" r="1.5" fill="white"/><circle cx="42" cy="56" r="1.5" fill="white"/>
-    <path d="M32 52 L48 52" stroke="#e0584f" stroke-width="2" opacity="0.5"/>
-  </g>
-  <path d="M48 62 L67 55" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/>
-  <rect x="82" y="78" width="16" height="16" rx="4" fill="#3b82f6" opacity="0.3"/>
-  <path d="M86 86 L94 86 M90 82 L90 90" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300" width="660" height="300">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#1a2a1a"/>
+      <stop offset="100%" stop-color="#0a0f0a"/>
+    </radialGradient>
+    <filter id="glow-r">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-g">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="blur-trail">
+      <feGaussianBlur stdDeviation="2.5"/>
+    </filter>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a3a0a"/>
+      <stop offset="100%" stop-color="#0d1f06"/>
+    </linearGradient>
+  </defs>
+  <rect width="660" height="300" fill="url(#sky)"/>
+  <ellipse cx="330" cy="280" rx="380" ry="60" fill="url(#ground)" opacity="0.9"/>
+  <line x1="330" y1="180" x2="0" y2="300" stroke="#2a5a10" stroke-width="1.5" opacity="0.4"/>
+  <line x1="330" y1="180" x2="120" y2="300" stroke="#2a5a10" stroke-width="1.2" opacity="0.35"/>
+  <line x1="330" y1="180" x2="260" y2="300" stroke="#2a5a10" stroke-width="1" opacity="0.3"/>
+  <line x1="330" y1="180" x2="400" y2="300" stroke="#2a5a10" stroke-width="1" opacity="0.3"/>
+  <line x1="330" y1="180" x2="540" y2="300" stroke="#2a5a10" stroke-width="1.2" opacity="0.35"/>
+  <line x1="330" y1="180" x2="660" y2="300" stroke="#2a5a10" stroke-width="1.5" opacity="0.4"/>
+  <ellipse cx="185" cy="185" rx="40" ry="8" fill="#3b82f6" opacity="0.18" filter="url(#blur-trail)" transform="rotate(-25 185 185)"/>
+  <ellipse cx="195" cy="183" rx="28" ry="5" fill="#3b82f6" opacity="0.22" filter="url(#blur-trail)" transform="rotate(-25 195 183)"/>
+  <ellipse cx="460" cy="175" rx="38" ry="7" fill="#a78bfa" opacity="0.18" filter="url(#blur-trail)" transform="rotate(20 460 175)"/>
+  <ellipse cx="450" cy="173" rx="26" ry="5" fill="#a78bfa" opacity="0.22" filter="url(#blur-trail)" transform="rotate(20 450 173)"/>
+  <ellipse cx="510" cy="210" rx="35" ry="7" fill="#2ec495" opacity="0.18" filter="url(#blur-trail)" transform="rotate(15 510 210)"/>
+  <ellipse cx="330" cy="235" rx="22" ry="6" fill="#000" opacity="0.35"/>
+  <line x1="316" y1="225" x2="304" y2="248" stroke="#8b0000" stroke-width="7" stroke-linecap="round"/>
+  <line x1="344" y1="222" x2="356" y2="245" stroke="#8b0000" stroke-width="7" stroke-linecap="round"/>
+  <line x1="320" y1="198" x2="295" y2="205" stroke="#8b0000" stroke-width="6" stroke-linecap="round"/>
+  <line x1="340" y1="196" x2="365" y2="200" stroke="#8b0000" stroke-width="6" stroke-linecap="round"/>
+  <rect x="316" y="192" width="28" height="36" rx="5" fill="#c0392b" filter="url(#glow-r)"/>
+  <circle cx="330" cy="183" r="14" fill="#e05050" filter="url(#glow-r)"/>
+  <text x="330" y="188" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="Arial,sans-serif" letter-spacing="1">IT</text>
+  <ellipse cx="215" cy="232" rx="14" ry="4" fill="#000" opacity="0.3"/>
+  <line x1="208" y1="222" x2="198" y2="240" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="222" y1="220" x2="230" y2="238" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="210" y1="198" x2="196" y2="208" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="220" y1="196" x2="234" y2="205" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>
+  <rect x="205" y="194" width="20" height="28" rx="4" fill="#3b82f6"/>
+  <circle cx="215" cy="184" r="11" fill="#60a5fa"/>
+  <ellipse cx="472" cy="228" rx="13" ry="4" fill="#000" opacity="0.3"/>
+  <line x1="466" y1="218" x2="458" y2="235" stroke="#7c3aed" stroke-width="5" stroke-linecap="round"/>
+  <line x1="478" y1="216" x2="486" y2="233" stroke="#7c3aed" stroke-width="5" stroke-linecap="round"/>
+  <line x1="468" y1="196" x2="456" y2="207" stroke="#7c3aed" stroke-width="5" stroke-linecap="round"/>
+  <line x1="476" y1="194" x2="490" y2="202" stroke="#7c3aed" stroke-width="5" stroke-linecap="round"/>
+  <rect x="462" y="190" width="20" height="28" rx="4" fill="#a78bfa"/>
+  <circle cx="472" cy="180" r="11" fill="#c4b5fd"/>
+  <ellipse cx="540" cy="240" rx="13" ry="4" fill="#000" opacity="0.3"/>
+  <line x1="534" y1="230" x2="526" y2="248" stroke="#059669" stroke-width="5" stroke-linecap="round"/>
+  <line x1="546" y1="228" x2="555" y2="246" stroke="#059669" stroke-width="5" stroke-linecap="round"/>
+  <line x1="535" y1="207" x2="524" y2="216" stroke="#059669" stroke-width="5" stroke-linecap="round"/>
+  <line x1="545" y1="205" x2="558" y2="213" stroke="#059669" stroke-width="5" stroke-linecap="round"/>
+  <rect x="530" y="202" width="20" height="28" rx="4" fill="#2ec495"/>
+  <circle cx="540" cy="192" r="11" fill="#6ee7b7"/>
+  <ellipse cx="120" cy="215" rx="8" ry="3" fill="#000" opacity="0.25"/>
+  <rect x="114" y="202" width="12" height="16" rx="3" fill="#f2c14e" opacity="0.9"/>
+  <circle cx="120" cy="197" r="7" fill="#fde68a" opacity="0.9"/>
+  <line x1="345" y1="200" x2="372" y2="196" stroke="#ff4444" stroke-width="1.5" opacity="0.6" stroke-dasharray="3,2"/>
+  <line x1="342" y1="195" x2="370" y2="188" stroke="#ff4444" stroke-width="1" opacity="0.4" stroke-dasharray="3,2"/>
+  <line x1="316" y1="200" x2="289" y2="197" stroke="#ff4444" stroke-width="1.5" opacity="0.6" stroke-dasharray="3,2"/>
+  <text x="330" y="68" text-anchor="middle" font-size="72" font-weight="900" fill="none" stroke="#22c55e" stroke-width="2.5" opacity="0.35" font-family="Arial Black, Impact, sans-serif" letter-spacing="8">TAG</text>
+  <text x="330" y="68" text-anchor="middle" font-size="72" font-weight="900" fill="#22c55e" font-family="Arial Black, Impact, sans-serif" letter-spacing="8" filter="url(#glow-g)">TAG</text>
+  <text x="330" y="92" text-anchor="middle" font-size="12" fill="#86efac" opacity="0.8" font-family="Arial,sans-serif" letter-spacing="5">CATCH THEM ALL</text>
+  <rect x="298" y="152" width="64" height="22" rx="4" fill="#8b0000" opacity="0.9"/>
+  <text x="330" y="168" text-anchor="middle" font-size="12" font-weight="900" fill="#fff" font-family="Arial,sans-serif" letter-spacing="2">YOU'RE IT!</text>
+  <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+    <stop offset="55%" stop-color="transparent"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.7)"/>
+  </radialGradient>
+  <rect width="660" height="300" fill="url(#vig)"/>
 </svg>

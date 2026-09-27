@@ -1,12 +1,82 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <circle cx="60" cy="65" r="45" fill="#2a1a0a" stroke="#d4a574" stroke-width="4"/>
-  <circle cx="60" cy="65" r="38" fill="none" stroke="#f2c14e" stroke-width="2" stroke-dasharray="8 4"/>
-  <circle cx="42" cy="58" r="14" fill="#e0584f" stroke="#b91c1c" stroke-width="2"/>
-  <circle cx="42" cy="52" r="3" fill="white"/><circle cx="42" cy="52" r="1.5" fill="#111"/>
-  <circle cx="78" cy="58" r="14" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
-  <circle cx="78" cy="52" r="3" fill="white"/><circle cx="78" cy="52" r="1.5" fill="#111"/>
-  <path d="M56 58 L64 58" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-  <path d="M56 55 L50 50" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
-  <path d="M64 55 L70 50" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
-  <text x="60" y="100" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="14" fill="#f2c14e">SUMO</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300">
+  <defs>
+    <radialGradient id="sa" cx="0.5" cy="0.55" r="0.55"><stop offset="0" stop-color="#f5e6c8"/><stop offset="0.7" stop-color="#d4b07a"/><stop offset="1" stop-color="#8b6340"/></radialGradient>
+    <radialGradient id="sg" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff8e1" stop-opacity="0.7"/><stop offset="1" stop-color="#fff8e1" stop-opacity="0"/></radialGradient>
+    <linearGradient id="sbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1008"/><stop offset="1" stop-color="#2d1f0e"/></linearGradient>
+    <linearGradient id="sr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="1" stop-color="#c0392b"/></linearGradient>
+    <linearGradient id="sb2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#74b0ff"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+    <filter id="sfb"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="sfs"><feGaussianBlur stdDeviation="1.5"/></filter>
+  </defs>
+  <rect width="660" height="300" fill="url(#sbg)"/>
+  <path d="M0 14 Q330 22 660 14" fill="none" stroke="#f2c14e" stroke-width="0.8" opacity="0.45"/>
+  <g fill="#f97316" opacity="0.8">
+    <ellipse cx="55" cy="16" rx="7" ry="9"/><ellipse cx="55" cy="16" rx="4" ry="7" fill="#fbbf24"/>
+    <ellipse cx="165" cy="10" rx="7" ry="9"/><ellipse cx="165" cy="10" rx="4" ry="7" fill="#fbbf24"/>
+    <ellipse cx="275" cy="15" rx="7" ry="9"/><ellipse cx="275" cy="15" rx="4" ry="7" fill="#fbbf24"/>
+    <ellipse cx="385" cy="9" rx="7" ry="9"/><ellipse cx="385" cy="9" rx="4" ry="7" fill="#fbbf24"/>
+    <ellipse cx="495" cy="14" rx="7" ry="9"/><ellipse cx="495" cy="14" rx="4" ry="7" fill="#fbbf24"/>
+    <ellipse cx="605" cy="18" rx="7" ry="9"/><ellipse cx="605" cy="18" rx="4" ry="7" fill="#fbbf24"/>
+  </g>
+  <rect x="0" y="26" width="660" height="44" fill="#231508"/>
+  <g fill="#170f06">
+    <ellipse cx="30" cy="56" rx="9" ry="7"/><ellipse cx="60" cy="50" rx="9" ry="7"/><ellipse cx="90" cy="57" rx="8" ry="6"/>
+    <ellipse cx="120" cy="52" rx="9" ry="7"/><ellipse cx="150" cy="56" rx="8" ry="7"/><ellipse cx="180" cy="50" rx="9" ry="6"/>
+    <ellipse cx="210" cy="55" rx="8" ry="7"/><ellipse cx="240" cy="53" rx="9" ry="6"/><ellipse cx="270" cy="56" rx="8" ry="7"/>
+    <ellipse cx="300" cy="51" rx="10" ry="7"/><ellipse cx="330" cy="55" rx="9" ry="7"/><ellipse cx="360" cy="51" rx="8" ry="6"/>
+    <ellipse cx="390" cy="56" rx="9" ry="7"/><ellipse cx="420" cy="51" rx="8" ry="7"/><ellipse cx="450" cy="55" rx="9" ry="6"/>
+    <ellipse cx="480" cy="53" rx="8" ry="7"/><ellipse cx="510" cy="56" rx="9" ry="6"/><ellipse cx="540" cy="51" rx="8" ry="7"/>
+    <ellipse cx="570" cy="55" rx="9" ry="6"/><ellipse cx="600" cy="52" rx="8" ry="7"/><ellipse cx="630" cy="56" rx="9" ry="6"/>
+  </g>
+  <ellipse cx="330" cy="224" rx="230" ry="26" fill="#000" opacity="0.4" filter="url(#sfb)"/>
+  <ellipse cx="330" cy="196" rx="218" ry="42" fill="#8b6340"/>
+  <ellipse cx="330" cy="188" rx="218" ry="42" fill="#c9975a"/>
+  <ellipse cx="330" cy="185" rx="214" ry="40" fill="url(#sa)"/>
+  <rect x="299" y="171" width="10" height="27" rx="2" fill="#3d2a0e" opacity="0.55"/>
+  <rect x="351" y="171" width="10" height="27" rx="2" fill="#3d2a0e" opacity="0.55"/>
+  <ellipse cx="330" cy="183" rx="130" ry="25" fill="none" stroke="#a07a40" stroke-width="8" opacity="0.55"/>
+  <ellipse cx="330" cy="183" rx="130" ry="25" fill="none" stroke="#f2e0a0" stroke-width="3" stroke-dasharray="14 8" opacity="0.9"/>
+  <ellipse cx="330" cy="174" rx="75" ry="20" fill="url(#sg)"/>
+  <!-- RED wrestler flying backward -->
+  <g transform="translate(230 150) rotate(-20)">
+    <ellipse cx="12" cy="48" rx="26" ry="5" fill="#000" opacity="0.18" filter="url(#sfs)"/>
+    <ellipse cx="12" cy="20" rx="22" ry="27" fill="url(#sr)"/>
+    <rect x="-6" y="9" width="36" height="15" rx="4" fill="#8b0000"/>
+    <line x1="-10" y1="5" x2="-44" y2="-12" stroke="#e8b08a" stroke-width="12" stroke-linecap="round"/>
+    <line x1="34" y1="5" x2="64" y2="-8" stroke="#e8b08a" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="-44" cy="-12" r="8" fill="#e8b08a"/>
+    <circle cx="64" cy="-8" r="8" fill="#e8b08a"/>
+    <circle cx="12" cy="-15" r="16" fill="#e8b08a"/>
+    <ellipse cx="12" cy="-29" rx="5" ry="7" fill="#2a1a0a"/>
+    <line x1="4" y1="44" x2="-12" y2="65" stroke="#c0392b" stroke-width="14" stroke-linecap="round"/>
+    <line x1="20" y1="44" x2="34" y2="62" stroke="#c0392b" stroke-width="14" stroke-linecap="round"/>
+    <path d="M-2 -22 L-9 -28 M-5 -17 L-14 -18" stroke="#ff5555" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <!-- BLUE wrestler charging -->
+  <g transform="translate(374 140) rotate(6)">
+    <ellipse cx="0" cy="54" rx="24" ry="5" fill="#000" opacity="0.18" filter="url(#sfs)"/>
+    <line x1="-16" y1="42" x2="-26" y2="68" stroke="#1d4ed8" stroke-width="16" stroke-linecap="round"/>
+    <line x1="16" y1="42" x2="22" y2="70" stroke="#1d4ed8" stroke-width="16" stroke-linecap="round"/>
+    <ellipse cx="0" cy="18" rx="22" ry="26" fill="url(#sb2)"/>
+    <rect x="-18" y="8" width="36" height="15" rx="4" fill="#1a3a8a"/>
+    <line x1="-22" y1="3" x2="-56" y2="-12" stroke="#c8a07a" stroke-width="13" stroke-linecap="round"/>
+    <line x1="-22" y1="15" x2="-54" y2="5" stroke="#c8a07a" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="-56" cy="-12" r="8" fill="#c8a07a"/>
+    <circle cx="-54" cy="5" r="8" fill="#c8a07a"/>
+    <circle cx="-4" cy="-15" r="16" fill="#c8a07a"/>
+    <ellipse cx="-4" cy="-29" rx="5" ry="7" fill="#2a1a0a"/>
+    <path d="M-12 -23 L-6 -19 M4 -23 L-2 -19" stroke="#444" stroke-width="2"/>
+  </g>
+  <circle cx="330" cy="166" r="36" fill="#f5e6c8" opacity="0.3" filter="url(#sfb)"/>
+  <g stroke="#f2c14e" stroke-width="2.5" opacity="0.8" stroke-linecap="round">
+    <line x1="307" y1="148" x2="292" y2="133"/><line x1="304" y1="164" x2="283" y2="165"/>
+    <line x1="313" y1="179" x2="297" y2="194"/><line x1="351" y1="151" x2="367" y2="135"/>
+    <line x1="355" y1="167" x2="378" y2="168"/><line x1="338" y1="145" x2="344" y2="128"/>
+  </g>
+  <ellipse cx="330" cy="186" rx="218" ry="43" fill="none" stroke="#7a5230" stroke-width="3" opacity="0.45"/>
+  <g font-family="'Arial Black','Segoe UI Black',Impact,sans-serif" font-weight="900" text-anchor="middle">
+    <text x="330" y="258" font-size="60" letter-spacing="3" fill="#000" opacity="0.3">SUMO SMASH</text>
+    <text x="327" y="254" font-size="60" letter-spacing="3" fill="#f2c14e">SUMO SMASH</text>
+    <text x="327" y="280" font-size="13" letter-spacing="7" fill="#c8a84b" opacity="0.9">ONLINE ARENA BRAWLER</text>
+  </g>
 </svg>

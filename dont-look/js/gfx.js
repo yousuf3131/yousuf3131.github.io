@@ -39,7 +39,7 @@ export function init(canvas) {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.FogExp2(0x000000, 0.065);
+    scene.fog = new THREE.FogExp2(0x000000, 0.035);
 
     camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.05, 80);
     camera.position.set(0, 1.7, 0);
@@ -57,9 +57,6 @@ export function init(canvas) {
     camera.add(flashlight);
     scene.add(camera);
 
-    // Dim ambient — near-zero so shadows are dramatic
-    const ambient = new THREE.AmbientLight(0x0a0a14, 0.15);
-    scene.add(ambient);
 }
 
 // ── Level geometry ─────────────────────────────────────────────────────────
@@ -307,6 +304,9 @@ export function buildLevel() {
     lightList = [];
     ritualMeshes = [];
 
+    // Dim ambient — re-added each time (clearLevel removes it)
+    scene.add(new THREE.AmbientLight(0x0a0a14, 0.15));
+
     for (let i = 0; i < ROOMS.length; i++) {
         buildRoom(ROOMS[i]);
         buildRoomWalls(i);
@@ -497,7 +497,7 @@ export function clearPlayerModels() {
 
 // ── Camera control ────────────────────────────────────────────────────────
 let headBobT = 0;
-export const camState = { x: 0, y: 1.7, z: 0, pitch: 0, yaw: 0, moving: false };
+export const camState = { x: 0, y: 0, z: 0, pitch: 0, yaw: 0, moving: false };
 
 export function updateCamera(dt) {
     if (camState.moving) headBobT += dt * 7.5;
@@ -516,6 +516,20 @@ export function updateCamera(dt) {
 
 export function applyShake(amount) {
     shakeT = Math.max(shakeT, amount);
+}
+
+// Slow orbit in start room for menu background
+export function updateMenuCamera(t) {
+    const angle = t * 0.04;
+    const cx = Math.sin(angle) * 4;
+    const cz = Math.cos(angle) * 4;
+    camera.position.set(cx, 1.7, cz);
+    camera.rotation.order = 'YXZ';
+    // Always look toward the corridor where monster stands
+    const tdx = 8 - cx;
+    const tdz = 0 - cz;
+    camera.rotation.y = Math.atan2(-tdx, -tdz);
+    camera.rotation.x = -0.05;
 }
 
 // ── Flashlight battery ────────────────────────────────────────────────────

@@ -1,11 +1,11 @@
 // Don't Look — horror multiplayer game
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=1';
+import { HostNet, ClientNet, makeCode } from './net.js?v=2';
 import { sfx, unlockAudio, setMuted, isMuted, tickAudio,
          startHeartbeat, stopHeartbeat, setHeartbeatRate,
-         startMonsterRumble, stopMonsterRumble } from './audio.js?v=1';
-import { play as playMusic, stop as stopMusic, setTension } from './music.js?v=1';
-import * as gfx from './gfx.js?v=1';
+         startMonsterRumble, stopMonsterRumble } from './audio.js?v=2';
+import { play as playMusic, stop as stopMusic, setTension } from './music.js?v=2';
+import * as gfx from './gfx.js?v=2';
 
 const track = (name, p) => { if (window.track) window.track(name, p); };
 const $ = id => document.getElementById(id);
@@ -335,11 +335,6 @@ function hostUpdate(dt) {
             }
             if (bestRitual) {
                 p.botTargetX = bestRitual.x; p.botTargetZ = bestRitual.z;
-                // Trigger ritual if close enough
-                if (bestDist < RITUAL_R) {
-                    const ri = gfx.RITUAL_POSITIONS.indexOf(bestRitual);
-                    if (ri >= 0 && !H.ritualsDone[ri]) hostHandle(id, { t: 'ritual', idx: ri });
-                }
             } else if (exitUnlocked) {
                 p.botTargetX = gfx.EXIT_POS.x; p.botTargetZ = gfx.EXIT_POS.z;
                 if (Math.hypot(gfx.EXIT_POS.x - p.x, gfx.EXIT_POS.z - p.z) < EXIT_R) {
@@ -367,6 +362,26 @@ function hostUpdate(dt) {
             p.vx *= ns / spd; p.vz *= ns / spd;
         }
         p.x += (p.vx || 0) * dt; p.z += (p.vz || 0) * dt;
+    }
+
+    // Bot ritual progress — accumulate dt, complete after RITUAL_TIME seconds
+    for (const [id, p] of players) {
+        if (!p.bot || !p.alive) continue;
+        let atRitual = false;
+        for (let i = 0; i < 3; i++) {
+            if (H.ritualsDone[i]) continue;
+            const rp = gfx.RITUAL_POSITIONS[i];
+            if (Math.hypot(rp.x - p.x, rp.z - p.z) < RITUAL_R) {
+                atRitual = true;
+                p.botRitualT = (p.botRitualT || 0) + dt;
+                if (p.botRitualT >= RITUAL_TIME) {
+                    p.botRitualT = 0;
+                    hostHandle(id, { t: 'ritual', idx: i });
+                }
+                break;
+            }
+        }
+        if (!atRitual) p.botRitualT = 0;
     }
 
     // Broadcast player positions
@@ -565,9 +580,11 @@ function renderLobby(plist) {
 function showResults(list) {
     track('match_end');
     view = 'results'; show('results');
-    gfx.clearLevel(); gfx.clearPlayerModels(); gfx.hideMonster();
+    gfx.clearLevel(); gfx.clearPlayerModels();
     players.clear(); me = null;
     playMusic('menu');
+    gfx.buildLevel();
+    gfx.setMonsterState(8, 0, 0, true);
     stopHeartbeat(); stopMonsterRumble();
     gameActive = false;
 
@@ -857,6 +874,7 @@ function frame(now) {
         gfx.update(dt, gameActive);
         gfx.updateCamera(dt);
     } else {
+        gfx.updateMenuCamera(now / 1000);
         gfx.update(dt, false);
     }
     gfx.render();
@@ -982,6 +1000,8 @@ const invite = (new URLSearchParams(location.search).get('room') || '').toUpperC
 if (invite) { $('code').value = invite; $('invite').textContent = `Invited to room ${invite}.`; $('invite').classList.remove('hidden'); }
 
 gfx.init(document.getElementById('c'));
+gfx.buildLevel();
+gfx.setMonsterState(8, 0, 0, true);
 show('menu');
 playMusic('menu');
 requestAnimationFrame(frame);

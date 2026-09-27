@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300" width="660" height="300">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0008"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="flashlight" cx="22%" cy="52%" r="45%">
+      <stop offset="0%" stop-color="#fff8e0" stop-opacity="0.22"/>
+      <stop offset="40%" stop-color="#ffedaa" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow-eye">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-red">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="blur-monster">
+      <feGaussianBlur stdDeviation="1.2"/>
+    </filter>
+    <linearGradient id="corridor" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0d0d14"/>
+      <stop offset="50%" stop-color="#080810"/>
+      <stop offset="100%" stop-color="#0d0d14"/>
+    </linearGradient>
+    <linearGradient id="floor-g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#111118"/>
+      <stop offset="100%" stop-color="#06060a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deep black background -->
+  <rect width="660" height="300" fill="url(#bg)"/>
+
+  <!-- Corridor walls — perspective lines converging to center-right -->
+  <!-- Left wall top edge -->
+  <polygon points="0,0 660,95 660,205 0,300" fill="url(#corridor)"/>
+  <!-- Stone texture lines on walls -->
+  <line x1="0" y1="40" x2="660" y2="115" stroke="#151520" stroke-width="1" opacity="0.6"/>
+  <line x1="0" y1="80" x2="660" y2="128" stroke="#151520" stroke-width="1" opacity="0.5"/>
+  <line x1="0" y1="120" x2="660" y2="140" stroke="#151520" stroke-width="1" opacity="0.5"/>
+  <line x1="0" y1="180" x2="660" y2="160" stroke="#151520" stroke-width="1" opacity="0.5"/>
+  <line x1="0" y1="220" x2="660" y2="172" stroke="#151520" stroke-width="1" opacity="0.6"/>
+  <line x1="0" y1="260" x2="660" y2="185" stroke="#151520" stroke-width="1" opacity="0.6"/>
+
+  <!-- Floor -->
+  <polygon points="0,270 660,195 660,300 0,300" fill="url(#floor-g)"/>
+  <!-- Floor reflection lines -->
+  <line x1="0" y1="280" x2="660" y2="200" stroke="#1a1a28" stroke-width="1" opacity="0.4"/>
+  <line x1="0" y1="295" x2="660" y2="210" stroke="#1a1a28" stroke-width="1" opacity="0.3"/>
+
+  <!-- Ceiling -->
+  <polygon points="0,0 660,95 660,0 0,0" fill="#08080c"/>
+
+  <!-- Distant orange flicker lights on ceiling -->
+  <ellipse cx="480" cy="105" rx="6" ry="3" fill="#ff8833" opacity="0.5"/>
+  <ellipse cx="480" cy="105" rx="20" ry="8" fill="#ff6622" opacity="0.12" filter="url(#blur-monster)"/>
+  <ellipse cx="580" cy="112" rx="5" ry="2.5" fill="#ff7722" opacity="0.4"/>
+
+  <!-- Flashlight cone from left (player's POV) -->
+  <ellipse cx="145" cy="152" rx="280" ry="155" fill="url(#flashlight)"/>
+
+  <!-- The Monster — tall thin humanoid deep in corridor -->
+  <!-- Monster body (distant, slightly blurred) -->
+  <g filter="url(#blur-monster)" opacity="0.92">
+    <!-- Legs -->
+    <line x1="430" y1="220" x2="423" y2="248" stroke="#0a0a0e" stroke-width="9" stroke-linecap="round"/>
+    <line x1="446" y1="218" x2="453" y2="247" stroke="#0a0a0e" stroke-width="9" stroke-linecap="round"/>
+    <!-- Arms (unnaturally long, hanging) -->
+    <line x1="424" y1="185" x2="408" y2="225" stroke="#0c0c12" stroke-width="8" stroke-linecap="round"/>
+    <line x1="452" y1="183" x2="468" y2="224" stroke="#0c0c12" stroke-width="8" stroke-linecap="round"/>
+    <!-- Body (tall thin) -->
+    <rect x="421" y="148" width="34" height="72" rx="6" fill="#0d0d14"/>
+    <!-- Head (elongated) -->
+    <ellipse cx="438" cy="136" rx="14" ry="18" fill="#111118"/>
+  </g>
+
+  <!-- Monster glowing eyes — the focal point -->
+  <circle cx="432" cy="133" r="4.5" fill="#ffffff" filter="url(#glow-eye)"/>
+  <circle cx="444" cy="133" r="4.5" fill="#ffffff" filter="url(#glow-eye)"/>
+  <circle cx="432" cy="133" r="2.5" fill="#ffffff"/>
+  <circle cx="444" cy="133" r="2.5" fill="#ffffff"/>
+
+  <!-- Eye glow halos -->
+  <ellipse cx="438" cy="133" rx="28" ry="12" fill="#ffffff" opacity="0.04"/>
+  <ellipse cx="438" cy="133" rx="18" ry="8" fill="#ddddff" opacity="0.06"/>
+
+  <!-- Ritual symbol on floor (glowing) -->
+  <g opacity="0.55">
+    <circle cx="200" cy="260" r="22" fill="none" stroke="#c8a840" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="200" cy="260" r="14" fill="none" stroke="#c8a840" stroke-width="1" opacity="0.5"/>
+    <line x1="200" y1="238" x2="200" y2="282" stroke="#c8a840" stroke-width="1" opacity="0.5"/>
+    <line x1="178" y1="260" x2="222" y2="260" stroke="#c8a840" stroke-width="1" opacity="0.5"/>
+    <line x1="184" y1="244" x2="216" y2="276" stroke="#c8a840" stroke-width="0.8" opacity="0.4"/>
+    <line x1="216" y1="244" x2="184" y2="276" stroke="#c8a840" stroke-width="0.8" opacity="0.4"/>
+    <ellipse cx="200" cy="260" rx="22" ry="6" fill="#c8a840" opacity="0.08" filter="url(#blur-monster)"/>
+  </g>
+
+  <!-- Player silhouette (small, left side, holding flashlight) -->
+  <g opacity="0.75">
+    <circle cx="48" cy="178" r="8" fill="#1a1a28"/>
+    <rect x="42" y="186" width="12" height="22" rx="3" fill="#1a1a28"/>
+    <line x1="54" y1="192" x2="72" y2="188" stroke="#1a1a28" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="72" cy="188" r="3" fill="#fff8e0" opacity="0.6" filter="url(#blur-monster)"/>
+  </g>
+
+  <!-- Fear meter visual — red bar top left -->
+  <rect x="20" y="22" width="80" height="5" rx="2.5" fill="#1a1a1a" opacity="0.8"/>
+  <rect x="20" y="22" width="62" height="5" rx="2.5" fill="#dc2626" opacity="0.85"/>
+  <text x="20" y="18" font-size="8" fill="#888" font-family="Arial,sans-serif" letter-spacing="2" opacity="0.8">FEAR</text>
+
+  <!-- Title: DON'T LOOK -->
+  <text x="330" y="60" text-anchor="middle" font-size="52" font-weight="900"
+        fill="none" stroke="#8b0000" stroke-width="2" opacity="0.4"
+        font-family="Arial Black, Impact, sans-serif" letter-spacing="4">DON'T LOOK</text>
+  <text x="330" y="60" text-anchor="middle" font-size="52" font-weight="900"
+        fill="#ffffff" font-family="Arial Black, Impact, sans-serif" letter-spacing="4"
+        filter="url(#glow-red)" opacity="0.9">DON'T LOOK</text>
+
+  <!-- Subtitle -->
+  <text x="330" y="82" text-anchor="middle" font-size="11" fill="#dc2626" opacity="0.75"
+        font-family="Arial,sans-serif" letter-spacing="6">HORROR MULTIPLAYER</text>
+
+  <!-- Look away warning -->
+  <text x="438" y="108" text-anchor="middle" font-size="9" fill="#ffffff" opacity="0.5"
+        font-family="Arial,sans-serif" letter-spacing="2">IT SEES YOU</text>
+
+  <!-- Vignette (strong dark corners) -->
+  <radialGradient id="vig" cx="50%" cy="50%" r="65%">
+    <stop offset="40%" stop-color="transparent"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.88)"/>
+  </radialGradient>
+  <rect width="660" height="300" fill="url(#vig)"/>
+</svg>

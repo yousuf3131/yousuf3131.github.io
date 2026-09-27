@@ -1,5 +1,5 @@
 // Don't Look — ambient horror drone generator (Web Audio API)
-import { getCtx } from './audio.js?v=1';
+import { getCtx } from './audio.js?v=2';
 
 let musicGain = null;
 let droneNodes = [];
