@@ -94,7 +94,7 @@ export const START_SPAWNS = [
     { x: -3, z: -3 }, { x: 3, z: -3 }, { x: -3, z: 3 }, { x: 3, z: 3 },
     { x:  0, z:  4 }, { x: 0, z: -4 }, { x: -4, z: 0 }, { x: 4, z: 0 },
 ];
-export const MONSTER_SPAWN = { x: -4, z: 4 };
+export const MONSTER_SPAWN = { x: 40, z: -34 };
 
 // Stone wall texture (canvas)
 function makeWallTexture() {
