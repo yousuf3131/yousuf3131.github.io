@@ -1,0 +1,274 @@
+:root {
+    --lava:   #ff4500;
+    --lava2:  #ff7a00;
+    --orange: #ff6a1a;
+    --panel:  rgba(10, 6, 4, 0.90);
+    --panel2: rgba(255,255,255,0.04);
+    --line:   rgba(255,255,255,0.09);
+    --text:   #f0e6d8;
+    --muted:  #9a8070;
+    --ok:     #90d090;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: #050201;
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none;
+}
+#c { display: block; width: 100vw; height: 100vh; touch-action: none; }
+.hidden { display: none !important; }
+h1,h2,h3,p { margin: 0; }
+button { font-family: inherit; cursor: pointer; }
+.display { font-family: 'Black Ops One', 'Courier New', monospace; }
+.kicker { color: var(--lava2); font-weight: 800; font-size: 0.72rem;
+    letter-spacing: 0.22em; text-transform: uppercase; }
+.status { min-height: 1.3em; color: var(--muted); font-size: 0.88rem; text-align: center; }
+.status.error { color: #ff9080; }
+
+/* ── Screens ────────────────────────────────────────────────── */
+.screen {
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 1rem; overflow: auto;
+}
+
+/* ── Panel ──────────────────────────────────────────────────── */
+.panel {
+    background: var(--panel);
+    border: 1px solid rgba(255,100,0,0.18);
+    border-radius: 16px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 24px 72px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,80,0,0.10);
+    padding: 2rem;
+    width: min(400px, 94vw);
+    display: flex; flex-direction: column; gap: 1rem;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn {
+    border: 1px solid var(--line);
+    background: var(--panel2);
+    color: var(--text);
+    font-weight: 700; font-size: 0.95rem;
+    padding: 11px 18px; border-radius: 12px;
+    transition: transform 0.12s, background-color 0.18s, border-color 0.18s;
+}
+.btn:hover { border-color: rgba(255,255,255,0.3); }
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+    background: linear-gradient(135deg, #d43200, #ff5a00);
+    color: #fff; border-color: transparent; font-weight: 800;
+}
+.btn.primary:hover { background: linear-gradient(135deg, #e03600, #ff6800); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.big { width: 100%; font-size: 1rem; padding: 14px 20px; }
+.btn.small { padding: 7px 12px; font-size: 0.8rem; }
+.icon-btn {
+    position: fixed; top: 14px; right: 14px; z-index: 30;
+    background: rgba(10,6,4,0.7); border-color: rgba(255,255,255,0.12);
+    font-size: 1rem; width: 38px; height: 38px; padding: 0;
+    display: flex; align-items: center; justify-content: center; border-radius: 10px;
+}
+
+/* ── Fields ─────────────────────────────────────────────────── */
+.field {
+    width: 100%; font: 600 1rem 'Inter', sans-serif;
+    color: var(--text); background: rgba(0,0,0,0.5);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; outline: none;
+    -webkit-user-select: text; user-select: text;
+}
+.field:focus { border-color: var(--lava); box-shadow: 0 0 0 3px rgba(255,69,0,0.25); }
+
+/* ── Menu ───────────────────────────────────────────────────── */
+.menu-panel { text-align: center; }
+.title-wrap { margin-bottom: 0.5rem; }
+
+@keyframes lava-flicker {
+    0%,17%,19%,96%,100% { opacity:1; text-shadow: 0 0 30px #ff450088, 0 0 60px #ff220044; }
+    18%  { opacity: 0.25; text-shadow: none; }
+    97%  { opacity: 0.8; }
+}
+.game-title {
+    font-size: clamp(3.2rem, 14vw, 5rem);
+    line-height: 0.92;
+    letter-spacing: 0.05em;
+    color: #ffe0c0;
+    animation: lava-flicker 8s infinite;
+}
+.tagline {
+    color: var(--muted); font-size: 0.9rem;
+    line-height: 1.55; margin: 0.75rem auto 0;
+}
+.menu-form { display: grid; gap: 10px; text-align: left; }
+.menu-form label { font-size: 0.76rem; font-weight: 800; color: var(--muted); letter-spacing: 0.08em; }
+.join-row { display: flex; gap: 8px; }
+.join-row .field {
+    text-transform: uppercase; letter-spacing: 0.3em;
+    font-weight: 800; text-align: center;
+}
+.divider {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 0.68rem;
+    font-weight: 800; letter-spacing: 0.15em;
+}
+.divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--line);
+}
+
+/* ── Lobby ──────────────────────────────────────────────────── */
+.lobby-panel { width: min(440px, 94vw); }
+.lobby-header {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.code-display {
+    font-family: 'Black Ops One', monospace;
+    font-size: 1.4rem; color: var(--lava2);
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 12px rgba(255,122,0,0.5);
+}
+.player-list {
+    display: grid; gap: 6px;
+    min-height: 80px; max-height: 220px; overflow-y: auto;
+}
+.player-row {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 12px; font-size: 0.9rem; font-weight: 600;
+}
+.player-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.player-chain-badge {
+    margin-left: auto; font-size: 0.72rem;
+    color: var(--lava2); font-weight: 800;
+    letter-spacing: 0.06em;
+}
+.lobby-actions { display: flex; flex-direction: column; gap: 8px; }
+body.is-host .client-only { display: none !important; }
+body:not(.is-host) .host-only { display: none !important; }
+body.solo .online-only { display: none !important; }
+
+/* ── HUD ────────────────────────────────────────────────────── */
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+
+#hud-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: center; padding: 14px;
+}
+#lava-warn {
+    font-family: 'Black Ops One', monospace;
+    font-size: 1rem; letter-spacing: 0.12em;
+    color: var(--lava); text-shadow: 0 0 10px #ff4500aa;
+    opacity: 0; transition: opacity 0.3s;
+}
+#lava-warn.visible { opacity: 1; }
+
+#hud-chain {
+    position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-width: 160px;
+}
+#chain-label {
+    font-size: 0.62rem; font-weight: 800;
+    color: var(--muted); letter-spacing: 0.2em;
+}
+#chain-bar-wrap {
+    width: 140px; height: 6px; background: rgba(255,255,255,0.1);
+    border-radius: 3px; overflow: hidden;
+}
+#chain-bar-fill {
+    height: 100%; width: 0%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #00e070, #ffcc00, #ff4500);
+    transition: width 0.08s, filter 0.2s;
+}
+#chain-bar-fill.danger { filter: drop-shadow(0 0 4px #ff4500); }
+
+#hud-players {
+    position: absolute; top: 14px; left: 14px;
+    display: flex; flex-direction: column; gap: 5px;
+}
+.hud-player-row {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(10,6,4,0.6); border-radius: 8px;
+    padding: 4px 8px; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.07);
+}
+.hud-player-dot { width: 8px; height: 8px; border-radius: 50%; }
+.hud-player-dead { opacity: 0.4; text-decoration: line-through; }
+
+#countdown {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-family: 'Black Ops One', monospace;
+    font-size: clamp(5rem, 20vw, 9rem);
+    color: #ffe0c0;
+    text-shadow: 0 0 40px #ff4500, 0 0 80px #ff220055;
+    pointer-events: none;
+}
+
+#hud-height {
+    position: absolute; top: 14px; right: 14px;
+    background: rgba(10,6,4,0.6); border-radius: 8px;
+    padding: 5px 10px; font-size: 0.8rem; font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: baseline; gap: 3px;
+}
+#height-val { font-size: 1.1rem; color: var(--lava2); font-weight: 900; }
+.height-unit { font-size: 0.72rem; color: var(--muted); }
+
+/* Lava overlay at bottom of screen */
+#lava-overlay {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 0; pointer-events: none; z-index: 9;
+    background: linear-gradient(to top, rgba(255,60,0,0.55), transparent);
+    transition: height 0.2s;
+}
+
+/* ── Results ────────────────────────────────────────────────── */
+.results-panel { text-align: center; width: min(420px, 94vw); }
+#results-title {
+    font-size: clamp(1.8rem, 8vw, 2.6rem);
+    color: var(--lava2);
+    text-shadow: 0 0 20px #ff450066;
+}
+#results-list {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; gap: 6px; text-align: left;
+}
+#results-list li {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 14px; font-size: 0.9rem; font-weight: 600;
+}
+.results-actions { display: flex; gap: 8px; flex-direction: column; }
+
+/* ── Touch ──────────────────────────────────────────────────── */
+#touch-controls {
+    position: fixed; inset: 0; pointer-events: none; z-index: 15;
+}
+#joy-zone-l {
+    position: absolute; bottom: 30px; left: 30px;
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.12);
+    pointer-events: all; touch-action: none;
+}
+#btn-jump {
+    position: absolute; bottom: 40px; right: 30px;
+    width: 70px; height: 70px; border-radius: 50%;
+    background: rgba(255,69,0,0.35);
+    border: 2px solid rgba(255,120,0,0.5);
+    color: #fff; font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: all;
+}

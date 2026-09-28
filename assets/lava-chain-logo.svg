@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300" width="660" height="300">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="100%" r="80%">
+      <stop offset="0%" stop-color="#3a0800"/>
+      <stop offset="50%" stop-color="#1a0300"/>
+      <stop offset="100%" stop-color="#050100"/>
+    </radialGradient>
+    <radialGradient id="lavaGlow" cx="50%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="#ff4400" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ff1100" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lavaSurface" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff6600"/>
+      <stop offset="40%" stop-color="#ff3300"/>
+      <stop offset="100%" stop-color="#cc1100"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow2">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="clip"><rect width="660" height="300"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+
+  <!-- Sky bg -->
+  <rect width="660" height="300" fill="url(#sky)"/>
+  <!-- Lava atmospheric glow from bottom -->
+  <rect width="660" height="300" fill="url(#lavaGlow)"/>
+
+  <!-- Distant floating rock platforms (background) -->
+  <rect x="50" y="200" width="80" height="14" rx="4" fill="#2a1208"/>
+  <rect x="51" y="200" width="78" height="5" rx="2" fill="#3a1a0a"/>
+  <rect x="200" y="185" width="60" height="12" rx="3" fill="#2a1208"/>
+  <rect x="201" y="185" width="58" height="4" rx="2" fill="#3a1a0a"/>
+  <rect x="520" y="195" width="90" height="14" rx="4" fill="#2a1208"/>
+  <rect x="521" y="195" width="88" height="5" rx="2" fill="#3a1a0a"/>
+  <rect x="380" y="178" width="70" height="12" rx="3" fill="#2a1208"/>
+
+  <!-- Mid platforms with orange underglow -->
+  <!-- Platform left -->
+  <rect x="80" y="145" width="120" height="18" rx="5" fill="#1a0a04" filter="url(#glow)"/>
+  <rect x="82" y="145" width="116" height="7" rx="3" fill="#2e1408"/>
+  <line x1="92" y1="145" x2="88" y2="163" stroke="#3a1a08" stroke-width="1.5"/>
+  <line x1="150" y1="145" x2="146" y2="163" stroke="#3a1a08" stroke-width="1.5"/>
+  <!-- Orange underglow -->
+  <ellipse cx="140" cy="165" rx="55" ry="8" fill="#ff3300" fill-opacity="0.3"/>
+
+  <!-- Platform right -->
+  <rect x="460" y="150" width="120" height="18" rx="5" fill="#1a0a04"/>
+  <rect x="462" y="150" width="116" height="7" rx="3" fill="#2e1408"/>
+  <ellipse cx="520" cy="170" rx="55" ry="8" fill="#ff3300" fill-opacity="0.3"/>
+
+  <!-- Main center platform (wide, ground) -->
+  <rect x="170" y="215" width="320" height="22" rx="6" fill="#1a0a04"/>
+  <rect x="172" y="215" width="316" height="9" rx="4" fill="#2e1408"/>
+  <!-- Lava cracks on center platform -->
+  <path d="M220,215 L228,222 L224,215" fill="none" stroke="#ff4400" stroke-width="1" opacity="0.7"/>
+  <path d="M340,215 L352,222 L348,215" fill="none" stroke="#ff4400" stroke-width="1" opacity="0.6"/>
+  <path d="M430,215 L438,221 L444,215" fill="none" stroke="#ff3300" stroke-width="1.2" opacity="0.8"/>
+  <ellipse cx="330" cy="238" rx="150" ry="10" fill="#ff3300" fill-opacity="0.18"/>
+
+  <!-- Lava surface -->
+  <path d="M0 270 Q30 258 60 265 Q90 272 120 260 Q150 248 180 257 Q210 266 240 255 Q270 244 300 252 Q330 260 360 250 Q390 240 420 249 Q450 258 480 246 Q510 234 540 244 Q570 254 600 243 Q630 232 660 242 L660 300 L0 300 Z"
+        fill="url(#lavaSurface)"/>
+  <!-- Lava highlight ripples -->
+  <path d="M0 275 Q60 268 120 274 Q180 280 240 272 Q300 264 360 272 Q420 280 480 270 Q540 260 600 268 Q630 272 660 265"
+        fill="none" stroke="#ff8800" stroke-width="1.5" opacity="0.4"/>
+  <path d="M0 285 Q80 278 160 285 Q240 292 320 283 Q400 274 480 283 Q560 292 660 280"
+        fill="none" stroke="#ff6600" stroke-width="1" opacity="0.3"/>
+  <!-- Lava glow overlay -->
+  <rect x="0" y="255" width="660" height="45" fill="#ff2200" fill-opacity="0.12"/>
+
+  <!-- Ember particles -->
+  <circle cx="120" cy="240" r="2" fill="#ff8800" opacity="0.9"/>
+  <circle cx="185" cy="225" r="1.5" fill="#ff6600" opacity="0.8"/>
+  <circle cx="320" cy="232" r="2.5" fill="#ffaa00" opacity="0.7"/>
+  <circle cx="450" cy="238" r="1.8" fill="#ff7700" opacity="0.9"/>
+  <circle cx="540" cy="228" r="2" fill="#ff5500" opacity="0.75"/>
+  <circle cx="90" cy="255" r="1.5" fill="#ff9900" opacity="0.6"/>
+  <circle cx="600" cy="245" r="2" fill="#ff6600" opacity="0.8"/>
+  <circle cx="255" cy="244" r="1.2" fill="#ffcc00" opacity="0.7"/>
+  <circle cx="390" cy="236" r="1.8" fill="#ff8800" opacity="0.85"/>
+
+  <!-- Player A (orange) on left platform, jumping -->
+  <g transform="translate(115,95)">
+    <!-- Shadow -->
+    <ellipse cx="0" cy="48" rx="12" ry="3" fill="#000" fill-opacity="0.4"/>
+    <!-- Body -->
+    <rect x="-9" y="14" width="18" height="26" rx="5" fill="#ff5500"/>
+    <rect x="-9" y="14" width="18" height="8" rx="4" fill="#ff6622"/>
+    <!-- Head -->
+    <circle cx="0" cy="8" r="11" fill="#ff5500"/>
+    <circle cx="-4" cy="7" r="2.5" fill="#fff" fill-opacity="0.9"/>
+    <circle cx="4" cy="7" r="2.5" fill="#fff" fill-opacity="0.9"/>
+    <!-- Arms (spread for jump) -->
+    <line x1="-9" y1="22" x2="-24" y2="16" stroke="#ff5500" stroke-width="5" stroke-linecap="round"/>
+    <line x1="9" y1="22" x2="24" y2="16" stroke="#ff5500" stroke-width="5" stroke-linecap="round"/>
+    <!-- Legs (bent jump) -->
+    <line x1="-5" y1="40" x2="-9" y2="54" stroke="#cc3300" stroke-width="5" stroke-linecap="round"/>
+    <line x1="5" y1="40" x2="9" y2="54" stroke="#cc3300" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Player B (blue) on right platform, running -->
+  <g transform="translate(510,110)">
+    <ellipse cx="0" cy="40" rx="12" ry="3" fill="#000" fill-opacity="0.4"/>
+    <rect x="-9" y="12" width="18" height="24" rx="5" fill="#44aaff"/>
+    <rect x="-9" y="12" width="18" height="8" rx="4" fill="#55bbff"/>
+    <circle cx="0" cy="6" r="11" fill="#44aaff"/>
+    <circle cx="-4" cy="5" r="2.5" fill="#fff" fill-opacity="0.9"/>
+    <circle cx="4" cy="5" r="2.5" fill="#fff" fill-opacity="0.9"/>
+    <line x1="-9" y1="22" x2="-22" y2="28" stroke="#44aaff" stroke-width="5" stroke-linecap="round"/>
+    <line x1="9" y1="22" x2="20" y2="14" stroke="#44aaff" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-5" y1="36" x2="-10" y2="50" stroke="#2288cc" stroke-width="5" stroke-linecap="round"/>
+    <line x1="5" y1="36" x2="12" y2="48" stroke="#2288cc" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Chain between the two players — catenary curve -->
+  <path d="M128 118 Q240 175 250 148 Q330 132 490 130 Q510 128 515 118"
+        fill="none" stroke="#ff8800" stroke-width="3.5" stroke-linecap="round"
+        filter="url(#glow)" opacity="0.9"/>
+  <!-- Chain links -->
+  <circle cx="190" cy="158" r="4" fill="#ff6600" filter="url(#glow)" opacity="0.8"/>
+  <circle cx="255" cy="148" r="4" fill="#ff6600" filter="url(#glow)" opacity="0.8"/>
+  <circle cx="330" cy="134" r="4" fill="#ffaa00" filter="url(#glow)" opacity="0.9"/>
+  <circle cx="408" cy="130" r="4" fill="#ffcc00" filter="url(#glow)" opacity="0.8"/>
+  <circle cx="465" cy="126" r="4" fill="#ff8800" filter="url(#glow)" opacity="0.8"/>
+
+  <!-- Title: LAVA CHAIN -->
+  <text x="330" y="70" text-anchor="middle" font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="62" font-weight="900" letter-spacing="3"
+        fill="#ffe0a0" filter="url(#softGlow)" opacity="0.35">LAVA CHAIN</text>
+  <text x="330" y="70" text-anchor="middle" font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="62" font-weight="900" letter-spacing="3"
+        fill="#ffe0a0">LAVA CHAIN</text>
+  <!-- Subtitle -->
+  <text x="330" y="90" text-anchor="middle" font-family="'Arial', sans-serif"
+        font-size="13" font-weight="700" letter-spacing="5"
+        fill="#ff6600" opacity="0.9">DON'T FALL  •  DON'T DRAG</text>
+
+  </g>
+</svg>
