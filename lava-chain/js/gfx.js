@@ -12,7 +12,7 @@ let skyBg;
 
 // ── Constants ──────────────────────────────────────────────────────────────
 export const GRAVITY        = -22;
-export const JUMP_FORCE     = 11;
+export const JUMP_FORCE     = 15.8; // ~5.7m high: the tallest step between platforms is 5m
 export const PLAYER_SPEED   = 7.5;
 export const PLAYER_H       = 1.0;  // half-height of capsule body
 export const PLAYER_R       = 0.35; // radius
@@ -386,7 +386,7 @@ export function clearPlayerModels() {
 // ── Chain ──────────────────────────────────────────────────────────────────
 export function updateChain(ax, ay, az, bx, by, bz, stretch01) {
     // stretch01: 0 = slack, 1 = fully stretched
-    if (chainMesh) { scene.remove(chainMesh); chainMesh = null; }
+    if (chainMesh) { scene.remove(chainMesh); chainMesh.geometry.dispose(); chainMesh.material.dispose(); chainMesh = null; }
 
     const start = new THREE.Vector3(ax, ay + PLAYER_H, az);
     const end   = new THREE.Vector3(bx, by + PLAYER_H, bz);

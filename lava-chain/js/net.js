@@ -1,6 +1,6 @@
-// Room networking for Deadline. Adapted from Sumo Smash.
+// Room networking for Lava Chain. Adapted from Deadline.
 
-const PREFIX = 'yoahka-deadline-';
+const PREFIX = 'yoahka-lavachain-';
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const RELAYS = ['wss://broker.emqx.io:8084/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
 const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }] };
@@ -8,7 +8,7 @@ const DIRECT_WAIT_MS = 8000;
 const RELAY_SILENCE_MS = 12000;
 
 export const makeCode = () => Array.from({ length: 5 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
-const topicRoot = code => `yoahka-deadline/v1/${code}`;
+const topicRoot = code => `yoahka-lavachain/v1/${code}`;
 const randomId = () => 'r' + Math.random().toString(36).slice(2, 12);
 
 function loadMqtt() {
@@ -23,7 +23,7 @@ function loadMqtt() {
 
 function relayConnect(url) {
     return new Promise((resolve, reject) => {
-        const client = window.mqtt.connect(url, { connectTimeout: 6000, reconnectPeriod: 2000, clean: true, clientId: `deadline_${Math.random().toString(16).slice(2, 12)}` });
+        const client = window.mqtt.connect(url, { connectTimeout: 6000, reconnectPeriod: 2000, clean: true, clientId: `lavachain_${Math.random().toString(16).slice(2, 12)}` });
         client.on('error', () => {});
         const timer = setTimeout(() => { client.end(true); reject(new Error('relay timeout')); }, 7000);
         client.once('connect', () => { clearTimeout(timer); resolve(client); });

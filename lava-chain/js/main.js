@@ -1,10 +1,10 @@
 // Lava Chain — main.js
 import * as THREE from 'three';
-import { HostNet, ClientNet, makeCode } from './net.js?v=1';
+import { HostNet, ClientNet, makeCode } from './net.js?v=2';
 import { sfx, unlockAudio, setMuted, isMuted,
          startLavaRumble, stopLavaRumble, setLavaIntensity, tickAudio } from './audio.js?v=1';
 import { play as playMusic, stop as stopMusic, setTension, setVolume } from './music.js?v=1';
-import * as gfx from './gfx.js?v=2';
+import * as gfx from './gfx.js?v=3';
 
 const track = (name, p) => { if (window.track) window.track(name, p); };
 const $ = id => document.getElementById(id);
@@ -53,18 +53,34 @@ const shared = {
 // Input
 const keys = {};
 let joyL = { x: 0, y: 0, id: null, sx: 0, sy: 0 };
-let jumpPressed = false;
 
 // ── Networking helpers ─────────────────────────────────────────────────────
+// Host: send to every guest AND handle it here, so the host's own screen (and solo play) sees it too.
 function emit(msg) {
-    if (net) net.emit(msg);
+    if (role !== 'host') return;
+    if (net) net.broadcast(msg);
+    clientHandle(msg);
 }
+// Anyone: tell the host something (the host just handles it directly)
+function send(msg) {
+    if (role === 'host') hostHandle(myId, msg);
+    else if (net) net.send(msg);
+}
+
+// Platform state everyone keeps from 'platCrumble' messages: idx -> 0 normal, 1 cracking, 2 gone
+const platPhase = {};
 
 function hostHandle(fromId, msg) {
     switch (msg.t) {
         case 'hello': {
-            const idx = H.players.length;
-            H.players.push({ id: fromId, name: msg.name.slice(0, 16), colorIdx: idx % 8 });
+            if (H.players.some(p => p.id === fromId)) return; // the relay can deliver twice
+            const reject = reason => { if (net && fromId !== myId) net.send(fromId, { t: 'reject', reason }); };
+            if (H.phase !== 'lobby') return reject('A game is already running in that room. Try again when it ends.');
+            if (H.players.length >= 8) return reject('That room is full (8 players max).');
+            let colorIdx = 0;
+            while (H.players.some(p => p.colorIdx === colorIdx)) colorIdx++;
+            H.players.push({ id: fromId, name: String(msg.name || 'Player').slice(0, 16), colorIdx });
+            if (net && fromId !== myId) net.send(fromId, { t: 'welcome', you: fromId, code: roomCode });
             emit({ t: 'lobby', players: H.players });
             break;
         }
@@ -77,7 +93,8 @@ function hostHandle(fromId, msg) {
         case 'st': {
             if (!gameActive) return;
             const p = players.get(fromId);
-            if (p && !p.bot) {
+            if (p && !p.bot && p.alive) {
+                if (![msg.x, msg.y, msg.z].every(Number.isFinite)) return;
                 p.x = msg.x; p.y = msg.y; p.z = msg.z;
                 p.vx = msg.vx; p.vy = msg.vy; p.vz = msg.vz;
                 p.onGround = msg.og;
@@ -87,7 +104,7 @@ function hostHandle(fromId, msg) {
         case 'escape': {
             if (!gameActive) return;
             const p = players.get(fromId);
-            if (p && p.alive) {
+            if (p && p.alive && isOnPlatform(p, gfx.PLATFORMS[gfx.PLATFORMS.length - 1])) {
                 p.alive = false; p.escaped = true;
                 H.survivorCount++;
                 emit({ t: 'escaped', id: fromId });
@@ -157,6 +174,7 @@ function startRound() {
     for (const [id, p] of players) {
         gfx.addPlayerModel(id, p.colorIdx, p.name);
     }
+    for (const k in platPhase) delete platPhase[k];
 
     emit({
         t: 'roundStart',
@@ -170,6 +188,7 @@ function startRound() {
     const cdEl = $('countdown');
     cdEl.classList.remove('hidden');
     const cdInt = setInterval(() => {
+        if (H.phase !== 'game') { clearInterval(cdInt); return; }
         if (cd > 0) { cdEl.textContent = cd; cd--; }
         else {
             cdEl.textContent = 'GO!';
@@ -218,31 +237,15 @@ function hostUpdate(dt) {
             if (ps.t >= CRUMBLE_FALL) {
                 ps.phase = 2;
                 emit({ t: 'platCrumble', idx: plat.idx, phase: 2 });
-                // Respawn after 6s
+                // Respawn after 6s (unless the round has moved on)
                 setTimeout(() => {
+                    if (H.platState[plat.idx] !== ps || H.phase !== 'game') return;
                     ps.phase = 0; ps.t = 0;
                     emit({ t: 'platCrumble', idx: plat.idx, phase: 0 });
                 }, 6000);
             }
         }
         H.platState[plat.idx] = ps;
-    }
-
-    // Chain spring: apply force between paired players
-    for (const chain of H.chains) {
-        const pa = players.get(chain.a);
-        const pb = players.get(chain.b);
-        if (!pa || !pb || (!pa.alive && !pb.alive)) continue;
-        const dx = pb.x - pa.x, dy = pb.y - pa.y, dz = pb.z - pa.z;
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.001;
-        if (dist > gfx.CHAIN_MAX) {
-            const over = dist - gfx.CHAIN_MAX;
-            const fx = (dx / dist) * over * gfx.CHAIN_SPRING;
-            const fz = (dz / dist) * over * gfx.CHAIN_SPRING;
-            const fy = (dy / dist) * over * gfx.CHAIN_SPRING * 0.5;
-            if (pa.alive) { pa.vx += fx * dt; pa.vy += fy * dt; pa.vz += fz * dt; }
-            if (pb.alive) { pb.vx -= fx * dt; pb.vy -= fy * dt; pb.vz -= fz * dt; }
-        }
     }
 
     // Bot AI
@@ -263,8 +266,8 @@ function hostUpdate(dt) {
 
 function isOnPlatform(p, plat) {
     const hw = plat.w / 2, hd = plat.d / 2;
-    return p.x >= plat.x - hw && p.x <= plat.x + hw
-        && p.z >= plat.z - hd && p.z <= plat.z + hd
+    return p.x >= plat.x - hw - EDGE && p.x <= plat.x + hw + EDGE
+        && p.z >= plat.z - hd - EDGE && p.z <= plat.z + hd + EDGE
         && Math.abs(p.y - plat.y) < 0.5;
 }
 
@@ -301,42 +304,36 @@ function checkRoundEnd() {
 
 // ── Bot AI ────────────────────────────────────────────────────────────────
 function botThink(id, p, dt) {
-    const target = _botPickTarget(p, H.lavaY);
+    // Re-plan only when standing somewhere; in the air, keep going where we jumped
+    if (p.onGround || !p.botTarget) p.botTarget = _botPickTarget(p, H.lavaY);
+    const target = p.botTarget;
+    p._botJump = false;
     if (!target) { p._botWishVx = 0; p._botWishVz = 0; return; }
 
     const dx = target.x - p.x, dz = target.z - p.z;
     const hdist = Math.sqrt(dx*dx + dz*dz);
+    if (hdist > 0.6) { p._botWishVx = dx / hdist; p._botWishVz = dz / hdist; }
+    else { p._botWishVx = 0; p._botWishVz = 0; }
 
-    // Set desired velocity toward target
-    if (hdist > 0.4) {
-        const spd = gfx.PLAYER_SPEED * 0.78;
-        p._botWishVx = (dx / hdist) * spd;
-        p._botWishVz = (dz / hdist) * spd;
-    } else {
-        p._botWishVx = 0;
-        p._botWishVz = 0;
-    }
-
-    // Jump if target is higher
+    // Jump once the target ledge is within reach, and climb the chain when dangling
+    const edgeX = Math.max(0, Math.abs(dx) - target.w / 2), edgeZ = Math.max(0, Math.abs(dz) - target.d / 2);
+    const toEdge = Math.hypot(edgeX, edgeZ);
     p.botJumpT = (p.botJumpT || 0) + dt;
-    if (p.onGround && target.y > p.y + 0.4 && p.botJumpT > 0.55) {
-        p.vy = gfx.JUMP_FORCE;
-        p.onGround = false;
-        p.botJumpT = 0;
-    }
+    if (p.onGround && target.y > p.y + 0.3 && toEdge < 4.5 && p.botJumpT > 0.3) { p._botJump = true; p.botJumpT = 0; }
+    if (!p.onGround && p.taut && p.partnerGrounded && p.partnerAbove) p._botJump = true;
 }
 
+// The highest platform we can reach from here that isn't about to fall or already under lava
 function _botPickTarget(p, lavaY) {
-    // Pick lowest platform that's safely above lava + 3, and close-ish
-    let best = null, bestScore = Infinity;
+    let best = null, bestScore = -Infinity;
     for (const plat of gfx.PLATFORMS) {
-        if (plat.y < lavaY + 3) continue;
-        const ps = H.platState[plat.idx];
-        if (ps && ps.phase === 2) continue; // gone
-        const dx = plat.x - p.x, dz = plat.z - p.z;
-        const hdist = Math.sqrt(dx*dx + dz*dz);
-        const score = hdist + Math.abs(plat.y - p.y - 2) * 0.5;
-        if (score < bestScore) { bestScore = score; best = plat; }
+        const phase = platPhase[plat.idx] || 0;
+        if (phase === 2 || (phase === 1 && !isOnPlatform(p, plat))) continue;
+        if (plat.y > p.y + 5.2 || plat.y < lavaY + 1) continue;
+        const hd = Math.hypot(plat.x - p.x, plat.z - p.z);
+        if (hd > 14) continue;
+        const score = plat.y * 4 - hd * 0.4; // height is what matters: always take the step up
+        if (score > bestScore) { bestScore = score; best = plat; }
     }
     return best;
 }
@@ -346,11 +343,24 @@ function clientHandle(msg) {
     switch (msg.t) {
         case 'welcome':
             myId = msg.you; roomCode = msg.code;
+            clearTimeout(joinTimer);
+            if (view === 'menu') enterLobby();
             $('lobby-code').textContent = msg.code;
             break;
         case 'reject': leave(msg.reason); return;
-        case 'lobby': renderLobby(msg.players); break;
+        case 'lobby':
+            if (role === 'client' && view === 'menu') { clearTimeout(joinTimer); enterLobby(); }
+            renderLobby(msg.players);
+            break;
+        case 'toLobby':
+            $('results').classList.add('hidden');
+            $('countdown').classList.add('hidden');
+            enterLobby();
+            renderLobby(msg.players);
+            break;
         case 'roundStart': {
+            for (const k in platPhase) delete platPhase[k];
+            if (role === 'host') break; // the host set everything up in startRound()
             gameActive = false;
             players.clear();
             gfx.clearLevel();
@@ -380,6 +390,7 @@ function clientHandle(msg) {
             break;
         }
         case 'go':
+            if (role === 'host') break;
             gameActive = true;
             startLavaRumble();
             playMusic(isMuted());
@@ -395,6 +406,7 @@ function clientHandle(msg) {
             shared.lavaY = msg.lavaY;
             break;
         case 'platCrumble':
+            platPhase[msg.idx] = msg.phase;
             gfx.setPlatformCrumble(msg.idx, msg.phase);
             if (msg.phase === 1) sfx.crumble();
             break;
@@ -423,12 +435,74 @@ function clientHandle(msg) {
     }
 }
 
-// ── Physics (client-side for self) ────────────────────────────────────────
+// ── Physics ───────────────────────────────────────────────────────────────
+const EDGE = gfx.PLAYER_R * 0.6;   // you can stand a little past a platform's edge
+const COYOTE = 0.12, JUMP_BUFFER = 0.14;
+let jumpQueued = false;            // set on the key/button press, used once
+
+// The chain is a rope, not a spring: slack until it's CHAIN_MAX long, then it simply won't stretch.
+// Each end takes its share of the correction. Whoever stands on a platform anchors a partner who is
+// hanging off it (the dangler takes most of the pull), but the anchor still gets dragged toward the edge.
+function applyChain(p) {
+    p.taut = false; p.partnerGrounded = false; p.partnerAbove = false;
+    if (!p.chainPartnerId) return;
+    const q = players.get(p.chainPartnerId);
+    if (!q || !q.alive || q.escaped) return;
+    const dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z;
+    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.001;
+    p.partnerGrounded = !!q.onGround;
+    p.partnerAbove = q.y > p.y + 0.5;
+    if (dist <= gfx.CHAIN_MAX) return;
+    p.taut = true;
+    const nx = dx / dist, ny = dy / dist, nz = dz / dist, over = dist - gfx.CHAIN_MAX;
+    const share = p.onGround === q.onGround ? 0.5 : (p.onGround ? 0.2 : 0.8);
+    p.x += nx * over * share; p.z += nz * over * share;
+    if (!p.onGround) p.y += ny * over * share; // an anchored player is dragged sideways, never through the floor
+    // Lose the velocity that was stretching the rope, so it tugs instead of bouncing
+    const away = -(p.vx * nx + p.vy * ny + p.vz * nz);
+    if (away > 0) { p.vx += nx * away; p.vz += nz * away; if (!p.onGround) p.vy += ny * away; }
+}
+
+// Move one body (a player or a bot) for a frame. Returns what happened so the caller can play sounds.
+function moveBody(p, dt, wx, wz, wantJump, speedK, accelGround, accelAir) {
+    const moveT = p.onGround ? Math.min(1, dt * accelGround) : Math.min(1, dt * accelAir);
+    p.vx += (wx * gfx.PLAYER_SPEED * speedK - p.vx) * moveT;
+    p.vz += (wz * gfx.PLAYER_SPEED * speedK - p.vz) * moveT;
+
+    // Jumping, with a little forgiveness: just after walking off an edge, or pressing just before landing.
+    // Dangling from a taut chain under a partner who's standing lets you climb up it.
+    p.coyote = p.onGround ? COYOTE : Math.max(0, (p.coyote || 0) - dt);
+    p.jumpBuf = wantJump ? JUMP_BUFFER : Math.max(0, (p.jumpBuf || 0) - dt);
+    p.climbCd = Math.max(0, (p.climbCd || 0) - dt);
+    let jumped = false;
+    if (p.jumpBuf > 0 && (p.onGround || p.coyote > 0)) { p.vy = gfx.JUMP_FORCE; jumped = true; }
+    else if (p.jumpBuf > 0 && p.taut && p.partnerGrounded && p.partnerAbove && p.climbCd <= 0) { p.vy = gfx.JUMP_FORCE * 0.75; p.climbCd = 0.45; jumped = true; }
+    if (jumped) { p.onGround = false; p.coyote = 0; p.jumpBuf = 0; }
+
+    p.vy = Math.max(p.vy + gfx.GRAVITY * dt, -30);
+    const prevY = p.y, wasGround = p.onGround, fallSpeed = -p.vy;
+    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+    applyChain(p);
+
+    // Platforms are solid from above only, so you can jump up through them
+    p.onGround = false;
+    for (const plat of gfx.PLATFORMS) {
+        if (platPhase[plat.idx] === 2) continue;
+        const hw = plat.w / 2 + EDGE, hd = plat.d / 2 + EDGE;
+        if (Math.abs(p.x - plat.x) > hw || Math.abs(p.z - plat.z) > hd) continue;
+        if (p.vy <= 0 && prevY >= plat.y - 0.15 && p.y <= plat.y + 0.02) {
+            p.y = plat.y; p.vy = 0; p.onGround = true; break;
+        }
+    }
+    p.x = clamp(p.x, -40, 40);
+    p.z = clamp(p.z, -40, 40);
+    return { jumped, landed: p.onGround && !wasGround && fallSpeed > 3 };
+}
+
 function updatePhysics(dt) {
     const p = me();
     if (!p || !p.alive) return;
 
-    // ── Input → desired velocity ──────────────────────────────────────────
     const { fwd, right } = gfx.getPlayerCamForward();
     let wx = 0, wz = 0;
     if (keys['KeyW'] || keys['ArrowUp'])    { wx += fwd.x;   wz += fwd.z; }
@@ -440,135 +514,33 @@ function updatePhysics(dt) {
         wz += right.z * joyL.x + fwd.z * (-joyL.y);
     }
     const wlen = Math.sqrt(wx*wx + wz*wz);
-    if (wlen > 0.01) { wx /= wlen; wz /= wlen; }
+    if (wlen > 1) { wx /= wlen; wz /= wlen; }
 
-    // ── Horizontal movement: lerp toward desired velocity ─────────────────
-    // Framerate-independent. Ground: snappy (t≈0.25/frame@60fps).
-    // Air: floaty (t≈0.10/frame). No broken power/friction formulas.
-    const wantVx = wx * gfx.PLAYER_SPEED;
-    const wantVz = wz * gfx.PLAYER_SPEED;
-    const moveT = p.onGround ? Math.min(1, dt * 16) : Math.min(1, dt * 6);
-    p.vx += (wantVx - p.vx) * moveT;
-    p.vz += (wantVz - p.vz) * moveT;
+    const r = moveBody(p, dt, wx, wz, jumpQueued, 1, 16, 6);
+    jumpQueued = false;
+    if (r.jumped) sfx.jump();
+    if (r.landed) sfx.land();
+    if (p.taut && !p._wasTaut) sfx.chainTaut();
+    p._wasTaut = p.taut;
 
-    // ── Jump ──────────────────────────────────────────────────────────────
-    const wantJump = keys['Space'] || jumpPressed;
-    if (wantJump && p.onGround) {
-        p.vy = gfx.JUMP_FORCE;
-        p.onGround = false;
-        sfx.jump();
-        jumpPressed = false;
-    }
-
-    // ── Chain spring (client-side mirror of host physics) ─────────────────
-    if (p.chainPartnerId) {
-        const partner = players.get(p.chainPartnerId);
-        if (partner && partner.alive) {
-            const dx = partner.x - p.x, dy = partner.y - p.y, dz = partner.z - p.z;
-            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.001;
-            if (dist > gfx.CHAIN_MAX) {
-                const over = dist - gfx.CHAIN_MAX;
-                const inv = 1 / dist;
-                p.vx += dx * inv * over * gfx.CHAIN_SPRING * dt;
-                p.vy += dy * inv * over * gfx.CHAIN_SPRING * 0.4 * dt;
-                p.vz += dz * inv * over * gfx.CHAIN_SPRING * dt;
-            }
-        }
-    }
-
-    // ── Gravity + terminal velocity ───────────────────────────────────────
-    p.vy += gfx.GRAVITY * dt;
-    p.vy = Math.max(p.vy, -30);
-
-    // ── Integrate ─────────────────────────────────────────────────────────
-    const prevY = p.y;
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.z += p.vz * dt;
-
-    // ── Platform collision (swept + resting, with break) ──────────────────
-    const prevOnGround = p.onGround;
-    p.onGround = false;
-    for (const plat of gfx.PLATFORMS) {
-        const ps = role === 'host' ? H.platState[plat.idx] : null;
-        if (ps && ps.phase === 2) continue;
-        const hw = plat.w / 2, hd = plat.d / 2;
-        if (p.x < plat.x - hw || p.x > plat.x + hw) continue;
-        if (p.z < plat.z - hd || p.z > plat.z + hd) continue;
-        // Fast-fall swept: path crossed the surface from above
-        if (prevY >= plat.y && p.y < plat.y && p.vy < 0) {
-            if (!prevOnGround) sfx.land();
-            p.y = plat.y; p.vy = 0; p.onGround = true; break;
-        }
-        // Resting: gravity nudged us slightly below surface
-        if (prevY >= plat.y - 0.15 && p.y <= plat.y + 0.05 && p.vy <= 0) {
-            if (p.vy < -3 && !prevOnGround) sfx.land();
-            p.y = plat.y; p.vy = 0; p.onGround = true; break;
-        }
-    }
-
-    // ── Escape: standing on summit platform ───────────────────────────────
+    // Standing on the summit: escaped (ask once; the host confirms)
     const summit = gfx.PLATFORMS[gfx.PLATFORMS.length - 1];
-    if (p.onGround && Math.abs(p.x - summit.x) < summit.w / 2
-     && Math.abs(p.z - summit.z) < summit.d / 2) {
-        if (role === 'host') hostHandle(myId, { t: 'escape' });
-        else emit({ t: 'escape' });
-    }
+    if (p.onGround && !p.escapeSent && isOnPlatform(p, summit)) { p.escapeSent = true; send({ t: 'escape' }); }
 
-    // ── Bounds + step sound ───────────────────────────────────────────────
-    p.x = clamp(p.x, -40, 40);
-    p.z = clamp(p.z, -40, 40);
     if (p.onGround && wlen > 0.1) {
         p._stepT = (p._stepT || 0) + dt;
         if (p._stepT > 0.35) { sfx.step(); p._stepT = 0; }
     }
-
-    // ── Lava kill ─────────────────────────────────────────────────────────
-    const lavaY = role === 'host' ? H.lavaY : shared.lavaY;
-    if (p.y < lavaY + 0.3 && role === 'host') eliminatePlayer(myId, 'lava');
+    if (role === 'host' && p.y < H.lavaY + 0.3) eliminatePlayer(myId, 'lava');
 }
 
 // ── Host physics for bots ──────────────────────────────────────────────────
 function updateBotPhysics(id, p, dt) {
-    // Lerp toward desired velocity (same model as player, just less responsive)
-    const wantVx = p._botWishVx || 0;
-    const wantVz = p._botWishVz || 0;
-    const moveT = p.onGround ? Math.min(1, dt * 12) : Math.min(1, dt * 5);
-    p.vx += (wantVx - p.vx) * moveT;
-    p.vz += (wantVz - p.vz) * moveT;
-
-    p.vy += gfx.GRAVITY * dt;
-    p.vy = Math.max(p.vy, -30);
-
-    const prevY = p.y;
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.z += p.vz * dt;
-
-    p.onGround = false;
-    for (const plat of gfx.PLATFORMS) {
-        const ps = H.platState[plat.idx];
-        if (ps && ps.phase === 2) continue;
-        const hw = plat.w / 2, hd = plat.d / 2;
-        if (p.x < plat.x - hw || p.x > plat.x + hw) continue;
-        if (p.z < plat.z - hd || p.z > plat.z + hd) continue;
-        if (prevY >= plat.y && p.y < plat.y && p.vy < 0) {
-            p.y = plat.y; p.vy = 0; p.onGround = true; break;
-        }
-        if (prevY >= plat.y - 0.15 && p.y <= plat.y + 0.05 && p.vy <= 0) {
-            p.y = plat.y; p.vy = 0; p.onGround = true; break;
-        }
-    }
-
+    moveBody(p, dt, p._botWishVx || 0, p._botWishVz || 0, p._botJump, 0.8, 12, 5);
+    p._botJump = false;
     const summit = gfx.PLATFORMS[gfx.PLATFORMS.length - 1];
-    if (p.onGround && Math.abs(p.x - summit.x) < summit.w / 2
-     && Math.abs(p.z - summit.z) < summit.d / 2) {
-        hostHandle(id, { t: 'escape' });
-    }
-
-    if (p.y < H.lavaY + 0.3) eliminatePlayer(id, 'lava');
-    p.x = clamp(p.x, -40, 40);
-    p.z = clamp(p.z, -40, 40);
+    if (p.onGround && isOnPlatform(p, summit)) hostHandle(id, { t: 'escape' });
+    if (p.alive && p.y < H.lavaY + 0.3) eliminatePlayer(id, 'lava');
 }
 
 // ── Main game update ───────────────────────────────────────────────────────
@@ -577,10 +549,10 @@ function updateGame(dt) {
 
     if (role === 'host') {
         // Physics for bots
+        hostUpdate(dt);
         for (const [id, p] of players) {
             if (p.bot && p.alive) updateBotPhysics(id, p, dt);
         }
-        hostUpdate(dt);
         // Host also runs own physics
         updatePhysics(dt);
         // Sync lava for own client
@@ -594,7 +566,7 @@ function updateGame(dt) {
     if (sendTimer >= SEND_EVERY && role !== 'host') {
         sendTimer = 0;
         const p = me();
-        if (p) emit({ t: 'st', x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz, og: p.onGround });
+        if (p && p.alive) send({ t: 'st', x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), vx: +p.vx.toFixed(2), vy: +p.vy.toFixed(2), vz: +p.vz.toFixed(2), og: p.onGround });
     }
 }
 
@@ -624,13 +596,13 @@ function syncGraphics() {
     const mep = me();
     if (mep && mep.chainPartnerId) {
         const partner = players.get(mep.chainPartnerId);
-        if (partner) {
+        if (partner && partner.alive && mep.alive) {
             const dx = partner.x - mep.x, dy = partner.y - mep.y, dz = partner.z - mep.z;
             const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
             const stretch = Math.min(1, Math.max(0, (dist - 4) / (gfx.CHAIN_MAX - 4)));
             gfx.updateChain(mep.x, mep.y, mep.z, partner.x, partner.y, partner.z, stretch);
             updateChainHud(stretch);
-        }
+        } else { gfx.hideChain(); updateChainHud(0); }
     } else {
         gfx.hideChain();
         updateChainHud(0);
@@ -728,6 +700,8 @@ function enterLobby() {
     }
     gfx.clearLevel();
     gfx.buildLevel();
+    gfx.clearPlayerModels();
+    gfx.hideChain();
 }
 
 function renderLobby(plist) {
@@ -771,53 +745,69 @@ function startSolo() {
 }
 
 // ── Networking ─────────────────────────────────────────────────────────────
-function hostGame() {
+let joinTimer = null;
+
+async function hostGame() {
     unlockAudio();
     myName = $('name').value.trim() || 'Player';
     try { localStorage.setItem('lcName', myName); } catch {}
     roomCode = makeCode();
     role = 'host'; document.body.classList.add('is-host');
-    myId = 'host_' + Math.random().toString(36).slice(2, 8);
+    myId = 'host';
     H.players = []; H.phase = 'lobby';
-
-    net = new HostNet(roomCode, (fromId, msg) => {
-        if (fromId === myId) return;
-        hostHandle(fromId, msg);
+    $('menu-status').textContent = 'Creating room…'; $('menu-status').className = 'status';
+    const hn = new HostNet({
+        onMessage: (fromId, msg) => { if (msg && typeof msg.t === 'string') hostHandle(fromId, msg); },
+        onLeave: id => hostLeave(id),
     });
-    net.onConnect = id => {
-        // Send lobby state on connect
-        emit({ t: 'welcome', you: id, code: roomCode });
-        emit({ t: 'lobby', players: H.players });
-    };
-
-    hostHandle(myId, { t: 'hello', name: myName });
-    $('lobby-code').textContent = roomCode;
+    try { await hn.open(roomCode); }
+    catch (e) {
+        if (e.message === 'code-taken') return hostGame();
+        role = null; document.body.classList.remove('is-host');
+        $('menu-status').textContent = e.message; $('menu-status').className = 'status error';
+        return;
+    }
+    net = hn;
     $('menu-status').textContent = '';
     track('host');
     enterLobby();
-    renderLobby(H.players);
+    $('lobby-code').textContent = roomCode;
+    hostHandle(myId, { t: 'hello', name: myName });
 }
 
-function joinGame() {
+function hostLeave(id) {
+    H.players = H.players.filter(p => p.id !== id);
+    const p = players.get(id);
+    if (p && p.alive && gameActive) eliminatePlayer(id, 'left');
+    if (H.phase === 'lobby') emit({ t: 'lobby', players: H.players });
+}
+
+async function joinGame() {
     unlockAudio();
     myName = $('name').value.trim() || 'Player';
     try { localStorage.setItem('lcName', myName); } catch {}
-    const code = $('code').value.trim().toUpperCase();
+    const code = $('code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (code.length !== 5) { $('menu-status').textContent = 'Enter a 5-letter code'; $('menu-status').className = 'status error'; return; }
 
     role = 'client';
     $('menu-status').textContent = 'Connecting…'; $('menu-status').className = 'status';
-    net = new ClientNet(code, msg => clientHandle(msg));
-    net.onOpen = () => {
-        myId = 'client_' + Math.random().toString(36).slice(2, 8);
-        emit({ t: 'hello', name: myName });
-        enterLobby();
-        track('join');
-    };
-    net.onError = () => { $('menu-status').textContent = 'Room not found'; $('menu-status').className = 'status error'; };
+    const cn = new ClientNet({
+        onMessage: msg => { if (msg && typeof msg.t === 'string') clientHandle(msg); },
+        onClose: () => { if (net === cn) leave(view === 'menu' ? 'No answer from that room. Check the code.' : 'Lost connection to the host.'); },
+        onStatus: st => { $('menu-status').textContent = st; },
+    });
+    try { myId = await cn.connect(code); }
+    catch (e) { role = null; $('menu-status').textContent = e.message; $('menu-status').className = 'status error'; return; }
+    net = cn; roomCode = code;
+    $('menu-status').textContent = 'Connected. Waiting for the host…';
+    cn.send({ t: 'hello', name: myName });
+    track('join');
+    clearTimeout(joinTimer);
+    joinTimer = setTimeout(() => { if (net === cn && view === 'menu') leave('No answer from that room. Check the code.'); }, 15000);
 }
 
 function leave(reason) {
+    clearTimeout(joinTimer);
     const n = net; net = null; if (n) n.close();
     role = null; myId = null; roomCode = '';
     gameActive = false;
@@ -841,8 +831,9 @@ function leave(reason) {
 
 // ── Input ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+    if (e.target && e.target.tagName === 'INPUT') return;
     keys[e.code] = true;
-    if (e.code === 'Space') e.preventDefault();
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jumpQueued = true; }
 });
 document.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -886,8 +877,7 @@ $('joy-zone-l').addEventListener('touchmove', e => {
         }
     });
 });
-$('btn-jump').addEventListener('touchstart', e => { e.preventDefault(); jumpPressed = true; });
-$('btn-jump').addEventListener('touchend', e => { e.preventDefault(); jumpPressed = false; });
+$('btn-jump').addEventListener('touchstart', e => { e.preventDefault(); jumpQueued = true; });
 
 // ── UI Events ──────────────────────────────────────────────────────────────
 $('btn-solo').addEventListener('click', startSolo);
@@ -903,11 +893,8 @@ $('btn-start').addEventListener('click', () => {
 $('btn-exit').addEventListener('click', () => leave());
 $('btn-results-lobby').addEventListener('click', () => {
     if (role !== 'host') return;
-    $('results').classList.add('hidden');
-    $('lobby').classList.remove('hidden');
-    view = 'lobby';
-    renderLobby(H.players);
-    gfx.clearLevel(); gfx.buildLevel();
+    H.phase = 'lobby';
+    emit({ t: 'toLobby', players: H.players });
 });
 $('btn-results-exit').addEventListener('click', () => leave());
 
@@ -944,3 +931,6 @@ function frame(now) {
     gfx.update(dt);
 }
 requestAnimationFrame(frame);
+
+// Test hook for automated checks (harmless in normal play)
+window.__lc = { players, H, platPhase, get view() { return view; }, get gameActive() { return gameActive; } };
