@@ -256,53 +256,120 @@ const PLAYER_COLORS = [0xff5500, 0x44aaff, 0xffcc00, 0x88ff44,
 
 export function addPlayerModel(id, colorIdx, name) {
     if (playerMeshes.has(id)) return;
+
+    // group = position anchor (never rotated)
+    // moveGroup = rotates to face movement direction
     const group = new THREE.Group();
+    const moveGroup = new THREE.Group();
+    group.add(moveGroup);
 
-    const bodyGeo = new THREE.CylinderGeometry(PLAYER_R, PLAYER_R * 0.85, PLAYER_H * 2, 12);
     const col = PLAYER_COLORS[colorIdx % PLAYER_COLORS.length];
-    const bodyMat = new THREE.MeshStandardMaterial({
-        color: col, roughness: 0.45, metalness: 0.25,
-        emissive: new THREE.Color(col), emissiveIntensity: 0.35,
+    const c = new THREE.Color(col);
+    const dark = new THREE.Color(c.r * 0.45, c.g * 0.45, c.b * 0.45);
+    const accent = new THREE.Color(0x110a04);
+
+    const matMain  = new THREE.MeshStandardMaterial({ color: col,   roughness: 0.5,  metalness: 0.15, emissive: c, emissiveIntensity: 0.18 });
+    const matDark  = new THREE.MeshStandardMaterial({ color: dark,  roughness: 0.6,  metalness: 0.1  });
+    const matBlack = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.8,  metalness: 0.05 });
+
+    function box(w, h, d, mat, px, py, pz, parent) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+        m.position.set(px, py, pz);
+        m.castShadow = true;
+        parent.add(m);
+        return m;
+    }
+
+    // ── Legs (pivot groups hanging from hip) ──────────────────────────────
+    const legLPivot = new THREE.Group(); legLPivot.position.set(-0.17, 0.74, 0); moveGroup.add(legLPivot);
+    const legRPivot = new THREE.Group(); legRPivot.position.set( 0.17, 0.74, 0); moveGroup.add(legRPivot);
+    box(0.25, 0.74, 0.28, matDark,  0, -0.37, 0, legLPivot);
+    box(0.25, 0.74, 0.28, matDark,  0, -0.37, 0, legRPivot);
+    // Boots
+    box(0.28, 0.18, 0.32, matBlack, 0, -0.77, 0.02, legLPivot);
+    box(0.28, 0.18, 0.32, matBlack, 0, -0.77, 0.02, legRPivot);
+
+    // ── Torso ─────────────────────────────────────────────────────────────
+    box(0.72, 0.70, 0.46, matMain,  0, 1.09, 0, moveGroup);
+    // Belt
+    box(0.76, 0.10, 0.48, matBlack, 0, 0.74, 0, moveGroup);
+
+    // ── Arms (pivot groups at shoulder) ───────────────────────────────────
+    const armLPivot = new THREE.Group(); armLPivot.position.set(-0.47, 1.36, 0); moveGroup.add(armLPivot);
+    const armRPivot = new THREE.Group(); armRPivot.position.set( 0.47, 1.36, 0); moveGroup.add(armRPivot);
+    box(0.26, 0.60, 0.30, matDark,  0, -0.30, 0, armLPivot);
+    box(0.26, 0.60, 0.30, matDark,  0, -0.30, 0, armRPivot);
+    // Gloves
+    box(0.28, 0.18, 0.28, matBlack, 0, -0.65, 0, armLPivot);
+    box(0.28, 0.18, 0.28, matBlack, 0, -0.65, 0, armRPivot);
+
+    // ── Head ─────────────────────────────────────────────────────────────
+    box(0.58, 0.52, 0.54, matMain,  0, 1.65, 0, moveGroup);
+    // Visor strip
+    const visorMat = new THREE.MeshStandardMaterial({
+        color: 0x1a0800, emissive: new THREE.Color(col), emissiveIntensity: 0.6,
+        roughness: 0.3, metalness: 0.5,
     });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = PLAYER_H;
-    body.castShadow = true;
-    group.add(body);
+    box(0.52, 0.18, 0.10, visorMat, 0, 1.62, 0.29, moveGroup);
+    // Eyes
+    const eyeMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, emissive: new THREE.Color(1, 0.9, 0.5), emissiveIntensity: 2.5,
+        roughness: 0.2, metalness: 0,
+    });
+    const eyeGeo = new THREE.SphereGeometry(0.07, 7, 6);
+    const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.13, 1.64, 0.30); moveGroup.add(eyeL);
+    const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set( 0.13, 1.64, 0.30); moveGroup.add(eyeR);
 
-    const headGeo = new THREE.SphereGeometry(PLAYER_R * 0.85, 12, 10);
-    const head = new THREE.Mesh(headGeo, bodyMat.clone());
-    head.position.y = PLAYER_H * 2 + PLAYER_R * 0.8;
-    head.castShadow = true;
-    group.add(head);
-
-    // Name sprite
-    const nameCanvas = document.createElement('canvas');
-    nameCanvas.width = 256; nameCanvas.height = 64;
-    const nc = nameCanvas.getContext('2d');
-    nc.font = 'bold 28px Inter, sans-serif';
-    nc.fillStyle = '#ffe0b0';
-    nc.textAlign = 'center';
-    nc.fillText(name.slice(0, 12), 128, 42);
-    const nameTex = new THREE.CanvasTexture(nameCanvas);
+    // ── Name label (always faces camera, not in moveGroup) ────────────────
+    const nc = document.createElement('canvas');
+    nc.width = 256; nc.height = 52;
+    const nctx = nc.getContext('2d');
+    nctx.font = 'bold 26px Inter, sans-serif';
+    nctx.fillStyle = '#ffe0b0';
+    nctx.textAlign = 'center';
+    nctx.fillText(name.slice(0, 12), 128, 36);
     const nameSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: nameTex, transparent: true, opacity: 0.85,
-        sizeAttenuation: true,
+        map: new THREE.CanvasTexture(nc), transparent: true, opacity: 0.9, sizeAttenuation: true,
     }));
-    nameSprite.scale.set(2.2, 0.55, 1);
-    nameSprite.position.y = PLAYER_H * 2 + PLAYER_R * 1.8 + 0.2;
+    nameSprite.scale.set(2.0, 0.52, 1);
+    nameSprite.position.y = 2.25;
     group.add(nameSprite);
 
     scene.add(group);
-    playerMeshes.set(id, { group, body, head });
+    playerMeshes.set(id, {
+        group, moveGroup,
+        legLPivot, legRPivot, armLPivot, armRPivot,
+        moveYaw: 0, walkT: 0,
+    });
 }
 
-export function setPlayerPos(id, x, y, z, alive) {
+export function setPlayerPos(id, x, y, z, alive, vx, vz) {
     const m = playerMeshes.get(id);
     if (!m) return;
     m.group.position.set(x, y, z);
     m.group.visible = alive;
-    // Running bob (subtle)
-    m.head.position.y = PLAYER_H * 2 + PLAYER_R * 0.8 + Math.sin(Date.now() * 0.008) * 0.04;
+    if (!alive) return;
+
+    const speed = Math.sqrt((vx||0)*(vx||0) + (vz||0)*(vz||0));
+
+    // Rotate character to face movement direction (smooth)
+    if (speed > 0.4) {
+        const targetYaw = Math.atan2(vx || 0, vz || 0);
+        let diff = targetYaw - m.moveYaw;
+        while (diff >  Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        m.moveYaw += diff * 0.22;
+        m.moveGroup.rotation.y = m.moveYaw;
+    }
+
+    // Leg/arm swing animation tied to speed
+    const t = Date.now() * 0.0055;
+    const amp = Math.min(speed / 7, 1) * 0.55;
+    const swing = Math.sin(t * speed * 0.9 + 1) * amp;
+    m.legLPivot.rotation.x =  swing;
+    m.legRPivot.rotation.x = -swing;
+    m.armLPivot.rotation.x = -swing * 0.75;
+    m.armRPivot.rotation.x =  swing * 0.75;
 }
 
 export function removePlayerModel(id) {

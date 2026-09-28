@@ -4,7 +4,7 @@ import { HostNet, ClientNet, makeCode } from './net.js?v=1';
 import { sfx, unlockAudio, setMuted, isMuted,
          startLavaRumble, stopLavaRumble, setLavaIntensity, tickAudio } from './audio.js?v=1';
 import { play as playMusic, stop as stopMusic, setTension, setVolume } from './music.js?v=1';
-import * as gfx from './gfx.js?v=1';
+import * as gfx from './gfx.js?v=2';
 
 const track = (name, p) => { if (window.track) window.track(name, p); };
 const $ = id => document.getElementById(id);
@@ -115,12 +115,12 @@ function startRound() {
     players.clear();
     const allP = [...H.players];
 
-    // Spawn positions on ground platform
+    // Spawn positions on ground platform (y=0 = platform top surface)
     const spawns = [
-        { x: -4, y: 0.01, z: -4 }, { x:  4, y: 0.01, z: -4 },
-        { x: -4, y: 0.01, z:  4 }, { x:  4, y: 0.01, z:  4 },
-        { x: -2, y: 0.01, z:  0 }, { x:  2, y: 0.01, z:  0 },
-        { x:  0, y: 0.01, z: -2 }, { x:  0, y: 0.01, z:  2 },
+        { x: -4, y: 0, z: -4 }, { x:  4, y: 0, z: -4 },
+        { x: -4, y: 0, z:  4 }, { x:  4, y: 0, z:  4 },
+        { x: -2, y: 0, z:  0 }, { x:  2, y: 0, z:  0 },
+        { x:  0, y: 0, z: -2 }, { x:  0, y: 0, z:  2 },
     ];
 
     allP.forEach((pd, i) => {
@@ -151,6 +151,7 @@ function startRound() {
         players.get(last).chainPartnerId = null;
     }
 
+    gfx.clearLevel();
     gfx.buildLevel();
     gfx.clearPlayerModels();
     for (const [id, p] of players) {
@@ -300,24 +301,25 @@ function checkRoundEnd() {
 
 // ── Bot AI ────────────────────────────────────────────────────────────────
 function botThink(id, p, dt) {
-    // Find a safe platform above lava to target
-    const lavaY = H.lavaY;
-    const target = _botPickTarget(p, lavaY);
-    if (!target) return;
+    const target = _botPickTarget(p, H.lavaY);
+    if (!target) { p._botWishVx = 0; p._botWishVz = 0; return; }
 
     const dx = target.x - p.x, dz = target.z - p.z;
-    const dist = Math.sqrt(dx*dx + dz*dz);
+    const hdist = Math.sqrt(dx*dx + dz*dz);
 
-    // Move toward target
-    if (dist > 0.5) {
-        const spd = gfx.PLAYER_SPEED * 0.75;
-        p.vx += (dx / dist) * spd * dt * 6;
-        p.vz += (dz / dist) * spd * dt * 6;
+    // Set desired velocity toward target
+    if (hdist > 0.4) {
+        const spd = gfx.PLAYER_SPEED * 0.78;
+        p._botWishVx = (dx / hdist) * spd;
+        p._botWishVz = (dz / hdist) * spd;
+    } else {
+        p._botWishVx = 0;
+        p._botWishVz = 0;
     }
 
-    // Jump if target is higher and on ground
+    // Jump if target is higher
     p.botJumpT = (p.botJumpT || 0) + dt;
-    if (p.onGround && target.y > p.y + 0.5 && p.botJumpT > 0.6) {
+    if (p.onGround && target.y > p.y + 0.4 && p.botJumpT > 0.55) {
         p.vy = gfx.JUMP_FORCE;
         p.onGround = false;
         p.botJumpT = 0;
@@ -426,32 +428,30 @@ function updatePhysics(dt) {
     const p = me();
     if (!p || !p.alive) return;
 
-    // Input → wish velocity
+    // ── Input → desired velocity ──────────────────────────────────────────
     const { fwd, right } = gfx.getPlayerCamForward();
     let wx = 0, wz = 0;
-
     if (keys['KeyW'] || keys['ArrowUp'])    { wx += fwd.x;   wz += fwd.z; }
     if (keys['KeyS'] || keys['ArrowDown'])  { wx -= fwd.x;   wz -= fwd.z; }
     if (keys['KeyA'] || keys['ArrowLeft'])  { wx -= right.x; wz -= right.z; }
     if (keys['KeyD'] || keys['ArrowRight']) { wx += right.x; wz += right.z; }
-
-    // Joystick
     if (joyL.x !== 0 || joyL.y !== 0) {
         wx += right.x * joyL.x + fwd.x * (-joyL.y);
         wz += right.z * joyL.x + fwd.z * (-joyL.y);
     }
-
     const wlen = Math.sqrt(wx*wx + wz*wz);
     if (wlen > 0.01) { wx /= wlen; wz /= wlen; }
 
-    const accel = p.onGround ? 55 : 18;
-    const friction = p.onGround ? 0.82 : 0.97;
-    p.vx += wx * gfx.PLAYER_SPEED * accel * dt;
-    p.vz += wz * gfx.PLAYER_SPEED * accel * dt;
-    p.vx *= Math.pow(friction, dt * 60);
-    p.vz *= Math.pow(friction, dt * 60);
+    // ── Horizontal movement: lerp toward desired velocity ─────────────────
+    // Framerate-independent. Ground: snappy (t≈0.25/frame@60fps).
+    // Air: floaty (t≈0.10/frame). No broken power/friction formulas.
+    const wantVx = wx * gfx.PLAYER_SPEED;
+    const wantVz = wz * gfx.PLAYER_SPEED;
+    const moveT = p.onGround ? Math.min(1, dt * 16) : Math.min(1, dt * 6);
+    p.vx += (wantVx - p.vx) * moveT;
+    p.vz += (wantVz - p.vz) * moveT;
 
-    // Jump
+    // ── Jump ──────────────────────────────────────────────────────────────
     const wantJump = keys['Space'] || jumpPressed;
     if (wantJump && p.onGround) {
         p.vy = gfx.JUMP_FORCE;
@@ -460,7 +460,7 @@ function updatePhysics(dt) {
         jumpPressed = false;
     }
 
-    // Chain spring (client-side mirror)
+    // ── Chain spring (client-side mirror of host physics) ─────────────────
     if (p.chainPartnerId) {
         const partner = players.get(p.chainPartnerId);
         if (partner && partner.alive) {
@@ -468,78 +468,79 @@ function updatePhysics(dt) {
             const dist = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.001;
             if (dist > gfx.CHAIN_MAX) {
                 const over = dist - gfx.CHAIN_MAX;
-                p.vx += (dx / dist) * over * gfx.CHAIN_SPRING * dt;
-                p.vy += (dy / dist) * over * gfx.CHAIN_SPRING * 0.5 * dt;
-                p.vz += (dz / dist) * over * gfx.CHAIN_SPRING * dt;
+                const inv = 1 / dist;
+                p.vx += dx * inv * over * gfx.CHAIN_SPRING * dt;
+                p.vy += dy * inv * over * gfx.CHAIN_SPRING * 0.4 * dt;
+                p.vz += dz * inv * over * gfx.CHAIN_SPRING * dt;
             }
         }
     }
 
-    // Gravity
+    // ── Gravity + terminal velocity ───────────────────────────────────────
     p.vy += gfx.GRAVITY * dt;
+    p.vy = Math.max(p.vy, -30);
 
-    // Integrate
+    // ── Integrate ─────────────────────────────────────────────────────────
+    const prevY = p.y;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.z += p.vz * dt;
 
-    // Platform collision
+    // ── Platform collision (swept + resting, with break) ──────────────────
     const prevOnGround = p.onGround;
     p.onGround = false;
     for (const plat of gfx.PLATFORMS) {
         const ps = role === 'host' ? H.platState[plat.idx] : null;
-        if (ps && ps.phase === 2) continue; // gone
+        if (ps && ps.phase === 2) continue;
         const hw = plat.w / 2, hd = plat.d / 2;
-        if (p.x >= plat.x - hw && p.x <= plat.x + hw
-         && p.z >= plat.z - hd && p.z <= plat.z + hd
-         && p.y >= plat.y - 0.3 && p.y <= plat.y + 0.5) {
-            if (p.vy <= 0) {
-                p.y = plat.y;
-                if (p.vy < -2 && !prevOnGround) sfx.land();
-                p.vy = 0;
-                p.onGround = true;
-            }
+        if (p.x < plat.x - hw || p.x > plat.x + hw) continue;
+        if (p.z < plat.z - hd || p.z > plat.z + hd) continue;
+        // Fast-fall swept: path crossed the surface from above
+        if (prevY >= plat.y && p.y < plat.y && p.vy < 0) {
+            if (!prevOnGround) sfx.land();
+            p.y = plat.y; p.vy = 0; p.onGround = true; break;
+        }
+        // Resting: gravity nudged us slightly below surface
+        if (prevY >= plat.y - 0.15 && p.y <= plat.y + 0.05 && p.vy <= 0) {
+            if (p.vy < -3 && !prevOnGround) sfx.land();
+            p.y = plat.y; p.vy = 0; p.onGround = true; break;
         }
     }
 
-    // Escape zone: top platform
+    // ── Escape: standing on summit platform ───────────────────────────────
     const summit = gfx.PLATFORMS[gfx.PLATFORMS.length - 1];
     if (p.onGround && Math.abs(p.x - summit.x) < summit.w / 2
-     && Math.abs(p.z - summit.z) < summit.d / 2
-     && p.y >= summit.y - 0.1) {
-        // Reached summit!
-        if (role === 'host') {
-            hostHandle(myId, { t: 'escape' });
-        } else {
-            emit({ t: 'escape' });
-        }
+     && Math.abs(p.z - summit.z) < summit.d / 2) {
+        if (role === 'host') hostHandle(myId, { t: 'escape' });
+        else emit({ t: 'escape' });
     }
 
-    // Clamp horizontal bounds
+    // ── Bounds + step sound ───────────────────────────────────────────────
     p.x = clamp(p.x, -40, 40);
     p.z = clamp(p.z, -40, 40);
-
-    // Step sound
     if (p.onGround && wlen > 0.1) {
         p._stepT = (p._stepT || 0) + dt;
         if (p._stepT > 0.35) { sfx.step(); p._stepT = 0; }
     }
 
-    // Check lava
+    // ── Lava kill ─────────────────────────────────────────────────────────
     const lavaY = role === 'host' ? H.lavaY : shared.lavaY;
-    if (p.y < lavaY + 0.3) {
-        if (role === 'host') {
-            eliminatePlayer(myId, 'lava');
-        }
-        // Client side: host will send eliminated
-    }
+    if (p.y < lavaY + 0.3 && role === 'host') eliminatePlayer(myId, 'lava');
 }
 
 // ── Host physics for bots ──────────────────────────────────────────────────
 function updateBotPhysics(id, p, dt) {
+    // Lerp toward desired velocity (same model as player, just less responsive)
+    const wantVx = p._botWishVx || 0;
+    const wantVz = p._botWishVz || 0;
+    const moveT = p.onGround ? Math.min(1, dt * 12) : Math.min(1, dt * 5);
+    p.vx += (wantVx - p.vx) * moveT;
+    p.vz += (wantVz - p.vz) * moveT;
+
     p.vy += gfx.GRAVITY * dt;
-    p.vx *= Math.pow(0.78, dt * 60);
-    p.vz *= Math.pow(0.78, dt * 60);
+    p.vy = Math.max(p.vy, -30);
+
+    const prevY = p.y;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.z += p.vz * dt;
@@ -549,23 +550,23 @@ function updateBotPhysics(id, p, dt) {
         const ps = H.platState[plat.idx];
         if (ps && ps.phase === 2) continue;
         const hw = plat.w / 2, hd = plat.d / 2;
-        if (p.x >= plat.x - hw && p.x <= plat.x + hw
-         && p.z >= plat.z - hd && p.z <= plat.z + hd
-         && p.y >= plat.y - 0.3 && p.y <= plat.y + 0.5) {
-            if (p.vy <= 0) { p.y = plat.y; p.vy = 0; p.onGround = true; }
+        if (p.x < plat.x - hw || p.x > plat.x + hw) continue;
+        if (p.z < plat.z - hd || p.z > plat.z + hd) continue;
+        if (prevY >= plat.y && p.y < plat.y && p.vy < 0) {
+            p.y = plat.y; p.vy = 0; p.onGround = true; break;
+        }
+        if (prevY >= plat.y - 0.15 && p.y <= plat.y + 0.05 && p.vy <= 0) {
+            p.y = plat.y; p.vy = 0; p.onGround = true; break;
         }
     }
 
-    // Escape at summit
     const summit = gfx.PLATFORMS[gfx.PLATFORMS.length - 1];
     if (p.onGround && Math.abs(p.x - summit.x) < summit.w / 2
      && Math.abs(p.z - summit.z) < summit.d / 2) {
         hostHandle(id, { t: 'escape' });
     }
 
-    // Lava
     if (p.y < H.lavaY + 0.3) eliminatePlayer(id, 'lava');
-
     p.x = clamp(p.x, -40, 40);
     p.z = clamp(p.z, -40, 40);
 }
@@ -616,7 +617,7 @@ function syncGraphics() {
     gfx.setLavaY(lavaY);
 
     for (const [id, p] of players) {
-        gfx.setPlayerPos(id, p.x, p.y, p.z, p.alive);
+        gfx.setPlayerPos(id, p.x, p.y, p.z, p.alive, p.vx || 0, p.vz || 0);
     }
 
     // Chain
@@ -725,6 +726,7 @@ function enterLobby() {
     if (role !== 'host') {
         $('lobby-code').textContent = roomCode;
     }
+    gfx.clearLevel();
     gfx.buildLevel();
 }
 
